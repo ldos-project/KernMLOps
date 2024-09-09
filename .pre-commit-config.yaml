@@ -1,0 +1,41 @@
+fail_fast: true
+exclude: .gitmodules|.gitignore|.git/
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.2.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.4
+    hooks:
+      - id: forbid-tabs
+        exclude: scripts/|Makefile|.*\.mk$
+      - id: remove-tabs
+        exclude: scripts/|Makefile|.*\.mk$
+        args: [--whitespaces-count, '2']
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.31.1
+    hooks:
+      - id: markdownlint
+      - id: markdownlint-fix
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: shfmt
+        args: [-i 4]
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+      - id: codespell
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.4
+    hooks:
+      - id: ruff
+        types_or: [ python, pyi ]
+        args: [ --fix ]
+      - id: ruff
+        types_or: [ python, pyi ]
+        args: [ --fix, --select=I ]
