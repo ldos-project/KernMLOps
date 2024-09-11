@@ -30,6 +30,8 @@ make pre-commit
 
 ## Dependencies
 
+### Python
+
 Python is required, version `3.12` is recommended for best compatibility.
 
 Python package dependencies are listed in `requirements.txt` and can be
@@ -47,6 +49,15 @@ Then the python packages can be installed via:
 ```shell
 conda install -c conda-forge --file requirements.txt
 mamba install -c conda-forge --file requirements.txt
+```
+
+### Creating VMs
+
+For ubuntu the requirements can be installed with:
+
+```shell
+sudo apt install -y bc flex bison gcc make libelf-dev libssl-dev \
+    squashfs-tools busybox-static tree cpio curl
 ```
 
 ## Contributing

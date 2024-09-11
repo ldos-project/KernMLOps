@@ -1,0 +1,4 @@
+---
+# defaults file for clone-kernel
+
+version: "6.11-rc7"

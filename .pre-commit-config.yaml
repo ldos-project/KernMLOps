@@ -1,3 +1,4 @@
+---
 fail_fast: true
 exclude: .gitmodules|.gitignore|.git/
 repos:
@@ -9,7 +10,7 @@ repos:
       - id: mixed-line-ending
       - id: trailing-whitespace
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.4
+    rev: v1.5.5
     hooks:
       - id: forbid-tabs
         exclude: scripts/|Makefile|.*\.mk$
@@ -30,6 +31,11 @@ repos:
     rev: v2.2.6
     hooks:
       - id: codespell
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.26.3
+    hooks:
+      - id: yamllint
+        entry: yamllint --config-file .yamllint.yaml
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.4
     hooks:

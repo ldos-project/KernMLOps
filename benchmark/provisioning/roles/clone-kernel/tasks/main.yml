@@ -1,0 +1,58 @@
+---
+# tasks file for clone-kernel
+
+
+# - ansible.builtin.debug:
+#     msg: "{{ ansible_facts }}"
+
+- name: Install apt packages to build linux kernel
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+    pkg:
+      - git
+      - fakeroot
+      - build-essential
+      - ncurses-dev
+      - xz-utils
+      - libssl-dev
+      - bc
+      - flex
+      - libelf-dev
+      - bison
+    state: present
+
+- name: Download Linux repo
+  ansible.builtin.unarchive:
+    creates: /linux-kernel
+    src: "https://git.kernel.org/torvalds/t/linux-{{ version }}.tar.gz"
+    dest: /tmp
+    remote_src: true
+    owner: "{{ ansible_facts['env']['USER'] }}"
+  register: linux_downloaded
+
+- name: Rename Linux repo
+  become: true
+  ansible.builtin.command: mv "/tmp/linux-{{ version }}" /linux-kernel
+  when: linux_downloaded.changed
+
+- name: Create kernel directory
+  become: true
+  ansible.builtin.file:
+    path: /linux-kernel
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_facts['env']['USER'] }}"
+
+- name: Create kernel build directory
+  ansible.builtin.file:
+    path: /linux-kernel/build
+    state: directory
+    mode: '0755'
+
+- name: Generate kernel build config
+  community.general.make:
+    chdir: /linux-kernel
+    target: defconfig
+    params:
+      O: /linux-kernel/build

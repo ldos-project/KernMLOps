@@ -1,0 +1,19 @@
+---
+# tasks file for build-kernel
+
+- name: Check kernel initialized
+  stat:
+    path: /linux-kernel/build/Makefile
+  register: kernel_initialized
+  failed_when: not kernel_initialized.stat.exists
+
+- name: Clean Linux kernel build
+  community.general.make:
+    chdir: /linux-kernel/build
+    target: clean
+
+- name: Build Linux kernel
+  community.general.make:
+    chdir: /linux-kernel/build
+    target: all
+    jobs: "{{ ansible_facts['processor_nproc'] }}"

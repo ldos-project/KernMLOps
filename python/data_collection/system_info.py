@@ -25,6 +25,7 @@ class MachineSoftwareConfiguration:
     swap_size_bytes: int
     huge_pages: int
     huge_page_size_bytes: int
+    quanta_length: int # TODO(Patrick): add this
     is_vm: bool = False
 
 
@@ -191,6 +192,7 @@ def machine_software_config() -> MachineSoftwareConfiguration:
         os=os,
         kernel_version=kernel_version,
         swap_size_bytes=swap_size_bytes,
+        quanta_length=0,
         huge_pages=huge_pages,
         huge_page_size_bytes=huge_page_size_bytes,
         is_vm=False,

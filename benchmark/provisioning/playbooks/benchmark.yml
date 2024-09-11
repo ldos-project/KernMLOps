@@ -1,0 +1,12 @@
+---
+
+- hosts: benchmark-kernel-build
+  roles:
+    - clone-kernel
+    # - install-kernel
+    # - run-data-collection
+    - build-kernel
+
+- hosts: test
+  roles:
+    - clone-kernel

@@ -1,3 +1,4 @@
+ansible >= 10.2.0
 polars >= 1.6.0
 psutil >= 5.9.0
 pyright == 1.1.379
