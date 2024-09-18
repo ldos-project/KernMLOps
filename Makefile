@@ -1,3 +1,7 @@
+SHELL := /bin/bash
+
+USER_PYTHON ?= $(shell readlink -nf $(shell which python))
+
 dependencies: dependencies-asdf
 
 dependencies-asdf:
@@ -30,3 +34,12 @@ lint:
 format:
 	ruff check --fix
 	ruff check --select I --fix
+
+set-capabilities:
+	sudo setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=+eip ${USER_PYTHON}
+
+revoke-capabilities:
+	sudo setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=-eip ${USER_PYTHON}
+
+vmlinux-header:
+	bpftool btf dump file /sys/kernel/btf/vmlinux format c > python/data_collection/bpf/vmlinux.h

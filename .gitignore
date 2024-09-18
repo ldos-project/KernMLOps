@@ -166,4 +166,8 @@ cython_debug/
 hosts
 kernel
 
+# eBPF files
+vmlinux.h
+
 tmp
+.vscode

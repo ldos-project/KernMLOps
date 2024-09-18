@@ -12,7 +12,7 @@ import psutil
 
 @dataclass(frozen=True)
 class MachineIDInfo:
-    id: str
+    collection_id: str
     hostname: str
     start_time_sec: float
     uptime_sec: float
@@ -127,7 +127,7 @@ def machine_id_info() -> MachineIDInfo:
     start_time_sec = psutil.boot_time()
     uptime_sec = time.time() - start_time_sec
     return MachineIDInfo(
-        id=collection_id,
+        collection_id=collection_id,
         hostname=hostname,
         start_time_sec=start_time_sec,
         uptime_sec=uptime_sec,

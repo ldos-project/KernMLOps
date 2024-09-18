@@ -28,6 +28,30 @@ make hooks
 make pre-commit
 ```
 
+### [bcc](https://github.com/iovisor/bcc)
+
+A toolset for building eBPF programs including python bindings.
+
+It is highly recommended to build this from scratch so that its python package
+can be pip installed to your local environment.  By default system packages will
+only install it for the system python, which may complicate development for user
+level package management.
+
+Building instructions are provided [here](https://github.com/iovisor/bcc/blob/master/INSTALL.md#source)
+for most major distributions.
+
+After installing, the python package can be installed to your local environment via:
+
+```shell
+pip install -e BCC_BUILD_DIR/src/python/bcc-python3
+```
+
+Verify proper installation with:
+
+```python
+import bcc
+```
+
 ## Dependencies
 
 ### Python
