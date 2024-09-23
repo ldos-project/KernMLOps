@@ -7,6 +7,9 @@ from typing_extensions import Protocol
 class BPFProgram(Protocol):
   """Loadable BPF program that returns performance data."""
 
+  @classmethod
+  def name(cls) -> str: ...
+
   def load(self) -> None: ...
 
   def poll(self) -> None: ...

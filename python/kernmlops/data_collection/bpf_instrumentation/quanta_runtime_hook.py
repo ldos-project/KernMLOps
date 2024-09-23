@@ -4,7 +4,7 @@ from pathlib import Path
 import polars as pl
 from bcc import BPF
 
-from bpf_instrumentation.bpf_hook import BPFProgram
+from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
 
 
 @dataclass(frozen=True)
@@ -16,6 +16,10 @@ class QuantaRuntimeData:
   quanta_run_length_us: int
 
 class QuantaRuntimeBPFHook(BPFProgram):
+
+  @classmethod
+  def name(cls) -> str:
+    return "quanta_runtime"
 
   def __init__(self):
     self.is_support_raw_tp = BPF.support_raw_tracepoint()
@@ -39,10 +43,11 @@ class QuantaRuntimeBPFHook(BPFProgram):
     # this would be nice but does not work with only capabilities: CAP_BPF,CAP_SYS_ADMIN
     self.bpf = BPF(text = self.bpf_text)
     if not self.is_support_raw_tp:
-      self.bpf.attach_kprobe(event_re=rb'^finish_task_switch$|^finish_task_switch\.isra\.\d$',
-                      fn_name=b"trace_run")
+      self.bpf.attach_kprobe(
+        event_re=rb'^finish_task_switch$|^finish_task_switch\.isra\.\d$',
+        fn_name=b"trace_run"
+      )
     self.bpf["quanta_runtimes"].open_perf_buffer(self._event_handler)
-    print("Quanta Runtimes BPF program loaded")
 
   def poll(self):
     self.bpf.perf_buffer_poll()
@@ -54,9 +59,9 @@ class QuantaRuntimeBPFHook(BPFProgram):
     self.quanta_runtime_data.clear()
 
   def pop_data(self) -> pl.DataFrame:
-     quanta_df = self.data()
-     self.clear()
-     return quanta_df
+    quanta_df = self.data()
+    self.clear()
+    return quanta_df
 
   def _event_handler(self, cpu, quanta_runtime_perf_event, size):
     event = self.bpf["quanta_runtimes"].event(quanta_runtime_perf_event)
