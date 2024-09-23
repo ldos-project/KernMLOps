@@ -4,6 +4,18 @@ This repository serves as the mono-repo for the KernMLOps research project.
 
 Currently, it only contains scripts for data collection of kernel performance.
 
+Quick Setup:
+
+```shell
+make dependencies
+make hooks
+make docker-image
+# Ensure you have installed your kernel's development headers
+# On ubuntu: apt install linux-headers-$(uname -r)
+# On redhat: dnf install kernel-devel kernel-headers
+make collect
+```
+
 ## Tools
 
 ### [asdf](https://asdf-vm.com)
@@ -51,6 +63,11 @@ Verify proper installation with:
 ```python
 import bcc
 ```
+
+### [vagrant](https://developer.hashicorp.com/vagrant/docs/installation)
+
+Vagrant is a tool for managing VMs simply across different backend like VirtualBox
+and libvirt, we recommend using libvirt.
 
 ## Dependencies
 
@@ -105,3 +122,70 @@ Users can run data collection with:
 ```shell
 make collect-data
 ```
+
+## Troubleshooting: Or How I Learned to Shoot My Foot
+
+### eBPF Programs
+
+eBPF Programs are statically verified when the python scripts attempt
+to load them to into the kernel and that is where errors will manifest.
+When a program fails to compile the error
+will be the usual sort of C-compiler error. i.e.
+
+```shell
+/virtual/main.c:53:3: error: call to undeclared function '__bpf_builtin_memset';
+    ISO C99 and later do not support implicit function declarations
+    [-Wimplicit-function-declaration]
+   53 |   __bpf_builtin_memset(&data, 0, sizeof(data));
+      |   ^
+1 error generated.
+```
+
+For verification errors the entire compiled bytecode will be printed,
+look for something along the lines of:
+
+```shell
+invalid indirect read from stack R4 off -32+20 size 24
+processed 59 insns (limit 1000000) max_states_per_insn 0
+    total_states 3 peak_states 3 mark_read 3
+```
+
+#### eBPF Padding
+
+The error:
+
+```shell
+invalid indirect read from stack R4 off -32+20 size 24
+processed 59 insns (limit 1000000) max_states_per_insn 0
+    total_states 3 peak_states 3 mark_read 3
+```
+
+Indicates that a read in the program is reading uninitialized memory.
+
+That error came from:
+
+```c
+struct quanta_runtime_perf_event data;
+data.pid = pid;
+data.tgid = tgid;
+data.quanta_end_uptime_us = ts / 1000;
+data.quanta_run_length_us = delta / 1000;
+quanta_runtimes.perf_submit(ctx, &data, sizeof(data));
+```
+
+The invalid read was `perf_submit` since there was extra padding in the `data` struct
+that was not formally initialized.  To be as robust as possible this should be handled
+with an explicit `__builtin_memset` as in:
+
+```c
+struct quanta_runtime_perf_event data;
+__builtin_memset(&data, 0, sizeof(data));
+data.pid = pid;
+data.tgid = tgid;
+data.quanta_end_uptime_us = ts / 1000;
+data.quanta_run_length_us = delta / 1000;
+quanta_runtimes.perf_submit(ctx, &data, sizeof(data));
+```
+
+This gives the most robust handling for multiple systems,
+see [here](https://github.com/iovisor/bcc/issues/2623#issuecomment-560214481).

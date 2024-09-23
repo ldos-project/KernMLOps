@@ -1,0 +1,69 @@
+---
+# tasks file for install-bcc
+
+- name: Create a symbolic link python for python3
+  become: true
+  ansible.builtin.file:
+    src: /usr/bin/python3
+    dest: /usr/bin/python
+    state: link
+
+- name: Set required BPF capabilities on python
+  become: true
+  community.general.capabilities:
+    path: "/usr/bin/python{{ ansible_python_version.split('.')[:2] | join('.') }}"
+    capability: CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP+eip
+    state: present
+
+# Install package dependencies
+- name: dnf install rocky 9 bcc dependencies
+  ansible.builtin.include_tasks:
+    file: rocky9.yml
+  when: ansible_facts['pkg_mgr'] == "dnf"
+- name: apt install Ubuntu 24.04 bcc dependencies
+  ansible.builtin.include_tasks:
+    file: ubuntu.yml
+  when: ansible_distribution == "Ubuntu"
+
+- name: Check BCC installed
+  stat:
+    path: "{{ download_location }}"
+  register: bcc
+
+- name: Clone BCC tools repo
+  become: true
+  ansible.builtin.git:
+    repo: 'https://github.com/iovisor/bcc.git'
+    dest: "{{ download_location }}"
+    single_branch: true
+    version: "v{{ version }}"
+  register: bcc_download
+  when: not bcc.stat.exists
+
+- name: Create BCC build dir
+  become: true
+  ansible.builtin.file:
+    path: "{{ download_location }}/build"
+    state: directory
+    mode: '0755'
+  when: bcc_download.changed
+
+- name: Initialize BCC cmake build
+  become: true
+  ansible.builtin.command:
+    cmd: cmake  {{ bcc_cmake_args }} ..
+    chdir: "{{ download_location }}/build"
+  when: bcc_download.changed
+
+- name: Build BCC tools
+  become: true
+  community.general.make:
+    chdir: "{{ download_location }}/build"
+    target: all
+    jobs: "{{ ansible_facts['processor_nproc'] }}"
+
+- name: Install BCC tools
+  become: true
+  community.general.make:
+    chdir: "{{ download_location }}/build"
+    target: install

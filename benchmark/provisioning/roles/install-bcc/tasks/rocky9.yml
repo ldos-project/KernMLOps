@@ -1,0 +1,34 @@
+---
+# tasks file for install-bcc package dependencies on rocky 9
+
+- name: Install dnf packages to build BCC tools
+  become: true
+  ansible.builtin.dnf:
+    name:
+      - bison
+      - cmake
+      - ethtool
+      - flex
+      - git
+      - iperf3
+      - libstdc++-devel
+      - python3-netaddr
+      - python3-pip
+      - gcc
+      - gcc-c++
+      - make
+      - zlib-devel
+      - elfutils-libelf-devel
+      - clang
+      - clang-devel
+      - llvm
+      - llvm-devel
+      - llvm-static
+      - ncurses-devel
+      - netperf
+      - zip
+    state: present
+
+- name: Set BCC cmake arguments
+  ansible.builtin.set_fact:
+    bcc_cmake_args: "-DPYTHON_CMD=python3 -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_LLVM_SHARED=1"

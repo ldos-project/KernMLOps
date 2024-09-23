@@ -18,6 +18,7 @@ class QuantaRuntimeData:
 class QuantaRuntimeBPFHook(BPFProgram):
 
   def __init__(self):
+    self.is_support_raw_tp = BPF.support_raw_tracepoint()
     bpf_text = open(Path(__file__).parent / "bpf/sched_quanta_runtime.bpf.c", "r").read()
 
     # code substitutions
@@ -28,14 +29,18 @@ class QuantaRuntimeBPFHook(BPFProgram):
     # pid from userspace point of view is thread group from kernel pov
     # bpf_text = bpf_text.replace('FILTER', 'tgid != %s' % args.pid)
     self.bpf_text = bpf_text.replace('FILTER', '0')
+    if self.is_support_raw_tp:
+        bpf_text = bpf_text.replace('USE_TRACEPOINT', '1')
+    else:
+        bpf_text = bpf_text.replace('USE_TRACEPOINT', '0')
     self.quanta_runtime_data = list[QuantaRuntimeData]()
 
   def load(self):
     # this would be nice but does not work with only capabilities: CAP_BPF,CAP_SYS_ADMIN
-    #is_support_raw_tp = BPF.support_raw_tracepoint()
-    #if not is_support_raw_tp:
-    #  raise NotImplementedError()
     self.bpf = BPF(text = self.bpf_text)
+    if not self.is_support_raw_tp:
+      self.bpf.attach_kprobe(event_re=rb'^finish_task_switch$|^finish_task_switch\.isra\.\d$',
+                      fn_name=b"trace_run")
     self.bpf["quanta_runtimes"].open_perf_buffer(self._event_handler)
     print("Quanta Runtimes BPF program loaded")
 

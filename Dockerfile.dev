@@ -1,0 +1,88 @@
+ARG BUILD_IMAGE=ubuntu:22.04
+FROM ubuntu:22.04 AS bcc
+
+USER root
+
+WORKDIR /dependencies
+
+# bcc dependencies
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update -y \
+    && apt install -y \
+    zip \
+    bison \
+    build-essential \
+    cmake \
+    flex \
+    git \
+    libedit-dev \
+    libllvm14 \
+    llvm-14-dev \
+    libcap2-bin \
+    libclang-14-dev \
+    python3 \
+    python3-pip \
+    zlib1g-dev \
+    libelf-dev \
+    libfl-dev \
+    python3-setuptools \
+    liblzma-dev \
+    libdebuginfod-dev \
+    arping \
+    netperf \
+    iperf \
+    && apt clean
+
+RUN git clone  --depth 1 --branch v0.31.0 https://github.com/iovisor/bcc.git
+WORKDIR /dependencies/bcc/build
+RUN cmake -DPYTHON_CMD=python3 ..
+RUN make -j4
+RUN make install
+
+# Base development image
+FROM ${BUILD_IMAGE} AS dev
+
+ARG IS_CI=true
+
+RUN apt update -y \
+  &&  apt install -y \
+  vim \
+  pkg-config \
+  shfmt \
+  && apt clean
+
+RUN if [ "${IS_CI}" != "true" ] ; then \
+  apt update -y \
+    &&  apt install -y \
+    vim \
+    zsh \
+    && apt clean; fi
+
+ARG UNAME
+ARG UID
+ARG GID
+
+RUN if [ "${UNAME}" != "root" ] ; then groupadd -g ${GID} ${UNAME} \
+      &&  useradd -ms /bin/bash  -u "${UID}" -g "${GID}" ${UNAME}; fi
+
+RUN mkdir -p /home/${UNAME} \
+      && chown ${UNAME}:${UNAME} /home/${UNAME}
+
+USER ${UNAME}
+
+ARG SRC_DIR=/KernMLOps
+RUN echo "export SRC_DIR=${SRC_DIR}" >> /home/${UNAME}/.profile
+RUN mkdir -p /home/${UNAME}/.local
+RUN echo "export PATH=$PATH:/home/pkenney/.local/bin" >> /home/${UNAME}/.profile
+
+WORKDIR /home/${UNAME}
+COPY --chown=${UNAME} requirements.txt /home/${UNAME}/requirements.txt
+RUN pip install --user --no-warn-script-location -r /home/${UNAME}/requirements.txt
+
+# Give python capabilities to load eBPF programs
+USER root
+RUN setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=+eip /usr/bin/python3.10
+RUN ln -s /usr/bin/python3.10 /usr/bin/python
+
+USER ${UNAME}
+WORKDIR ${SRC_DIR}

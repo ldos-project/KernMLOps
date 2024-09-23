@@ -237,7 +237,7 @@ def machine_hardware_config() -> MachineHardwareConfiguration:
 
 def _convert_cache_size_to_bytes(raw_line: str) -> int:
     cache_size_data = raw_line.split(":", 1)[1].lstrip().rstrip().split()
-    value = int(cache_size_data[0]) if cache_size_data else 0
+    value = int(float(cache_size_data[0])) if cache_size_data else 0
     unit = cache_size_data[1] if len(cache_size_data) > 1 else ""
     return convert_to_bytes(value=value, unit=unit)
 

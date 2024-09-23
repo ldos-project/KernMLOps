@@ -2,10 +2,15 @@
 
 - hosts: benchmark-kernel-build
   roles:
-    - clone-kernel
+    - install-bcc
+    # - clone-kernel
     # - install-kernel
     # - run-data-collection
-    - build-kernel
+    # - build-kernel
+
+- hosts: development
+  roles:
+    - install-bcc
 
 - hosts: test
   roles:

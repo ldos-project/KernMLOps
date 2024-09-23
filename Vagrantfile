@@ -41,7 +41,8 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "generic/ubuntu2204"
+  config.vm.box = "bento/ubuntu-24.04" #"generic/rocky9" #  # "generic/ubuntu2204"
+  config.vm.synced_folder "./", "/vagrant", type: "virtiofs"
 
   config.vm.define "KernMLOps" do |machine|
     machine.vm.hostname = "KernMLOps"
@@ -50,24 +51,20 @@ Vagrant.configure("2") do |config|
       ansible.groups = {
         "benchmark-kernel-build" => ["KernMLOps"]
       }
-      ansible.playbook = "provisioning/site.yml"
+      ansible.playbook = "benchmark/provisioning/site.yml"
       ansible.extra_vars = {
         ansible_python_interpreter: "/usr/bin/python3"
       }
     end
   end
 
-  # Provider-specific configuration so you can fine-tune various
-  # backing providers for Vagrant. These expose provider-specific options.
-  # Example for VirtualBox:
-  #
-  config.vm.provider "virtualbox" do |vb|
-    # Display the VirtualBox GUI when booting the machine
-    # vb.gui = true
-
+  # https://vagrant-libvirt.github.io/vagrant-libvirt/examples.html#using-kernel-and-initrd
+  config.vm.provider :libvirt do |libvirt|
     # Customize the amount of memory on the VM:
-    vb.cpus = self.processor_count
-    vb.memory = self.memory / 2
+    libvirt.cpu_mode = "host-passthrough"
+    libvirt.cpus = self.processor_count
+    libvirt.memory = self.memory / 2
+    libvirt.memorybacking :access, :mode => "shared"
   end
 
   # Disable automatic box update checking. If you disable this, then
