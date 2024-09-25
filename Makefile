@@ -5,6 +5,8 @@ UID ?= $(shell id -u)
 GID ?= $(shell id -g)
 USER_PYTHON ?= $(shell readlink -nf $(shell which python))
 KERNEL_VERSION ?= $(shell uname -r)
+
+# Container variables
 KERNEL_DEV_HEADERS_DIR ?= /usr/src/kernels/${KERNEL_VERSION}
 KERNEL_DEV_SPECIFIC_HEADERS_MOUNT ?=
 KERNEL_DEV_MODULES_DIR ?= /lib/modules/${KERNEL_VERSION}
@@ -35,16 +37,29 @@ VERSION ?= $(shell git log --pretty="%h" -1 Dockerfile.dev requirements.txt)
 
 CONTAINER_SRC_DIR ?= /KernMLOps
 CONTAINER_WORKDIR ?= ${CONTAINER_SRC_DIR}
+CONTAINER_HOSTNAME ?= $(shell hostname)-docker
 CONTAINER_CONTEXT ?= default
 CONTAINER_CPUSET ?=
 CONTAINER_CMD ?= bash -l
 INTERACTIVE ?= i
+
+# Benchmarking variables
+COLLECTION_BENCHMARK ?= faux
+COLLECTION_POLL_RATE ?= .5
+BENCHMARK_DIR ?= /home/${UNAME}/kernmlops-benchmark
+
+# Provisioning variables
+PROVISIONING_USER ?= ${UNAME}
+PROVISIONING_HOST ?= localhost
+PROVISIONING_PORT ?= 22
+PROVISIONING_TARGET ?= ${PROVISIONING_HOST}:${PROVISIONING_PORT}
 
 # Developer variables that should be set as env vars in startup files like .profile
 KERNMLOPS_CONTAINER_MOUNTS ?=
 KERNMLOPS_CONTAINER_ENV ?=
 
 
+# Dependency and code quality commands
 dependencies: dependencies-asdf
 
 dependencies-asdf:
@@ -66,12 +81,50 @@ hooks:
 pre-commit:
 	@pre-commit run -a
 
+lint:
+	ruff check
+	ruff check --select I
+	pyright
+
+format:
+	ruff check --fix
+	ruff check --select I --fix
+
+
+# Python commands
 collect:
-	@${MAKE} -e CONTAINER_CMD="make collect-data" docker
+	@${MAKE} -e CONTAINER_CMD="make benchmark-linux-build" docker
 
 collect-data:
-	@python python/kernmlops collect -v
+	@python python/kernmlops collect -v \
+	-p ${COLLECTION_POLL_RATE} \
+	-d ${BENCHMARK_DIR} \
+	--benchmark ${COLLECTION_BENCHMARK}
 
+benchmark-linux-build:
+	@python python/kernmlops collect -v \
+	-p ${COLLECTION_POLL_RATE} \
+	-d ${BENCHMARK_DIR} \
+	--benchmark linux-build
+
+dump:
+	@python python/kernmlops collect dump
+
+
+# Provisioning commands
+provision-benchmarks:
+	@echo "[install-benchmarks]" > hosts
+	@echo "${PROVISIONING_TARGET}" >> hosts
+	@ansible-playbook benchmark/provisioning/site.yml -u ${PROVISIONING_USER} -i ./hosts -e benchmark_dir=${BENCHMARK_DIR} \
+	|| echo "Ensure that 'make provision-benchmarks-admin' has been run by your system administrator"
+
+provision-benchmarks-admin:
+	@echo "[install-benchmarks]" > hosts
+	@echo "${PROVISIONING_TARGET}" >> hosts
+	ansible-playbook benchmark/provisioning/site.yml -u ${PROVISIONING_USER} -i ./hosts -e benchmark_dir=${BENCHMARK_DIR} -K
+
+
+# Docker commands
 docker-image:
 	@${MAKE} docker-image-dependencies
 	docker --context ${CONTAINER_CONTEXT} build \
@@ -99,10 +152,16 @@ docker:
 	@if [ ! -d "${KERNEL_DEV_MODULES_DIR}" ]; then \
 		echo "Kernel dev headers not installed: ${KERNEL_DEV_MODULES_DIR}" && exit 1; \
 	fi
+	@if [ ! -d "${BENCHMARK_DIR}" ]; then \
+		echo "User benchmarks not installed: ${BENCHMARK_DIR}" \
+		&& echo "Try 'make provision-benchmarks'" && exit 1; \
+	fi
 	@docker --context ${CONTAINER_CONTEXT} run --rm \
 	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR} \
 	-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR} \
 	-v ${KERNEL_DEV_MODULES_DIR}/:${KERNEL_DEV_MODULES_DIR} \
+	-v ${BENCHMARK_DIR}/:/home/${UNAME}/kernmlops-benchmark \
+	-v ${BENCHMARK_DIR}/:${BENCHMARK_DIR} \
 	-v /sys/kernel/debug/:/sys/kernel/debug \
 	-v /sys/kernel/tracing/:/sys/kernel/tracing \
 	${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT} \
@@ -110,19 +169,13 @@ docker:
 	${KERNMLOPS_CONTAINER_ENV} \
 	${CONTAINER_CPUSET} \
 	--privileged \
+	--hostname=${CONTAINER_HOSTNAME} \
 	--workdir=${CONTAINER_WORKDIR} ${CONTAINER_OPTS} -${INTERACTIVE}t \
 	${IMAGE_NAME}:${VERSION} \
 	${CONTAINER_CMD} || true
 
-lint:
-	ruff check
-	ruff check --select I
-	pyright
 
-format:
-	ruff check --fix
-	ruff check --select I --fix
-
+# Miscellaneous commands
 set-capabilities:
 	sudo setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=+eip ${USER_PYTHON}
 

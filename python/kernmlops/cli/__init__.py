@@ -1,3 +1,4 @@
+import multiprocessing
 import sys
 from pathlib import Path
 
@@ -5,6 +6,7 @@ import click
 import data_collection
 import data_import
 from click_default_group import DefaultGroup
+from kernmlops_benchmark import FauxBenchmark, benchmarks
 
 from cli import collect
 
@@ -29,6 +31,20 @@ def cli_collect():
     type=float,
 )
 @click.option(
+    "-b",
+    "--benchmark",
+    "benchmark_name",
+    default=FauxBenchmark.name(),
+    type=click.Choice(list(benchmarks.keys())),
+)
+@click.option(
+    "--cpus",
+    "cpus",
+    default=multiprocessing.cpu_count(),
+    required=False,
+    type=int,
+)
+@click.option(
     "-v",
     "--verbose",
     "verbose",
@@ -37,18 +53,39 @@ def cli_collect():
     type=bool,
 )
 @click.option(
-    "-d",
+    "-o",
     "--output-dir",
     "output_dir",
-    default=Path("data/curated"),
+    default=Path("data"),
     required=True,
     type=click.Path(exists=True, file_okay=False, path_type=Path),
 )
-def cli_collect_data(output_dir: Path, poll_rate: float, verbose: bool):
+@click.option(
+    "-d",
+    "--benchmark-dir",
+    "benchmark_dir",
+    default=Path.home() / "kernmlops-benchmark",
+    required=True,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+)
+def cli_collect_data(
+    output_dir: Path,
+    benchmark_name: str,
+    benchmark_dir: Path,
+    cpus: int | None,
+    poll_rate: float,
+    verbose: bool,
+):
     """Run data collection tooling."""
     bpf_programs = data_collection.bpf.hooks()
+    benchmark_args = {
+        "benchmark_dir": benchmark_dir,
+        "cpus": cpus,
+    }
+    benchmark = benchmarks[benchmark_name](**benchmark_args)  # pyright: ignore [reportCallIssue]
     collect.run_collect(
-        output_dir=output_dir,
+        data_dir=output_dir,
+        benchmark=benchmark,
         bpf_programs=bpf_programs,
         poll_rate=poll_rate,
         verbose=verbose,
@@ -64,9 +101,18 @@ def cli_collect_data(output_dir: Path, poll_rate: float, verbose: bool):
     required=True,
     type=click.Path(exists=True, file_okay=False, path_type=Path),
 )
-def cli_collect_dump(input_dir: Path):
+@click.option(
+    "-b",
+    "--benchmark",
+    "benchmark_name",
+    default=None,
+    required=False,
+    help="Benchmark to filter by, default is to dump all data",
+    type=click.Choice(list(benchmarks.keys())),
+)
+def cli_collect_dump(input_dir: Path, benchmark_name: str | None):
     """Debug tool to dump collected data."""
-    kernmlops_dfs = data_import.read_parquet_dir(input_dir)
+    kernmlops_dfs = data_import.read_parquet_dir(input_dir, benchmark_name=benchmark_name)
     for name, kernmlops_df in kernmlops_dfs.items():
         print(f"{name}: {kernmlops_df}")
 

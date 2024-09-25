@@ -5,54 +5,57 @@
 # - ansible.builtin.debug:
 #     msg: "{{ ansible_facts }}"
 
+- name: Gather apt package facts
+  ansible.builtin.package_facts:
+    manager: apt
+  when: ansible_facts['pkg_mgr'] == "apt"
+
 - name: Install apt packages to build linux kernel
   become: true
   ansible.builtin.apt:
     update_cache: true
-    pkg:
-      - git
-      - fakeroot
-      - build-essential
-      - ncurses-dev
-      - xz-utils
-      - libssl-dev
-      - bc
-      - flex
-      - libelf-dev
-      - bison
+    pkg: "{{ linux_kernel_apt_pkgs }}"
     state: present
+  when:
+    - ansible_facts['pkg_mgr'] == "apt"
+    - linux_kernel_apt_pkgs is not ansible.builtin.subset(ansible_facts.packages.keys() | list)
+
+- name: Linux kernel downloaded
+  stat:
+    path: "{{ linux_source_dir }}"
+  register: linux_exists
 
 - name: Download Linux repo
+  retries: 3
+  delay: 3
   ansible.builtin.unarchive:
-    creates: /linux-kernel
+    creates: "{{ linux_source_dir }}"
     src: "https://git.kernel.org/torvalds/t/linux-{{ version }}.tar.gz"
     dest: /tmp
     remote_src: true
-    owner: "{{ ansible_facts['env']['USER'] }}"
   register: linux_downloaded
+  when: not linux_exists.stat.exists
 
-- name: Rename Linux repo
-  become: true
-  ansible.builtin.command: mv "/tmp/linux-{{ version }}" /linux-kernel
-  when: linux_downloaded.changed
-
-- name: Create kernel directory
-  become: true
+- name: Ensure benchmark directory exists
   ansible.builtin.file:
-    path: /linux-kernel
+    path: "{{ benchmark_dir }}"
     state: directory
     mode: '0755'
-    owner: "{{ ansible_facts['env']['USER'] }}"
+  when: linux_downloaded.changed
+
+- name: Rename Linux repo
+  ansible.builtin.command: mv "/tmp/linux-{{ version }}" "{{ linux_source_dir }}"
+  when: linux_downloaded.changed
 
 - name: Create kernel build directory
   ansible.builtin.file:
-    path: /linux-kernel/build
+    path: "{{ linux_build_dir }}"
     state: directory
     mode: '0755'
 
 - name: Generate kernel build config
   community.general.make:
-    chdir: /linux-kernel
+    chdir: "{{ linux_source_dir }}"
     target: defconfig
     params:
-      O: /linux-kernel/build
+      O: "{{ linux_build_dir }}"

@@ -39,6 +39,21 @@ RUN cmake -DPYTHON_CMD=python3 ..
 RUN make -j4
 RUN make install
 
+# benchmark dependencies
+RUN apt update -y \
+    && apt install -y \
+    git \
+    fakeroot \
+    build-essential \
+    libncurses-dev \
+    xz-utils \
+    libssl-dev \
+    bc \
+    flex \
+    libelf-dev \
+    bison \
+    && apt clean
+
 # Base development image
 FROM ${BUILD_IMAGE} AS dev
 

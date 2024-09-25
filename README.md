@@ -9,10 +9,19 @@ Quick Setup:
 ```shell
 make dependencies
 make hooks
+
 make docker-image
+
+pip install -r requirements.txt
+# Installs benchmarks without root privileges
+make provision-benchmarks
+# If the above fails dependencies may need to be installed with
+make provision-benchmarks-admin
+
 # Ensure you have installed your kernel's development headers
 # On ubuntu: apt install linux-headers-$(uname -r)
 # On redhat: dnf install kernel-devel kernel-headers
+
 make collect
 ```
 
@@ -63,6 +72,10 @@ Verify proper installation with:
 ```python
 import bcc
 ```
+
+### [ansible](https://www.ansible.com/)
+
+Ansible is an automation tool for configuring VMs and baremetal machines.
 
 ### [vagrant](https://developer.hashicorp.com/vagrant/docs/installation)
 
