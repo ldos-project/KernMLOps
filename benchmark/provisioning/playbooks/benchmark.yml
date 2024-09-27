@@ -1,6 +1,7 @@
 ---
 - hosts: development
   roles:
+    - osquery
     - install-bcc
 
 - hosts: install-benchmarks

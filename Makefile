@@ -107,6 +107,13 @@ benchmark-linux-build:
 	-d ${BENCHMARK_DIR} \
 	--benchmark linux-build
 
+benchmark-linux-build-baseline:
+	@python python/kernmlops collect -v \
+	-p ${COLLECTION_POLL_RATE} \
+	-d ${BENCHMARK_DIR} \
+	--no-hooks \
+	--benchmark linux-build
+
 dump:
 	@python python/kernmlops collect dump
 
@@ -123,6 +130,10 @@ provision-benchmarks-admin:
 	@echo "${PROVISIONING_TARGET}" >> hosts
 	ansible-playbook benchmark/provisioning/site.yml -u ${PROVISIONING_USER} -i ./hosts -e benchmark_dir=${BENCHMARK_DIR} -K
 
+provision-development:
+	@echo "[development]" > hosts
+	@echo "${PROVISIONING_TARGET}" >> hosts
+	ansible-playbook benchmark/provisioning/site.yml -u ${PROVISIONING_USER} -i ./hosts -K
 
 # Docker commands
 docker-image:
@@ -156,6 +167,7 @@ docker:
 		echo "User benchmarks not installed: ${BENCHMARK_DIR}" \
 		&& echo "Try 'make provision-benchmarks'" && exit 1; \
 	fi
+	@${MAKE} ensure-osquery
 	@docker --context ${CONTAINER_CONTEXT} run --rm \
 	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR} \
 	-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR} \
@@ -164,6 +176,7 @@ docker:
 	-v ${BENCHMARK_DIR}/:${BENCHMARK_DIR} \
 	-v /sys/kernel/debug/:/sys/kernel/debug \
 	-v /sys/kernel/tracing/:/sys/kernel/tracing \
+	-v /home/${UNAME}/.osquery:/home/${UNAME}/.osquery \
 	${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT} \
 	${KERNMLOPS_CONTAINER_MOUNTS} \
 	${KERNMLOPS_CONTAINER_ENV} \
@@ -176,6 +189,16 @@ docker:
 
 
 # Miscellaneous commands
+ensure-osquery:
+	@mkdir -p /home/${UNAME}/.osquery
+	@if [ ! -S "/home/${UNAME}/.osquery/osqueryd.sock" ]; then \
+		osqueryd --ephemeral --disable_logging --disable_database \
+		--extensions_socket /home/${UNAME}/.osquery/osqueryd.sock 2> /dev/null > /dev/null & \
+	fi
+
+kill-osquery:
+	@pgrep osquery | xargs -I % kill % >/dev/null
+
 set-capabilities:
 	sudo setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=+eip ${USER_PYTHON}
 

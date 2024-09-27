@@ -1,0 +1,6 @@
+[osquery-s3-rpm]
+name=OS Query
+baseurl=https://pkg.osquery.io/rpm/osquery-s3-rpm.repo
+enabled=0
+gpgcheck=1
+gpgkey=https://pkg.osquery.io/rpm/GPG

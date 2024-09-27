@@ -21,6 +21,10 @@ make provision-benchmarks-admin
 # Ensure you have installed your kernel's development headers
 # On ubuntu: apt install linux-headers-$(uname -r)
 # On redhat: dnf install kernel-devel kernel-headers
+# Or
+# For first time installation of tooling like kernel-headers, bcc-tools, osquery
+# This requires admin permissions
+make provision-development
 
 make collect
 ```

@@ -53,6 +53,14 @@ def cli_collect():
     type=bool,
 )
 @click.option(
+    "--no-hooks",
+    "no_hooks",
+    default=False,
+    is_flag=True,
+    type=bool,
+    help="Used as baseline for overhead of instrumentation hooks",
+)
+@click.option(
     "-o",
     "--output-dir",
     "output_dir",
@@ -74,10 +82,11 @@ def cli_collect_data(
     benchmark_dir: Path,
     cpus: int | None,
     poll_rate: float,
+    no_hooks: bool,
     verbose: bool,
 ):
     """Run data collection tooling."""
-    bpf_programs = data_collection.bpf.hooks()
+    bpf_programs = [] if no_hooks else data_collection.bpf.hooks()
     benchmark_args = {
         "benchmark_dir": benchmark_dir,
         "cpus": cpus,

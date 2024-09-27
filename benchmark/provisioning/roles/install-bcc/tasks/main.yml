@@ -61,9 +61,11 @@
     chdir: "{{ download_location }}/build"
     target: all
     jobs: "{{ ansible_facts['processor_nproc'] }}"
+  when: bcc_download.changed
 
 - name: Install BCC tools
   become: true
   community.general.make:
     chdir: "{{ download_location }}/build"
     target: install
+  when: bcc_download.changed

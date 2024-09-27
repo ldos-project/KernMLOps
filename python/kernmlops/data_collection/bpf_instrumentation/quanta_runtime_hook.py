@@ -40,7 +40,6 @@ class QuantaRuntimeBPFHook(BPFProgram):
     self.quanta_runtime_data = list[QuantaRuntimeData]()
 
   def load(self):
-    # this would be nice but does not work with only capabilities: CAP_BPF,CAP_SYS_ADMIN
     self.bpf = BPF(text = self.bpf_text)
     if not self.is_support_raw_tp:
       self.bpf.attach_kprobe(

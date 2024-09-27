@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from pathlib import Path
 from time import sleep
@@ -41,7 +42,7 @@ def run_collect(
     system_info = data_collection.machine_info().to_polars()
     system_info = system_info.unnest(system_info.columns)
     collection_id = system_info["collection_id"][0]
-    output_dir = data_dir / "curated"
+    output_dir = data_dir / "curated" if bpf_programs else data_dir / "baseline"
 
     benchmark.setup()
 
@@ -57,8 +58,10 @@ def run_collect(
 
     tick = datetime.now()
     return_code = poll_instrumentation(benchmark, bpf_programs, poll_rate=poll_rate)
+    collection_time_sec = (datetime.now() - tick).total_seconds()
+
     if verbose:
-        print(f"Benchmark ran for {(datetime.now() - tick).total_seconds()}s")
+        print(f"Benchmark ran for {collection_time_sec}s")
     if return_code != 0:
         print(f"Benchmark {benchmark.name()} failed with return code {return_code}")
         output_dir = data_dir / "failed"
@@ -67,7 +70,12 @@ def run_collect(
         bpf_program.name(): bpf_program.pop_data().with_columns(pl.lit(collection_id).alias("collection_id"))
         for bpf_program in bpf_programs
     }
-    bpf_dfs["system_info"] = system_info
+    bpf_dfs["system_info"] = system_info.with_columns([
+        pl.lit(collection_time_sec).alias("collection_time_sec"),
+        pl.lit(os.getpid()).alias("collection_pid"),
+        pl.lit(benchmark.name()).alias("benchmark_name"),
+        pl.lit([hook.name() for hook in bpf_programs]).cast(pl.List(pl.String())).alias("hooks"),
+    ])
     for bpf_name, bpf_df in bpf_dfs.items():
         if verbose:
             print(f"{bpf_name}: {bpf_df}")
