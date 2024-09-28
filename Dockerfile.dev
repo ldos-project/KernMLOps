@@ -1,5 +1,5 @@
-ARG BUILD_IMAGE=ubuntu:22.04
-FROM ubuntu:22.04 AS bcc
+ARG BUILD_IMAGE=ubuntu:24.04
+FROM ubuntu:24.04 AS bcc
 
 USER root
 
@@ -16,10 +16,10 @@ RUN apt update -y \
     flex \
     git \
     libedit-dev \
-    libllvm14 \
-    llvm-14-dev \
+    libllvm18 \
+    llvm-18-dev \
     libcap2-bin \
-    libclang-14-dev \
+    libclang-18-dev \
     python3 \
     python3-pip \
     zlib1g-dev \
@@ -31,6 +31,7 @@ RUN apt update -y \
     arping \
     netperf \
     iperf \
+    libpolly-18-dev \
     && apt clean
 
 RUN git clone  --depth 1 --branch v0.31.0 https://github.com/iovisor/bcc.git
@@ -38,6 +39,21 @@ WORKDIR /dependencies/bcc/build
 RUN cmake -DPYTHON_CMD=python3 ..
 RUN make -j4
 RUN make install
+
+# Install OSQuery
+RUN apt update -y \
+  && apt install -y \
+  curl \
+  && apt clean
+RUN mkdir -p /etc/apt/keyrings
+RUN curl -fsSL  https://pkg.osquery.io/deb/pubkey.gpg | gpg --dearmor -o /etc/apt/keyrings/osquery.gpg
+RUN echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/osquery.gpg] https://pkg.osquery.io/deb deb main" \
+  | tee /etc/apt/sources.list.d/osquery.list > /dev/null
+RUN apt update -y \
+    && apt install -y \
+    osquery \
+    && apt clean
+RUN cp /opt/osquery/share/osquery/osquery.example.conf /etc/osquery/osquery.conf
 
 # benchmark dependencies
 RUN apt update -y \
@@ -77,6 +93,8 @@ ARG UNAME
 ARG UID
 ARG GID
 
+# May be required for Ubuntu:24.04 images that come with uid 1000
+RUN deluser --remove-home ubuntu
 RUN if [ "${UNAME}" != "root" ] ; then groupadd -g ${GID} ${UNAME} \
       &&  useradd -ms /bin/bash  -u "${UID}" -g "${GID}" ${UNAME}; fi
 
@@ -92,12 +110,18 @@ RUN echo "export PATH=$PATH:/home/pkenney/.local/bin" >> /home/${UNAME}/.profile
 
 WORKDIR /home/${UNAME}
 COPY --chown=${UNAME} requirements.txt /home/${UNAME}/requirements.txt
-RUN pip install --user --no-warn-script-location -r /home/${UNAME}/requirements.txt
+RUN pip install \
+  --break-system-packages \
+  --user --no-warn-script-location \
+  -r /home/${UNAME}/requirements.txt
 
 # Give python capabilities to load eBPF programs
 USER root
-RUN setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=+eip /usr/bin/python3.10
-RUN ln -s /usr/bin/python3.10 /usr/bin/python
+RUN setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=+eip /usr/bin/python3.12
+RUN ln -s /usr/bin/python3.12 /usr/bin/python
 
 USER ${UNAME}
 WORKDIR ${SRC_DIR}
+
+LABEL creator="${UNAME}"
+LABEL project="KernMLOps"

@@ -4,6 +4,7 @@ from pathlib import Path
 from time import sleep
 
 import data_collection
+import data_schema
 import polars as pl
 from kernmlops_benchmark import Benchmark, BenchmarkNotConfiguredError
 
@@ -81,3 +82,8 @@ def run_collect(
             print(f"{bpf_name}: {bpf_df}")
         Path(output_dir / bpf_name).mkdir(parents=True, exist_ok=True)
         bpf_df.write_parquet(output_dir / bpf_name / f"{collection_id}.{benchmark.name()}.parquet")
+    collection_data = data_schema.CollectionData.from_tables(
+        tables=bpf_dfs,
+        table_types=data_schema.table_types,
+    )
+    collection_data.graph(out_dir=data_dir / "graphs")

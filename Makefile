@@ -167,7 +167,6 @@ docker:
 		echo "User benchmarks not installed: ${BENCHMARK_DIR}" \
 		&& echo "Try 'make provision-benchmarks'" && exit 1; \
 	fi
-	@${MAKE} ensure-osquery
 	@docker --context ${CONTAINER_CONTEXT} run --rm \
 	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR} \
 	-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR} \
@@ -176,11 +175,11 @@ docker:
 	-v ${BENCHMARK_DIR}/:${BENCHMARK_DIR} \
 	-v /sys/kernel/debug/:/sys/kernel/debug \
 	-v /sys/kernel/tracing/:/sys/kernel/tracing \
-	-v /home/${UNAME}/.osquery:/home/${UNAME}/.osquery \
 	${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT} \
 	${KERNMLOPS_CONTAINER_MOUNTS} \
 	${KERNMLOPS_CONTAINER_ENV} \
 	${CONTAINER_CPUSET} \
+	--pid=host \
 	--privileged \
 	--hostname=${CONTAINER_HOSTNAME} \
 	--workdir=${CONTAINER_WORKDIR} ${CONTAINER_OPTS} -${INTERACTIVE}t \
@@ -189,15 +188,13 @@ docker:
 
 
 # Miscellaneous commands
-ensure-osquery:
-	@mkdir -p /home/${UNAME}/.osquery
-	@if [ ! -S "/home/${UNAME}/.osquery/osqueryd.sock" ]; then \
-		osqueryd --ephemeral --disable_logging --disable_database \
-		--extensions_socket /home/${UNAME}/.osquery/osqueryd.sock 2> /dev/null > /dev/null & \
-	fi
 
-kill-osquery:
-	@pgrep osquery | xargs -I % kill % >/dev/null
+clean-docker-images:
+	docker --context ${CONTAINER_CONTEXT} image list \
+	--filter "label=creator=${UNAME}" \
+	--filter "label=project=KernMLOps" \
+	--format "table {{.Repository}}:{{.Tag}}" | tail -n +2 | uniq \
+	| xargs -I % docker --context ${CONTAINER_CONTEXT} rmi %
 
 set-capabilities:
 	sudo setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=+eip ${USER_PYTHON}

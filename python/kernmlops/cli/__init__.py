@@ -5,6 +5,7 @@ from pathlib import Path
 import click
 import data_collection
 import data_import
+import data_schema
 from click_default_group import DefaultGroup
 from kernmlops_benchmark import FauxBenchmark, benchmarks
 
@@ -125,6 +126,33 @@ def cli_collect_dump(input_dir: Path, benchmark_name: str | None):
     for name, kernmlops_df in kernmlops_dfs.items():
         print(f"{name}: {kernmlops_df}")
 
+
+@cli_collect.command("graph")
+@click.option(
+    "-d",
+    "--input-dir",
+    "input_dir",
+    default=Path("data/curated"),
+    required=True,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+)
+@click.option(
+    "-c",
+    "--collection-id",
+    "collection_id",
+    default=None,
+    required=True,
+    help="Collection id to filter by, can be a unique prefix",
+    type=str,
+)
+def cli_collect_graph(input_dir: Path, collection_id: str):
+    """Debug tool to graph collected data."""
+    collection_data = data_schema.CollectionData.from_data(
+        data_dir=input_dir,
+        collection_id=collection_id,
+        table_types=data_schema.table_types,
+    )
+    collection_data.dump()
 
 
 def main():

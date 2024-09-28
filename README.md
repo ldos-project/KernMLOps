@@ -23,13 +23,17 @@ make provision-benchmarks-admin
 # On redhat: dnf install kernel-devel kernel-headers
 # Or
 # For first time installation of tooling like kernel-headers, bcc-tools, osquery
-# This requires admin permissions
-make provision-development
+# This is optional if docker is present, requires admin permissions, do
+# make provision-development
 
 make collect
 ```
 
 ## Tools
+
+### [Python-3.12]
+
+This is here to make the minimum python version blatant.
 
 ### [asdf](https://asdf-vm.com)
 
@@ -90,7 +94,8 @@ and libvirt, we recommend using libvirt.
 
 ### Python
 
-Python is required, version `3.12` is recommended for best compatibility.
+Python is required, at least version `3.12` is required for its generic typing support.
+This is the default version on Ubuntu 24.04.
 
 Python package dependencies are listed in `requirements.txt` and can be
 installed via `pip`.

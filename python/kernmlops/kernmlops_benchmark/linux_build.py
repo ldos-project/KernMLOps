@@ -17,7 +17,6 @@ class LinuxBuildBenchmark(Benchmark):
         self.process: subprocess.Popen | None = None
 
     def is_configured(self) -> bool:
-        print(self.benchmark_dir)
         return self.benchmark_dir.is_dir()
 
     def setup(self) -> None:
@@ -25,6 +24,16 @@ class LinuxBuildBenchmark(Benchmark):
             raise BenchmarkRunningError()
         subprocess.check_call(
             ["make", "-C", str(self.benchmark_dir), "clean"],
+            stdout=subprocess.DEVNULL,
+        )
+        subprocess.check_call(
+            [
+                "make",
+                "-C",
+                str(self.benchmark_dir / "../linux-kernel"),
+                f"O={str(self.benchmark_dir)}",
+                "defconfig",
+            ],
             stdout=subprocess.DEVNULL,
         )
 

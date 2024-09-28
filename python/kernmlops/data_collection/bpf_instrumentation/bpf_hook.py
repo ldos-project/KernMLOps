@@ -1,5 +1,6 @@
 """Abstract definition of a BPF program."""
 
+
 import polars as pl
 from typing_extensions import Protocol
 
