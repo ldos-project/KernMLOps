@@ -52,6 +52,17 @@ class QuantaRuntimeTable(CollectionTable):
             "quanta_run_length_us"
         ).sum()["quanta_run_length_us"].to_list()[0]
 
+    def per_cpu_total_runtime_sec(self) -> pl.DataFrame:
+        """Returns the total amount of runtime recorded across all cpus."""
+        return self.filtered_table().group_by(
+            "cpu"
+        ).agg(
+            pl.sum("quanta_run_length_us")
+        ).select([
+            "cpu",
+            (pl.col("quanta_run_length_us") / 1_000_000.0).alias("cpu_total_runtime_sec"),
+        ]).sort("cpu_total_runtime_sec")
+
     def top_k_runtime(self, k: int) -> pl.DataFrame:
         """Returns the pids and execution time of the k processes with the most execution time."""
         return self.filtered_table().select(
@@ -132,8 +143,7 @@ class QuantaRuntimeGraph(CollectionGraph):
                 label="Collector Process" if collector_pid == pid else label,
                 marker="braille",
             )
-
-        print(f"Total processor time per cpu: {quanta_table.total_runtime_us() / 1_000_000.0 / self.collection_data.cpus }s")
+        print(f"Total processor time per cpu:\n{quanta_table.per_cpu_total_runtime_sec()}")
 
     def _get_pid_labels(self, pids: list[int], collector_pid: int | None = None) -> list[tuple[int, str]]:
         process_table = self.collection_data.get(ProcessMetadataTable)

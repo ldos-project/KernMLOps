@@ -1,5 +1,6 @@
 # Abstract definition of CollectionTable and logical collection
 
+import json
 from pathlib import Path
 from typing import Mapping, cast
 
@@ -204,7 +205,10 @@ class CollectionData:
     def dump(self):
         self.graph()
         for name, table in self.tables.items():
-            print(f"{name}: {table.table}")
+            if name == SystemInfoTable.name():
+                print(f"{name}: {json.dumps(table.table.row(0, named=True), indent=4)}")
+            else:
+                print(f"{name}: {table.table}")
 
     @classmethod
     def from_tables(

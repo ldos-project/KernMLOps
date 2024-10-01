@@ -201,7 +201,7 @@ def machine_software_config() -> MachineSoftwareConfiguration:
 
 def machine_hardware_config() -> MachineHardwareConfiguration:
     uname = platform.uname()
-    cores = psutil.cpu_count()
+    cores = psutil.cpu_count(logical=False)
     lscpu_output = raw_lscpu_output()
     architecture = uname.processor
     logical_cores = psutil.cpu_count(logical=True)

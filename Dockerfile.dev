@@ -117,7 +117,7 @@ RUN pip install \
 
 # Give python capabilities to load eBPF programs
 USER root
-RUN setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=+eip /usr/bin/python3.12
+RUN setcap CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=+eip /usr/bin/python3.12
 RUN ln -s /usr/bin/python3.12 /usr/bin/python
 
 USER ${UNAME}
