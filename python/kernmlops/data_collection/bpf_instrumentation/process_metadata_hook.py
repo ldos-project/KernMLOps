@@ -1,4 +1,5 @@
 import os
+import signal
 from dataclasses import dataclass, fields
 from functools import cache
 from typing import Any, Mapping
@@ -7,6 +8,8 @@ from typing import Any, Mapping
 import osquery
 import osquery.extensions
 import polars as pl
+from data_schema import CollectionTable
+from data_schema.process_metadata import ProcessMetadataTable
 from osquery.extensions.ttypes import ExtensionStatus
 
 from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
@@ -42,7 +45,8 @@ class ProcessMetadataHook(BPFProgram):
     self.collector_pid = os.getpid()
     self.process_metadata = list[Mapping[str, Any]]()
 
-  def load(self):
+  def load(self, collection_id: str):
+    self.collection_id = collection_id
     self.osquery_instance = osquery.SpawnInstance()
     self.osquery_instance.open()
     self.osquery_client = self.osquery_instance.client
@@ -66,25 +70,34 @@ class ProcessMetadataHook(BPFProgram):
     assert isinstance(new_processes_query.response, list)
     self.process_metadata.extend(new_processes_query.response)
 
-  def data(self) -> pl.DataFrame:
-    return pl.DataFrame(
-      self.process_metadata
-    ).unique(
-      "pid"
-    ).cast({
-      "pid": pl.Int64(),
-      "start_time": pl.Int64(),
-      "parent": pl.Int64(),
-      "nice": pl.Int64(),
-    }).rename({
-      "parent": "parent_pid",
-      "start_time": "start_time_unix_sec",
-    })
+  def close(self):
+    self.osquery_instance.instance.send_signal(signal.SIGINT)  # pyright: ignore [reportOptionalMemberAccess]
+    self.osquery_instance.instance.wait()  # pyright: ignore [reportOptionalMemberAccess]
+
+  def data(self) -> list[CollectionTable]:
+    return [
+      ProcessMetadataTable.from_df_id(
+        pl.DataFrame(
+          self.process_metadata
+        ).unique(
+          "pid"
+        ).cast({
+          "pid": pl.Int64(),
+          "start_time": pl.Int64(),
+          "parent": pl.Int64(),
+          "nice": pl.Int64(),
+        }).rename({
+          "parent": "parent_pid",
+          "start_time": "start_time_unix_sec",
+        }),
+        collection_id=self.collection_id,
+      )
+    ]
 
   def clear(self):
     self.process_metadata.clear()
 
-  def pop_data(self) -> pl.DataFrame:
-    process_df = self.data()
+  def pop_data(self) -> list[CollectionTable]:
+    process_table = self.data()
     self.clear()
-    return process_df
+    return process_table

@@ -25,7 +25,7 @@ ifeq (${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT},)
 # Now check if the headers are the "generic" version
 	ifneq ("$(shell echo ${KERNEL_DEV_HEADERS_DIR} | grep generic)","")
 			KERNEL_DEV_SPECIFIC_HEADERS_DIR = /usr/src/linux-headers-$(shell echo "${KERNEL_VERSION}" | sed 's|\(.*\)-.*|\1|')
-			KERNEL_DEV_SPECIFIC_HEADERS_MOUNT = -v ${KERNEL_DEV_SPECIFIC_HEADERS_DIR}/:${KERNEL_DEV_SPECIFIC_HEADERS_DIR}
+			KERNEL_DEV_SPECIFIC_HEADERS_MOUNT = -v ${KERNEL_DEV_SPECIFIC_HEADERS_DIR}/:${KERNEL_DEV_SPECIFIC_HEADERS_DIR}:ro
 	endif
 endif
 
@@ -93,7 +93,7 @@ format:
 
 # Python commands
 collect:
-	@${MAKE} -e CONTAINER_CMD="make benchmark-linux-build" docker
+	@${MAKE} -e CONTAINER_CMD="bash -lc 'make benchmark-linux-build'" docker
 
 collect-data:
 	@python python/kernmlops collect -v \
@@ -169,12 +169,11 @@ docker:
 	fi
 	@docker --context ${CONTAINER_CONTEXT} run --rm \
 	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR} \
-	-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR} \
-	-v ${KERNEL_DEV_MODULES_DIR}/:${KERNEL_DEV_MODULES_DIR} \
+	-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR}:ro \
+	-v ${KERNEL_DEV_MODULES_DIR}/:${KERNEL_DEV_MODULES_DIR}:ro \
 	-v ${BENCHMARK_DIR}/:/home/${UNAME}/kernmlops-benchmark \
 	-v ${BENCHMARK_DIR}/:${BENCHMARK_DIR} \
-	-v /sys/kernel/debug/:/sys/kernel/debug \
-	-v /sys/kernel/tracing/:/sys/kernel/tracing \
+	-v /sys/kernel/:/sys/kernel \
 	${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT} \
 	${KERNMLOPS_CONTAINER_MOUNTS} \
 	${KERNMLOPS_CONTAINER_ENV} \
@@ -197,10 +196,13 @@ clean-docker-images:
 	| xargs -I % docker --context ${CONTAINER_CONTEXT} rmi %
 
 set-capabilities:
-	sudo setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=+eip ${USER_PYTHON}
+	sudo setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP,CAP_PERFMON=+eip ${USER_PYTHON}
 
 revoke-capabilities:
-	sudo setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=-eip ${USER_PYTHON}
+	sudo setcap CAP_BPF,CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP,CAP_PERFMON=-eip ${USER_PYTHON}
 
 vmlinux-header:
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > python/data_collection/bpf/vmlinux.h
+
+clear-page-cache:
+	sync && echo 3 > /proc/sys/vm/drop_caches

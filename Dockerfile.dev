@@ -10,41 +10,17 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update -y \
     && apt install -y \
     zip \
-    bison \
+    curl \
     build-essential \
     cmake \
-    flex \
     git \
-    libedit-dev \
-    libllvm18 \
-    llvm-18-dev \
-    libcap2-bin \
-    libclang-18-dev \
     python3 \
     python3-pip \
-    zlib1g-dev \
-    libelf-dev \
-    libfl-dev \
     python3-setuptools \
-    liblzma-dev \
-    libdebuginfod-dev \
-    arping \
-    netperf \
-    iperf \
-    libpolly-18-dev \
+    bpfcc-tools \
     && apt clean
 
-RUN git clone  --depth 1 --branch v0.31.0 https://github.com/iovisor/bcc.git
-WORKDIR /dependencies/bcc/build
-RUN cmake -DPYTHON_CMD=python3 ..
-RUN make -j4
-RUN make install
-
 # Install OSQuery
-RUN apt update -y \
-  && apt install -y \
-  curl \
-  && apt clean
 RUN mkdir -p /etc/apt/keyrings
 RUN curl -fsSL  https://pkg.osquery.io/deb/pubkey.gpg | gpg --dearmor -o /etc/apt/keyrings/osquery.gpg
 RUN echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/osquery.gpg] https://pkg.osquery.io/deb deb main" \
@@ -89,6 +65,13 @@ RUN if [ "${IS_CI}" != "true" ] ; then \
     zsh \
     && apt clean; fi
 
+COPY --chown=root requirements.txt /root/requirements.txt
+RUN pip install \
+  --break-system-packages \
+  --user --no-warn-script-location \
+  -r /root/requirements.txt
+RUN ln -s /usr/bin/python3.12 /usr/bin/python
+
 ARG UNAME
 ARG UID
 ARG GID
@@ -101,26 +84,13 @@ RUN if [ "${UNAME}" != "root" ] ; then groupadd -g ${GID} ${UNAME} \
 RUN mkdir -p /home/${UNAME} \
       && chown ${UNAME}:${UNAME} /home/${UNAME}
 
-USER ${UNAME}
-
 ARG SRC_DIR=/KernMLOps
-RUN echo "export SRC_DIR=${SRC_DIR}" >> /home/${UNAME}/.profile
-RUN mkdir -p /home/${UNAME}/.local
-RUN echo "export PATH=$PATH:/home/pkenney/.local/bin" >> /home/${UNAME}/.profile
+RUN echo "export SRC_DIR=${SRC_DIR}" >> /root/.profile
+RUN echo "export UNAME=${UNAME}" >> /root/.profile
+RUN echo "export GID=${GID}" >> /root/.profile
 
 WORKDIR /home/${UNAME}
-COPY --chown=${UNAME} requirements.txt /home/${UNAME}/requirements.txt
-RUN pip install \
-  --break-system-packages \
-  --user --no-warn-script-location \
-  -r /home/${UNAME}/requirements.txt
 
-# Give python capabilities to load eBPF programs
-USER root
-RUN setcap CAP_SYS_ADMIN,CAP_DAC_READ_SEARCH,CAP_SYS_RESOURCE,CAP_NET_ADMIN,CAP_SETPCAP=+eip /usr/bin/python3.12
-RUN ln -s /usr/bin/python3.12 /usr/bin/python
-
-USER ${UNAME}
 WORKDIR ${SRC_DIR}
 
 LABEL creator="${UNAME}"

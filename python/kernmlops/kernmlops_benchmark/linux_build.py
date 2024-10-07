@@ -1,6 +1,9 @@
 import subprocess
 from pathlib import Path
 
+import psutil
+from data_schema import demote
+
 from kernmlops_benchmark.benchmark import Benchmark
 from kernmlops_benchmark.errors import BenchmarkNotRunningError, BenchmarkRunningError
 
@@ -13,7 +16,7 @@ class LinuxBuildBenchmark(Benchmark):
 
     def __init__(self, benchmark_dir: Path, cpus: int | None = None):
         self.benchmark_dir = benchmark_dir / self.name()
-        self.cpus = cpus
+        self.cpus = cpus or (3 * psutil.cpu_count(logical=False))
         self.process: subprocess.Popen | None = None
 
     def is_configured(self) -> bool:
@@ -24,6 +27,7 @@ class LinuxBuildBenchmark(Benchmark):
             raise BenchmarkRunningError()
         subprocess.check_call(
             ["make", "-C", str(self.benchmark_dir), "clean"],
+            preexec_fn=demote(),
             stdout=subprocess.DEVNULL,
         )
         subprocess.check_call(
@@ -34,6 +38,11 @@ class LinuxBuildBenchmark(Benchmark):
                 f"O={str(self.benchmark_dir)}",
                 "defconfig",
             ],
+            preexec_fn=demote(),
+            stdout=subprocess.DEVNULL,
+        )
+        subprocess.check_call(
+            ["bash", "-c", "sync && echo 3 > /proc/sys/vm/drop_caches"],
             stdout=subprocess.DEVNULL,
         )
 
@@ -43,6 +52,7 @@ class LinuxBuildBenchmark(Benchmark):
         jobs = f"-j{self.cpus}" if self.cpus else "-j"
         self.process = subprocess.Popen(
             ["make", "-C", str(self.benchmark_dir), jobs],
+            preexec_fn=demote(),
             stdout=subprocess.DEVNULL,
         )
 

@@ -6,6 +6,7 @@ from time import sleep
 import data_collection
 import data_schema
 import polars as pl
+from data_schema import demote
 from kernmlops_benchmark import Benchmark, BenchmarkNotConfiguredError
 
 
@@ -22,7 +23,6 @@ def poll_instrumentation(
             sleep(poll_rate)
             return_code = benchmark.poll()
             # clean data when missed samples - or detect?
-            # include collector pid
         except KeyboardInterrupt:
             benchmark.kill()
             return_code = 0 if benchmark.name() == "faux" else 1
@@ -48,7 +48,7 @@ def run_collect(
     benchmark.setup()
 
     for bpf_program in bpf_programs:
-        bpf_program.load()
+        bpf_program.load(collection_id)
         if verbose:
             print(f"{bpf_program.name()} BPF program loaded")
     if verbose:
@@ -60,30 +60,32 @@ def run_collect(
     tick = datetime.now()
     return_code = poll_instrumentation(benchmark, bpf_programs, poll_rate=poll_rate)
     collection_time_sec = (datetime.now() - tick).total_seconds()
-
+    for bpf_program in bpf_programs:
+        bpf_program.close()
+    demote()()
     if verbose:
         print(f"Benchmark ran for {collection_time_sec}s")
     if return_code != 0:
         print(f"Benchmark {benchmark.name()} failed with return code {return_code}")
         output_dir = data_dir / "failed"
 
-    bpf_dfs = {
-        bpf_program.name(): bpf_program.pop_data().with_columns(pl.lit(collection_id).alias("collection_id"))
-        for bpf_program in bpf_programs
-    }
-    bpf_dfs["system_info"] = system_info.with_columns([
-        pl.lit(collection_time_sec).alias("collection_time_sec"),
-        pl.lit(os.getpid()).alias("collection_pid"),
-        pl.lit(benchmark.name()).alias("benchmark_name"),
-        pl.lit([hook.name() for hook in bpf_programs]).cast(pl.List(pl.String())).alias("hooks"),
-    ])
-    for bpf_name, bpf_df in bpf_dfs.items():
+
+    collection_tables: list[data_schema.CollectionTable] = [
+        data_schema.SystemInfoTable.from_df(
+            system_info.with_columns([
+                pl.lit(collection_time_sec).alias("collection_time_sec"),
+                pl.lit(os.getpid()).alias("collection_pid"),
+                pl.lit(benchmark.name()).alias("benchmark_name"),
+                pl.lit([hook.name() for hook in bpf_programs]).cast(pl.List(pl.String())).alias("hooks"),
+            ])
+        )
+    ]
+    for bpf_program in bpf_programs:
+        collection_tables.extend(bpf_program.pop_data())
+    for collection_table in collection_tables:
         if verbose:
-            print(f"{bpf_name}: {bpf_df}")
-        Path(output_dir / bpf_name).mkdir(parents=True, exist_ok=True)
-        bpf_df.write_parquet(output_dir / bpf_name / f"{collection_id}.{benchmark.name()}.parquet")
-    collection_data = data_schema.CollectionData.from_tables(
-        tables=bpf_dfs,
-        table_types=data_schema.table_types,
-    )
+            print(f"{collection_table.name()}: {collection_table.table}")
+        Path(output_dir / collection_table.name()).mkdir(parents=True, exist_ok=True)
+        collection_table.table.write_parquet(output_dir / collection_table.name() / f"{collection_id}.{benchmark.name()}.parquet")
+    collection_data = data_schema.CollectionData.from_tables(collection_tables)
     collection_data.graph(out_dir=data_dir / "graphs")

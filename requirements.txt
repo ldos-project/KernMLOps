@@ -1,6 +1,7 @@
 ansible >= 10.2.0
 click >= 8.1.0
 click-default-group >= 1.2.0
+matplotlib >= 3.9.0
 osquery >= 3.1.0
 plotext >= 5.3.0
 polars >= 1.6.0
