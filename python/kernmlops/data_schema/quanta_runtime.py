@@ -1,10 +1,6 @@
-
 import json
 from typing import Mapping
 
-import plotext as plt
-
-# from matplotlib import pyplot as plt
 import polars as pl
 
 from data_schema.process_metadata import ProcessMetadataTable
@@ -117,7 +113,16 @@ class QuantaQueuedTable(CollectionTable):
         return self._table
 
     def filtered_table(self) -> pl.DataFrame:
-        return self.table
+        # filter out outliers
+        initial_datapoints = len(self.table)
+        max_queue_time_us = 1_000_000
+        quanta_df = self.table.filter(
+          pl.col("quanta_queued_time_us") < max_queue_time_us
+        )
+        datapoints_removed = initial_datapoints - len(quanta_df)
+        # TODO(Patrick): use logging
+        print(f"Filtered out {datapoints_removed} datapoints with max queue time {max_queue_time_us}us")
+        return quanta_df
 
     def graphs(self) -> list[type[CollectionGraph]]:
         return [QuantaQueuedGraph]
@@ -174,6 +179,7 @@ class QuantaRuntimeGraph(CollectionGraph):
     ):
         self.collection_data = collection_data
         self._quanta_table = quanta_table
+        self.plt = self.collection_data.plt
 
     def name(self) -> str:
         return f"{self.base_name()} for Collection {self.collection_data.id}"
@@ -182,7 +188,7 @@ class QuantaRuntimeGraph(CollectionGraph):
         return "Benchmark Runtime (sec)"
 
     def y_axis(self) -> str:
-        return "Quanta Run Length (usec)"
+        return "Quanta Run Length (msec)"
 
     def plot(self) -> None:
         quanta_df = self._quanta_table.filtered_table()
@@ -191,11 +197,11 @@ class QuantaRuntimeGraph(CollectionGraph):
         # group by and plot by cpu
         quanta_df_by_cpu = quanta_df.group_by("cpu")
         for cpu, quanta_df_group in quanta_df_by_cpu:
-            plt.scatter(
+            self.plt.scatter(
                 (
                     (quanta_df_group.select("quanta_end_uptime_us") / 1_000_000.0) - start_uptime_sec
                 ).to_series().to_list(),
-                quanta_df_group.select("quanta_run_length_us").to_series().to_list(),
+                (quanta_df_group.select("quanta_run_length_us") / 1_000.0).to_series().to_list(),
                 label=f"CPU {cpu[0]}",
             )
 
@@ -213,11 +219,11 @@ class QuantaRuntimeGraph(CollectionGraph):
             collector_runtimes = quanta_df.filter(
                 pl.col("tgid") == pid
             )
-            plt.plot(
+            self.plt.plot(
                 (
                     (collector_runtimes.select("quanta_end_uptime_us") / 1_000_000.0) - start_uptime_sec
                 ).to_series().to_list(),
-                collector_runtimes.select("quanta_run_length_us").to_series().to_list(),
+                (collector_runtimes.select("quanta_run_length_us") / 1_000.0).to_series().to_list(),
                 label="Collector Process" if collector_pid == pid else label[:35],
             )
         print(f"Total processor time per cpu:\n{quanta_table.per_cpu_total_runtime_sec()}")
@@ -255,7 +261,7 @@ class QuantaQueuedGraph(CollectionGraph):
         if quanta_table is not None:
             return QuantaQueuedGraph(
                 collection_data=collection_data,
-                quanta_table=quanta_table
+                quanta_table=quanta_table,
             )
         return None
 
@@ -270,6 +276,7 @@ class QuantaQueuedGraph(CollectionGraph):
     ):
         self.collection_data = collection_data
         self._quanta_table = quanta_table
+        self.plt = self.collection_data.plt
 
     def name(self) -> str:
         return f"{self.base_name()} for Collection {self.collection_data.id}"
@@ -278,7 +285,7 @@ class QuantaQueuedGraph(CollectionGraph):
         return "Benchmark Runtime (sec)"
 
     def y_axis(self) -> str:
-        return "Quanta Queued Time (usec)"
+        return "Quanta Queued Time (msec)"
 
     def plot(self) -> None:
         quanta_df = self._quanta_table.filtered_table()
@@ -287,11 +294,11 @@ class QuantaQueuedGraph(CollectionGraph):
         # group by and plot by cpu
         quanta_df_by_cpu = quanta_df.group_by("cpu")
         for cpu, quanta_df_group in quanta_df_by_cpu:
-            plt.scatter(
+            self.plt.scatter(
                 (
                     (quanta_df_group.select("quanta_end_uptime_us") / 1_000_000.0) - start_uptime_sec
                 ).to_series().to_list(),
-                quanta_df_group.select("quanta_queued_time_us").to_series().to_list(),
+                (quanta_df_group.select("quanta_queued_time_us") / 1_000.0).to_series().to_list(),
                 label=f"CPU {cpu[0]}",
             )
 
@@ -309,13 +316,12 @@ class QuantaQueuedGraph(CollectionGraph):
             collector_runtimes = quanta_df.filter(
                 pl.col("tgid") == pid
             )
-            plt.plot(
+            self.plt.plot(
                 (
                     (collector_runtimes.select("quanta_end_uptime_us") / 1_000_000.0) - start_uptime_sec
                 ).to_series().to_list(),
-                collector_runtimes.select("quanta_queued_time_us").to_series().to_list(),
+                (collector_runtimes.select("quanta_queued_time_us") / 1_000.0).to_series().to_list(),
                 label="Collector Process" if collector_pid == pid else label[:35],
-                marker="braille",
             )
         print(f"Total processor time per cpu:\n{quanta_table.per_cpu_total_runtime_sec()}")
 

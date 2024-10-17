@@ -54,8 +54,8 @@ class QuantaRuntimeBPFHook(BPFProgram):
         event_re=rb'^finish_task_switch$|^finish_task_switch\.isra\.\d$',
         fn_name=b"trace_run"
       )
-    self.bpf["quanta_runtimes"].open_perf_buffer(self._runtime_event_handler)
-    self.bpf["quanta_queue_times"].open_perf_buffer(self._queue_event_handler)
+    self.bpf["quanta_runtimes"].open_perf_buffer(self._runtime_event_handler, page_cnt=64)
+    self.bpf["quanta_queue_times"].open_perf_buffer(self._queue_event_handler, page_cnt=64)
 
   def poll(self):
     self.bpf.perf_buffer_poll()

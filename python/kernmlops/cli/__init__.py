@@ -153,14 +153,23 @@ def cli_collect_dump(input_dir: Path, benchmark_name: str | None):
     type=bool,
     help="Omit trend lines from graphs",
 )
-def cli_collect_graph(input_dir: Path, collection_id: str, no_trends: bool):
+@click.option(
+    "-m",
+    "--matplot",
+    "use_matplot",
+    default=False,
+    is_flag=True,
+    type=bool,
+    help="Use matplotlib to graph data",
+)
+def cli_collect_graph(input_dir: Path, collection_id: str, no_trends: bool, use_matplot: bool):
     """Debug tool to graph collected data."""
     collection_data = data_schema.CollectionData.from_data(
         data_dir=input_dir,
         collection_id=collection_id,
         table_types=data_schema.table_types,
     )
-    collection_data.dump(no_trends=no_trends)
+    collection_data.dump(no_trends=no_trends, use_matplot=use_matplot)
 
 
 def main():

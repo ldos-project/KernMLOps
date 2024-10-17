@@ -39,13 +39,12 @@ def run_collect(
 ):
     if not benchmark.is_configured():
         raise BenchmarkNotConfiguredError(f"benchmark {benchmark.name()} is not configured")
+    benchmark.setup()
 
     system_info = data_collection.machine_info().to_polars()
     system_info = system_info.unnest(system_info.columns)
     collection_id = system_info["collection_id"][0]
     output_dir = data_dir / "curated" if bpf_programs else data_dir / "baseline"
-
-    benchmark.setup()
 
     for bpf_program in bpf_programs:
         bpf_program.load(collection_id)

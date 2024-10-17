@@ -11,3 +11,6 @@ class BenchmarkRunningError(BenchmarkError):
 
 class BenchmarkNotRunningError(BenchmarkError):
     pass
+
+class BenchmarkNotInCollectionData(BenchmarkError):
+    pass

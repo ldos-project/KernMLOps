@@ -4,6 +4,7 @@ import os
 from pwd import getpwnam
 from typing import Callable
 
+from data_schema.file_data import FileDataTable
 from data_schema.process_metadata import ProcessMetadataTable
 from data_schema.quanta_runtime import QuantaQueuedTable, QuantaRuntimeTable
 from data_schema.schema import (
@@ -12,13 +13,17 @@ from data_schema.schema import (
     CollectionTable,
     SystemInfoTable,
     collection_id_column,
+    cumulative_pma_as_pdf,
 )
+from data_schema.tlb_perf import TLBPerfTable
 
 table_types = [
     SystemInfoTable,
     QuantaRuntimeTable,
     QuantaQueuedTable,
     ProcessMetadataTable,
+    FileDataTable,
+    TLBPerfTable,
 ]
 
 def demote(user_id: int | None = None, group_id: int | None = None) -> Callable[[], None]:
@@ -42,6 +47,7 @@ def demote(user_id: int | None = None, group_id: int | None = None) -> Callable[
 
 __all__ = [
     "collection_id_column",
+    "cumulative_pma_as_pdf",
     "demote",
     "table_types",
     "CollectionTable",

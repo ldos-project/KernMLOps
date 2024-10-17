@@ -4,10 +4,9 @@ import json
 from pathlib import Path
 from typing import Mapping, cast
 
-import plotext as plt
-
-# from matplotlib import pyplot as plt
+import plotext
 import polars as pl
+from matplotlib import pyplot
 from typing_extensions import Protocol
 
 
@@ -148,6 +147,7 @@ class CollectionData:
         assert isinstance(system_info, SystemInfoTable)
         assert len(system_info.table) == 1
         self._system_info = system_info
+        self._plt = plotext
 
     @property
     def tables(self) -> Mapping[str, CollectionTable]:
@@ -181,13 +181,20 @@ class CollectionData:
     def cpus(self) -> int:
         return self.system_info.cpus
 
+    @property
+    def plt(self):
+        return self._plt
+
     def get[T: CollectionTable](self, table_type: type[T]) -> T | None:
         table = self.tables.get(table_type.name(), None)
         if table:
             return cast(T, table)
         return None
 
-    def graph(self, out_dir: Path | None = None, no_trends: bool = False) -> None:
+    def graph(self, out_dir: Path | None = None, *, use_matplot: bool = False, no_trends: bool = False) -> None:
+        from kernmlops_benchmark import benchmarks
+        self._plt = pyplot if use_matplot else plotext
+
         # TODO(Patrick) use verbosity for filtering graphs
         graph_dir = out_dir / self.benchmark / self.id if out_dir else None
         if graph_dir:
@@ -197,23 +204,47 @@ class CollectionData:
                 graph = graph_type.with_collection(collection_data=self)
                 if not graph:
                     continue
-                plt.title(graph.name())
-                plt.xlabel(graph.x_axis())
-                plt.ylabel(graph.y_axis())
+                figure = None
+                if self.plt is pyplot:
+                    figure = pyplot.figure(graph.name())
+
+                self.plt.title(graph.name())
+                self.plt.xlabel(graph.x_axis())
+                self.plt.ylabel(graph.y_axis())
                 graph.plot()
                 if not no_trends:
                     graph.plot_trends()
-                # plt.legend() # required for matplotlib
-                plt.show()
-                if graph_dir:
-                    plt.save_fig(
-                        str(graph_dir / f"{graph.base_name().replace(' ', '_').lower()}.plt"),
-                        keep_colors=True,
-                    )
-                plt.clear_figure()
+                if self.benchmark in benchmarks:
+                    benchmarks[self.benchmark].plot_events(collection_data=self)
+                if self.plt is pyplot:
+                    pyplot.legend(loc="upper left")
 
-    def dump(self, no_trends: bool = False):
-        self.graph(no_trends=no_trends)
+                if figure is not None:
+                    manager = pyplot.get_current_fig_manager()
+                    if manager is not None:
+                        manager.full_screen_toggle()
+                    figure.show()
+                else:
+                    self.plt.show()
+
+                if graph_dir:
+                    if self.plt is plotext:
+                        plotext.save_fig(
+                            str(graph_dir / f"{graph.base_name().replace(' ', '_').lower()}.plt"),
+                            keep_colors=True,
+                        )
+                    else:
+                        pyplot.savefig(
+                            str(graph_dir / f"{graph.base_name().replace(' ', '_').lower()}.png"),
+                            dpi=100,
+                        )
+                if self.plt is plotext:
+                    plotext.clear_figure()
+        if self.plt is pyplot:
+            input()
+
+    def dump(self, *, use_matplot: bool, no_trends: bool = False):
+        self.graph(no_trends=no_trends, use_matplot=use_matplot)
         for name, table in self.tables.items():
             if name == SystemInfoTable.name():
                 print(f"{name}: {json.dumps(table.table.row(0, named=True), indent=4)}")
@@ -265,3 +296,39 @@ class CollectionData:
             if dfs:
                 collection_tables[dataframe_dir.name] = type_map[dataframe_dir.name].from_df(dfs[0])
         return CollectionData(collection_tables)
+
+
+def cumulative_pma_as_pdf(table: pl.DataFrame, *, counter_column: str, counter_column_rename: str) -> pl.DataFrame:
+    cumulative_columns = [
+        counter_column,
+        "pmu_enabled_time_us",
+        "pmu_running_time_us",
+    ]
+    final_select = [
+        column
+        for column in table.columns
+        if column not in cumulative_columns
+    ]
+    final_select.extend([counter_column_rename, "span_duration_us"])
+    by_cpu_pdf_dfs = [
+        by_cpu_df.lazy().sort("ts_uptime_us").with_columns(
+            pl.col(counter_column).shift(1, fill_value=0).alias(f"{counter_column}_shifted"),
+            pl.col("pmu_running_time_us").shift(1, fill_value=0).alias("pmu_running_time_us_shifted"),
+            pl.col("pmu_enabled_time_us").shift(1, fill_value=0).alias("pmu_enabled_time_us_shifted"),
+        ).with_columns(
+            (pl.col(counter_column) - pl.col(f"{counter_column}_shifted")).alias(f"{counter_column_rename}_raw"),
+            (pl.col("pmu_running_time_us") - pl.col("pmu_running_time_us_shifted")).alias("span_duration_us"),
+        ).with_columns(
+            (
+                (
+                    pl.col("span_duration_us")
+                ) / (
+                    pl.col("pmu_enabled_time_us") - pl.col("pmu_enabled_time_us_shifted")
+                )
+            ).alias("sampling_scaling"),
+        ).with_columns(
+            (pl.col(f"{counter_column_rename}_raw") * pl.col("sampling_scaling")).alias(counter_column_rename),
+        ).select(final_select)
+        for _, by_cpu_df in table.group_by("cpu")
+    ]
+    return pl.concat(by_cpu_pdf_dfs).collect()
