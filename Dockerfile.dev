@@ -1,5 +1,5 @@
 ARG BUILD_IMAGE=ubuntu:24.04
-FROM ubuntu:24.04 AS bcc
+FROM ubuntu:24.04 AS deps
 
 USER root
 
@@ -30,6 +30,10 @@ RUN apt update -y \
     osquery \
     && apt clean
 RUN cp /opt/osquery/share/osquery/osquery.example.conf /etc/osquery/osquery.conf
+
+# Install libpfm4
+RUN git clone --branch v4.13.0 https://github.com/wcohen/libpfm4.git /dependencies/libpfm4
+RUN make -C /dependencies/libpfm4
 
 # benchmark dependencies
 RUN apt update -y \
@@ -88,6 +92,7 @@ ARG SRC_DIR=/KernMLOps
 RUN echo "export SRC_DIR=${SRC_DIR}" >> /root/.profile
 RUN echo "export UNAME=${UNAME}" >> /root/.profile
 RUN echo "export GID=${GID}" >> /root/.profile
+RUN echo "export LIB_PFM4_DIR=/dependencies/libpfm4" >> /root/.profile
 
 WORKDIR /home/${UNAME}
 

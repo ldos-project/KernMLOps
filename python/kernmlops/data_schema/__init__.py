@@ -2,7 +2,7 @@
 
 import os
 from pwd import getpwnam
-from typing import Callable
+from typing import Callable, Mapping
 
 from data_schema.file_data import FileDataTable
 from data_schema.process_metadata import ProcessMetadataTable
@@ -11,20 +11,29 @@ from data_schema.schema import (
     CollectionData,
     CollectionGraph,
     CollectionTable,
+    PerfCollectionTable,
     SystemInfoTable,
     collection_id_column,
     cumulative_pma_as_pdf,
 )
-from data_schema.tlb_perf import TLBPerfTable
+from data_schema.tlb_perf import DTLBPerfTable, ITLBPerfTable, TLBFlushPerfTable
 
-table_types = [
+table_types: list[type[CollectionTable]] = [
     SystemInfoTable,
     QuantaRuntimeTable,
     QuantaQueuedTable,
     ProcessMetadataTable,
     FileDataTable,
-    TLBPerfTable,
+    DTLBPerfTable,
+    ITLBPerfTable,
+    TLBFlushPerfTable,
 ]
+
+perf_table_types: Mapping[str, type[PerfCollectionTable]] = {
+    DTLBPerfTable.name(): DTLBPerfTable,
+    ITLBPerfTable.name(): ITLBPerfTable,
+    TLBFlushPerfTable.name(): TLBFlushPerfTable,
+}
 
 def demote(user_id: int | None = None, group_id: int | None = None) -> Callable[[], None]:
     def no_op():
@@ -50,6 +59,7 @@ __all__ = [
     "cumulative_pma_as_pdf",
     "demote",
     "table_types",
+    "perf_table_types",
     "CollectionTable",
     "CollectionData",
     "CollectionGraph",

@@ -30,7 +30,7 @@ ifeq (${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT},)
 endif
 
 BASE_IMAGE_NAME ?= kernmlops
-BCC_IMAGE_NAME ?= ${BASE_IMAGE_NAME}-bcc
+BCC_IMAGE_NAME ?= ${BASE_IMAGE_NAME}-deps
 IMAGE_NAME ?= ${UNAME}-${BASE_IMAGE_NAME}
 SRC_DIR ?= $(shell pwd)
 VERSION ?= $(shell git log --pretty="%h" -1 Dockerfile.dev requirements.txt)
@@ -154,7 +154,7 @@ docker-image-dependencies:
 	docker --context ${CONTAINER_CONTEXT} build \
 	-t ${BCC_IMAGE_NAME}:latest \
 	--file Dockerfile.dev \
-	--target bcc .
+	--target deps .
 
 docker:
 	@if [ ! -d "${KERNEL_DEV_HEADERS_DIR}" ]; then \

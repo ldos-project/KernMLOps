@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Mapping, cast
+from typing import Mapping, cast, override
 
 import plotext
 import polars as pl
@@ -332,3 +332,113 @@ def cumulative_pma_as_pdf(table: pl.DataFrame, *, counter_column: str, counter_c
         for _, by_cpu_df in table.group_by("cpu")
     ]
     return pl.concat(by_cpu_pdf_dfs).collect()
+
+
+class PerfCollectionTable(CollectionTable, Protocol):
+
+    @classmethod
+    def name(cls) -> str: ...
+
+    @classmethod
+    def cumulative_column_name(cls) -> str:
+        return f"cumulative_{cls.name()}"
+
+    @classmethod
+    def component_name(cls) -> str:
+        """Name of the component being measured, ex. iTLB"""
+        ...
+
+    @classmethod
+    def measured_event_name(cls) -> str:
+        """Type of event being measured, ex. Misses"""
+        ...
+
+    @override
+    @classmethod
+    def from_df_id(cls, table: pl.DataFrame, collection_id: str) -> "CollectionTable":
+        return cls.from_df(
+            table=table.with_columns(
+                pl.lit(collection_id).alias(collection_id_column())
+            ).rename({
+                "cumulative_count": cls.cumulative_column_name(),
+            })
+        )
+
+    @classmethod
+    def schema(cls) -> pl.Schema:
+        return pl.Schema({
+            "cpu": pl.Int64(),
+            "ts_uptime_us": pl.Int64(),
+            "collection_id": pl.String(),
+            cls.cumulative_column_name(): pl.Int64(),
+            "pmu_enabled_time_us": pl.Int64(),
+            "pmu_running_time_us": pl.Int64(),
+        })
+
+    def total_cumulative(self) -> int:
+        return self.filtered_table().group_by("cpu").max().sum().select(
+            self.cumulative_column_name()
+        ).to_series().to_list()[0]
+
+    # the raw data is a cumulative representation, this returns the deltas
+    def as_pdf(self) -> pl.DataFrame:
+        return cumulative_pma_as_pdf(
+            self.filtered_table(),
+            counter_column=self.cumulative_column_name(),
+            counter_column_rename=self.name(),
+        )
+
+
+class RatePerfGraph(CollectionGraph, Protocol):
+
+    collection_data: CollectionData
+    _perf_table: PerfCollectionTable
+
+    @classmethod
+    def perf_table_type(cls) -> type[PerfCollectionTable]: ...
+
+    @classmethod
+    def base_name(cls) -> str:
+        return f"{cls.perf_table_type().component_name()} Performance"
+
+    def name(self) -> str:
+        return f"{self.base_name()} for Collection {self.collection_data.id}"
+
+    def __init__(
+        self,
+        collection_data: CollectionData,
+        perf_table: PerfCollectionTable,
+    ):
+        self.collection_data = collection_data
+        self._perf_table = perf_table
+
+    def x_axis(self) -> str:
+        return "Benchmark Runtime (sec)"
+
+    def y_axis(self) -> str:
+        return f"{self._perf_table.component_name()} {self._perf_table.measured_event_name()}/msec"
+
+    def plot(self) -> None:
+        pdf_df = self._perf_table.as_pdf()
+        start_uptime_sec = self.collection_data.start_uptime_sec
+        print(f"Total {self._perf_table.component_name()} {self._perf_table.measured_event_name()}: {self._perf_table.total_cumulative()}")
+
+        # group by and plot by cpu
+        def plot_rate(pdf_df: pl.DataFrame) -> None:
+            pdf_df_by_cpu = pdf_df.group_by("cpu")
+            for cpu, pdf_df_group in pdf_df_by_cpu:
+                self.collection_data.plt.plot(
+                    (
+                        (pdf_df_group.select("ts_uptime_us") / 1_000_000.0) - start_uptime_sec
+                    ).to_series().to_list(),
+                    (
+                        pdf_df_group.select(self._perf_table.name()) / (
+                            pdf_df_group.select("span_duration_us") / 1_000.0
+                        )
+                    ).to_series().to_list(),
+                    label=f"CPU {cpu[0]}",
+                )
+        plot_rate(pdf_df)
+
+    def plot_trends(self) -> None:
+        pass
