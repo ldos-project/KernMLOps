@@ -1,8 +1,9 @@
 import polars as pl
 
+from data_schema.memory_usage import MemoryUsageGraph
 from data_schema.schema import (
-    CollectionData,
     CollectionGraph,
+    GraphEngine,
     PerfCollectionTable,
     RatePerfGraph,
 )
@@ -46,11 +47,15 @@ class DTLBRateGraph(RatePerfGraph):
         return DTLBPerfTable
 
     @classmethod
-    def with_collection(cls, collection_data: CollectionData) -> CollectionGraph | None:
-        perf_table = collection_data.get(cls.perf_table_type())
+    def trend_graph(cls) -> type[CollectionGraph] | None:
+        return MemoryUsageGraph
+
+    @classmethod
+    def with_graph_engine(cls, graph_engine: GraphEngine) -> CollectionGraph | None:
+        perf_table = graph_engine.collection_data.get(cls.perf_table_type())
         if perf_table is not None:
             return DTLBRateGraph(
-                collection_data=collection_data,
+                graph_engine=graph_engine,
                 perf_table=perf_table
             )
         return None
@@ -94,11 +99,15 @@ class ITLBRateGraph(RatePerfGraph):
         return ITLBPerfTable
 
     @classmethod
-    def with_collection(cls, collection_data: CollectionData) -> CollectionGraph | None:
-        perf_table = collection_data.get(cls.perf_table_type())
+    def trend_graph(cls) -> type[CollectionGraph] | None:
+        return MemoryUsageGraph
+
+    @classmethod
+    def with_graph_engine(cls, graph_engine: GraphEngine) -> CollectionGraph | None:
+        perf_table = graph_engine.collection_data.get(cls.perf_table_type())
         if perf_table is not None:
             return ITLBRateGraph(
-                collection_data=collection_data,
+                graph_engine=graph_engine,
                 perf_table=perf_table
             )
         return None
@@ -142,11 +151,15 @@ class TLBFlushRateGraph(RatePerfGraph):
         return TLBFlushPerfTable
 
     @classmethod
-    def with_collection(cls, collection_data: CollectionData) -> CollectionGraph | None:
-        perf_table = collection_data.get(cls.perf_table_type())
+    def trend_graph(cls) -> type[CollectionGraph] | None:
+        return MemoryUsageGraph
+
+    @classmethod
+    def with_graph_engine(cls, graph_engine: GraphEngine) -> CollectionGraph | None:
+        perf_table = graph_engine.collection_data.get(cls.perf_table_type())
         if perf_table is not None:
             return TLBFlushRateGraph(
-                collection_data=collection_data,
+                graph_engine=graph_engine,
                 perf_table=perf_table
             )
         return None

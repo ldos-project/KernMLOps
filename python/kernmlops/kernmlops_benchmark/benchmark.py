@@ -1,6 +1,6 @@
 """Abstract definition of a benchmark."""
 
-from data_schema import CollectionData
+from data_schema import GraphEngine
 from typing_extensions import Protocol
 
 # TODO(Patrick): Add flush page-cache
@@ -29,7 +29,7 @@ class Benchmark(Protocol):
   def kill(self) -> None: ...
 
   @classmethod
-  def plot_events(cls, collection_data: CollectionData) -> None:
+  def plot_events(cls, graph_engine: GraphEngine) -> None:
     """Given a collection of data, plot important events for this benchmark."""
     ...
 
@@ -61,5 +61,5 @@ class FauxBenchmark(Benchmark):
     pass
 
   @classmethod
-  def plot_events(cls, collection_data: CollectionData) -> None:
+  def plot_events(cls, graph_engine: GraphEngine) -> None:
     pass
