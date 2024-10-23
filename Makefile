@@ -93,13 +93,19 @@ format:
 
 # Python commands
 collect:
-	@${MAKE} -e CONTAINER_CMD="bash -lc 'make benchmark-linux-build'" docker
+	@${MAKE} -e CONTAINER_CMD="bash -lc 'make benchmark-gap'" docker
 
 collect-data:
 	@python python/kernmlops collect -v \
 	-p ${COLLECTION_POLL_RATE} \
 	-d ${BENCHMARK_DIR} \
 	--benchmark ${COLLECTION_BENCHMARK}
+
+benchmark-gap:
+	@python python/kernmlops collect -v \
+	-p ${COLLECTION_POLL_RATE} \
+	-d ${BENCHMARK_DIR} \
+	--benchmark gap
 
 benchmark-linux-build:
 	@python python/kernmlops collect -v \

@@ -1,0 +1,8 @@
+---
+# defaults file for install-gap
+
+gap_version: "1.5"
+gap_benchmark_name: "gap"
+benchmark_dir_name: "kernmlops-benchmark"
+benchmark_dir: "{{ ansible_facts['env']['HOME'] }}/{{ benchmark_dir_name }}"
+gap_benchmark_dir: "{{ benchmark_dir }}/{{ gap_benchmark_name }}"

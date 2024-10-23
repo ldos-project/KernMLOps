@@ -206,6 +206,7 @@ class QuantaRuntimeGraph(CollectionGraph):
             )
 
     def plot_trends(self) -> None:
+        return
         quanta_table = self._quanta_table
         quanta_df = quanta_table.filtered_table()
         start_uptime_sec = self.collection_data.start_uptime_sec
@@ -303,6 +304,7 @@ class QuantaQueuedGraph(CollectionGraph):
             )
 
     def plot_trends(self) -> None:
+        return
         quanta_table = self._quanta_table
         quanta_df = quanta_table.filtered_table()
         start_uptime_sec = self.collection_data.start_uptime_sec

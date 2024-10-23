@@ -7,6 +7,7 @@
 - hosts: install-benchmarks
   roles:
     - clone-kernel
+    - install-gap
 
 - hosts: test
   roles:

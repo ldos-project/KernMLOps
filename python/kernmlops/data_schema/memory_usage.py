@@ -107,7 +107,7 @@ class MemoryUsageGraph(CollectionGraph):
         return "Memory (GB)"
 
     def plot(self) -> None:
-        self.plot_trends()
+        pass
 
     def plot_trends(self) -> None:
         memory_df = self._memory_usage_table.filtered_table()
