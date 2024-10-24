@@ -7,41 +7,30 @@ Currently, it only contains scripts for data collection of kernel performance.
 Quick Setup:
 
 ```shell
-make dependencies
+pip install -r requirements.txt
+
 make hooks
 
 make docker-image
 
-pip install -r requirements.txt
-# Installs benchmarks without root privileges
-make provision-benchmarks
-# If the above fails dependencies may need to be installed with
-make provision-benchmarks-admin
+# Installs gap benchmark (default)
+bash scripts/setup-benchmarks/setup-gap.sh
 
 # Ensure you have installed your kernel's development headers
 # On ubuntu: apt install linux-headers-$(uname -r)
 # On redhat: dnf install kernel-devel kernel-headers
-# Or
-# For first time installation of tooling like kernel-headers, bcc-tools, osquery
-# This is optional if docker is present, requires admin permissions, do
-# make provision-development
 
+# Run default benchmark and collect data for it inside docker
 make collect
+# Run data collection inside docker until manually terminated via Ctrl+C
+make collect-raw
 ```
 
 ## Tools
 
-### [Python-3.12]
+### Python-3.12
 
 This is here to make the minimum python version blatant.
-
-### [asdf](https://asdf-vm.com)
-
-Provides a declarative set of tools pinned to
-specific versions for environmental consistency.
-
-These tools are defined in `.tool-versions`.
-Run `make dependencies` to initialize a new environment.
 
 ### [pre-commit](https://pre-commit.com)
 
@@ -57,38 +46,18 @@ make hooks
 make pre-commit
 ```
 
-### [bcc](https://github.com/iovisor/bcc)
+### [perf](https://man7.org/linux/man-pages/man2/perf_event_open.2.html)
 
-A toolset for building eBPF programs including python bindings.
+Perf counters are used for low-level insights into performance.
 
-It is highly recommended to build this from scratch so that its python package
-can be pip installed to your local environment.  By default system packages will
-only install it for the system python, which may complicate development for user
-level package management.
+When using a new machine it is likely the counters used will be different
+from those already explicitly supported.  Developers can run
+`python python/kernmlops collect perf-list` to get the names, descriptions,
+and umasks of the various hardware events on the new machine. From there
+developers can add the correct `name, umask` pair to an existing counter
+config that already exists.
 
-Building instructions are provided [here](https://github.com/iovisor/bcc/blob/master/INSTALL.md#source)
-for most major distributions.
-
-After installing, the python package can be installed to your local environment via:
-
-```shell
-pip install -e BCC_BUILD_DIR/src/python/bcc-python3
-```
-
-Verify proper installation with:
-
-```python
-import bcc
-```
-
-### [ansible](https://www.ansible.com/)
-
-Ansible is an automation tool for configuring VMs and baremetal machines.
-
-### [vagrant](https://developer.hashicorp.com/vagrant/docs/installation)
-
-Vagrant is a tool for managing VMs simply across different backend like VirtualBox
-and libvirt, we recommend using libvirt.
+It is simplest to run the above command inside a container.
 
 ## Dependencies
 
@@ -98,29 +67,12 @@ Python is required, at least version `3.12` is required for its generic typing s
 This is the default version on Ubuntu 24.04.
 
 Python package dependencies are listed in `requirements.txt` and can be
-installed via `pip`.
-
-They can also be install via [conda](https://docs.anaconda.com/miniconda/miniconda-install/).
-If `conda` is used then it is recommended to then install `mamba` and use
-that as a drop in replacement.
-This can be done with `conda install -conda-forge mamba`.
-
-Or by [poetry](https://python-poetry.org/docs/).
-
-Then the python packages can be installed via:
+installed via:
 
 ```shell
-conda install -c conda-forge --file requirements.txt
-mamba install -c conda-forge --file requirements.txt
-```
-
-### Creating VMs
-
-For ubuntu the requirements can be installed with:
-
-```shell
-sudo apt install -y bc flex bison gcc make libelf-dev libssl-dev \
-    squashfs-tools busybox-static tree cpio curl
+# On some systems like Ubuntu 24.04 without a virtual environment
+# `--break-system-packages` may be necessary
+pip install [--break-system-packages] -r requirements.txt
 ```
 
 ## Contributing
@@ -142,7 +94,7 @@ make format
 Users can run data collection with:
 
 ```shell
-make collect-data
+make collect-raw
 ```
 
 ## Troubleshooting: Or How I Learned to Shoot My Foot

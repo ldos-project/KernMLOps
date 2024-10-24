@@ -217,10 +217,11 @@ class CustomHWConfigManager:
     pfm4_dir = os.environ.get("LIB_PFM4_DIR")
     if not pfm4_dir:
       # TODO(Patrick): make this a warning
-      print("warning: libpfm4 has not been properly configured, disabling custom perf counters")
+      print("warning: LIB_PFM4_DIR has not been set, disabling custom perf counters")
       return hw_events
     showevtinfo = Path(pfm4_dir) / "examples" / "showevtinfo"
     if not showevtinfo.is_file():
+      print("warning: libpfm4 has not been properly built, disabling custom perf counters")
       return hw_events
     raw_event_info = subprocess.check_output(str(showevtinfo))
     if isinstance(raw_event_info, bytes):

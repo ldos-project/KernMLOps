@@ -137,6 +137,13 @@ def cli_collect_dump(input_dir: Path, benchmark_name: str | None):
     type=click.Path(exists=True, file_okay=False, path_type=Path),
 )
 @click.option(
+    "-o",
+    "--output-dir",
+    "output_dir",
+    default=None,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+)
+@click.option(
     "-c",
     "--collection-id",
     "collection_id",
@@ -162,14 +169,22 @@ def cli_collect_dump(input_dir: Path, benchmark_name: str | None):
     type=bool,
     help="Use matplotlib to graph data",
 )
-def cli_collect_graph(input_dir: Path, collection_id: str, no_trends: bool, use_matplot: bool):
+def cli_collect_graph(input_dir: Path, output_dir: Path | None, collection_id: str, no_trends: bool, use_matplot: bool):
     """Debug tool to graph collected data."""
     collection_data = data_schema.CollectionData.from_data(
         data_dir=input_dir,
         collection_id=collection_id,
         table_types=data_schema.table_types,
     )
-    collection_data.dump(no_trends=no_trends, use_matplot=use_matplot)
+    collection_data.dump(output_dir=output_dir, no_trends=no_trends, use_matplot=use_matplot)
+
+
+@cli_collect.command("perf-list")
+def cli_collect_perf():
+    """Lists perf counter names for use in supporting new computers."""
+    for _, data in data_collection.bpf.CustomHWConfigManager.hw_event_map().items():
+        print(data.dump())
+
 
 
 def main():

@@ -59,15 +59,8 @@ RUN apt update -y \
   &&  apt install -y \
   vim \
   pkg-config \
-  shfmt \
+  zsh \
   && apt clean
-
-RUN if [ "${IS_CI}" != "true" ] ; then \
-  apt update -y \
-    &&  apt install -y \
-    vim \
-    zsh \
-    && apt clean; fi
 
 COPY --chown=root requirements.txt /root/requirements.txt
 RUN pip install \

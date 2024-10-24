@@ -9,7 +9,10 @@ from data_collection.bpf_instrumentation.process_metadata_hook import (
     ProcessMetadataHook,
 )
 from data_collection.bpf_instrumentation.quanta_runtime_hook import QuantaRuntimeBPFHook
-from data_collection.bpf_instrumentation.tlb_perf_hook import TLBPerfBPFHook
+from data_collection.bpf_instrumentation.tlb_perf_hook import (
+    CustomHWConfigManager,
+    TLBPerfBPFHook,
+)
 
 all_hooks = [
     FileDataBPFHook,
@@ -35,5 +38,6 @@ __all__ = [
     "all_hooks",
     "hooks",
     "BPFProgram",
+    "CustomHWConfigManager",
     "QuantaRuntimeBPFHook",
 ]

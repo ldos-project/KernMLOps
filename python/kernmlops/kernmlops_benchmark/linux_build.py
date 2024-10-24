@@ -29,11 +29,12 @@ class LinuxBuildBenchmark(Benchmark):
     def setup(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
-        subprocess.check_call(
-            ["make", "-C", str(self.benchmark_dir), "clean"],
-            preexec_fn=demote(),
-            stdout=subprocess.DEVNULL,
-        )
+        if (self.benchmark_dir / "Makefile").exists():
+            subprocess.check_call(
+                ["make", "-C", str(self.benchmark_dir), "clean"],
+                preexec_fn=demote(),
+                stdout=subprocess.DEVNULL,
+            )
         subprocess.check_call(
             [
                 "make",

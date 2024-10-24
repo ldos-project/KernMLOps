@@ -201,8 +201,8 @@ class CollectionData:
         if use_matplot:
             input()
 
-    def dump(self, *, use_matplot: bool, no_trends: bool = False):
-        self.graph(no_trends=no_trends, use_matplot=use_matplot)
+    def dump(self, *, output_dir: Path | None, use_matplot: bool, no_trends: bool = False):
+        self.graph(out_dir=output_dir, no_trends=no_trends, use_matplot=use_matplot)
         for name, table in self.tables.items():
             if name == SystemInfoTable.name():
                 print(f"{name}: {json.dumps(table.table.row(0, named=True), indent=4)}")
@@ -356,10 +356,12 @@ class GraphEngine:
                 str(graph_dir / f"{graph.base_name().replace(' ', '_').lower()}.plt"),
                 keep_colors=True,
             )
-        else:
-            pyplot.savefig(
+        elif self._figure is not None:
+            self._figure.set_size_inches(12, 8)
+            self._figure.savefig(
                 str(graph_dir / f"{graph.base_name().replace(' ', '_').lower()}.png"),
                 dpi=100,
+                bbox_inches='tight',
             )
 
     def clear(self) -> None:
