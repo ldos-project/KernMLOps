@@ -11,6 +11,7 @@ import yaml
 from cli import collect
 from cli.config import KernmlopsConfig
 from click_default_group import DefaultGroup
+from data_collection import GenericCollectorConfig
 from kernmlops_benchmark import benchmarks
 from kernmlops_config import DEFAULT_CONFIG_FILE
 
@@ -26,14 +27,6 @@ def cli_collect():
 
 
 @cli_collect.command("data")
-@click.option(
-    "-p",
-    "--poll-rate",
-    "poll_rate",
-    default=.5,
-    required=False,
-    type=float,
-)
 @click.option(
     "-c",
     "--config-file",
@@ -58,41 +51,20 @@ def cli_collect():
     is_flag=True,
     type=bool,
 )
-@click.option(
-    "--no-hooks",
-    "no_hooks",
-    default=False,
-    is_flag=True,
-    type=bool,
-    help="Used as baseline for overhead of instrumentation hooks",
-)
-@click.option(
-    "-o",
-    "--output-dir",
-    "output_dir",
-    default=Path("data"),
-    required=True,
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-)
 def cli_collect_data(
-    output_dir: Path,
     config_file: Path,
     benchmark_name: str | None,
-    poll_rate: float,
-    no_hooks: bool,
     verbose: bool,
 ):
     """Run data collection tooling."""
-    bpf_programs = [] if no_hooks else data_collection.bpf.hooks()
     config_overrides = yaml.safe_load(config_file.read_text())
     config = KernmlopsConfig().merge(config_overrides)
+    collector_config: GenericCollectorConfig = config.collector_config
     name = benchmark_name if benchmark_name else str(config.benchmark_config.generic.benchmark)
     benchmark = benchmarks[name].from_config(config.benchmark_config)
     collect.run_collect(
-        data_dir=output_dir,
+        collector_config=collector_config,
         benchmark=benchmark,
-        bpf_programs=bpf_programs,
-        poll_rate=poll_rate,
         verbose=verbose,
     )
 
@@ -184,8 +156,20 @@ def cli_collect_perf():
 @cli_collect.command("defaults")
 def cli_collect_defaults():
     """Output default collection config into yaml file defaults.yaml."""
+
+    # From https://github.com/yaml/pyyaml/issues/234
+    class Dumper(yaml.Dumper):
+        def increase_indent(self, flow=False, *args, **kwargs):
+            return super().increase_indent(flow=flow, indentless=False)
+
     DEFAULT_CONFIG_FILE.write_text(
-        "---\n" + yaml.dump(asdict(KernmlopsConfig()), sort_keys=False)
+        yaml.dump(
+            asdict(KernmlopsConfig()),
+            Dumper=Dumper,
+            indent=2,
+            sort_keys=False,
+            explicit_start=True,
+        )
     )
 
 

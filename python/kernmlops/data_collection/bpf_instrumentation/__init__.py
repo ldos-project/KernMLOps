@@ -1,6 +1,6 @@
 """Module for maintaining different BPF hooks/instrumentation."""
 
-from functools import cache
+from typing import Final, Mapping
 
 from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
 from data_collection.bpf_instrumentation.file_data_hook import FileDataBPFHook
@@ -14,29 +14,22 @@ from data_collection.bpf_instrumentation.tlb_perf_hook import (
     TLBPerfBPFHook,
 )
 
-all_hooks = [
-    FileDataBPFHook,
-    MemoryUsageHook,
-    ProcessMetadataHook,
-    QuantaRuntimeBPFHook,
-    TLBPerfBPFHook,
-]
+all_hooks: Final[Mapping[str, type[BPFProgram]]] = {
+    FileDataBPFHook.name(): FileDataBPFHook,
+    MemoryUsageHook.name(): MemoryUsageHook,
+    ProcessMetadataHook.name(): ProcessMetadataHook,
+    QuantaRuntimeBPFHook.name(): QuantaRuntimeBPFHook,
+    TLBPerfBPFHook.name(): TLBPerfBPFHook,
+}
 
 
-@cache
-def hooks() -> list[BPFProgram]:
-    return [
-        ProcessMetadataHook(),
-        FileDataBPFHook(),
-        MemoryUsageHook(),
-        QuantaRuntimeBPFHook(),
-        TLBPerfBPFHook(),
-    ]
+def hook_names() -> list[str]:
+    return list(all_hooks.keys())
 
 
 __all__ = [
     "all_hooks",
-    "hooks",
+    "hook_names",
     "BPFProgram",
     "CustomHWConfigManager",
     "QuantaRuntimeBPFHook",

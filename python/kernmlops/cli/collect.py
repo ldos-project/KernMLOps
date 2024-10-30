@@ -2,12 +2,14 @@ import os
 from datetime import datetime
 from pathlib import Path
 from time import sleep
+from typing import cast
 
 import data_collection
 import data_schema
 import polars as pl
 from data_schema import demote
 from kernmlops_benchmark import Benchmark, BenchmarkNotConfiguredError
+from kernmlops_config import ConfigBase
 
 
 def poll_instrumentation(
@@ -31,20 +33,20 @@ def poll_instrumentation(
 
 def run_collect(
     *,
-    data_dir: Path,
+    collector_config: ConfigBase,
     benchmark: Benchmark,
-    bpf_programs: list[data_collection.bpf.BPFProgram],
-    poll_rate: float,
     verbose: bool
 ):
     if not benchmark.is_configured():
         raise BenchmarkNotConfiguredError(f"benchmark {benchmark.name()} is not configured")
     benchmark.setup()
 
+    generic_config = cast(data_collection.GenericCollectorConfig, getattr(collector_config, "generic"))
+    bpf_programs = generic_config.get_hooks()
     system_info = data_collection.machine_info().to_polars()
     system_info = system_info.unnest(system_info.columns)
     collection_id = system_info["collection_id"][0]
-    output_dir = data_dir / "curated" if bpf_programs else data_dir / "baseline"
+    output_dir = generic_config.get_output_dir() / "curated" if bpf_programs else generic_config.get_output_dir() / "baseline"
 
     for bpf_program in bpf_programs:
         bpf_program.load(collection_id)
@@ -57,7 +59,7 @@ def run_collect(
         print(f"Started benchmark {benchmark.name()}")
 
     tick = datetime.now()
-    return_code = poll_instrumentation(benchmark, bpf_programs, poll_rate=poll_rate)
+    return_code = poll_instrumentation(benchmark, bpf_programs, poll_rate=generic_config.poll_rate)
     collection_time_sec = (datetime.now() - tick).total_seconds()
     for bpf_program in bpf_programs:
         bpf_program.close()
@@ -66,7 +68,7 @@ def run_collect(
         print(f"Benchmark ran for {collection_time_sec}s")
     if return_code != 0:
         print(f"Benchmark {benchmark.name()} failed with return code {return_code}")
-        output_dir = data_dir / "failed"
+        output_dir = generic_config.get_output_dir() / "failed"
 
 
     collection_tables: list[data_schema.CollectionTable] = [
@@ -87,4 +89,5 @@ def run_collect(
         Path(output_dir / collection_table.name()).mkdir(parents=True, exist_ok=True)
         collection_table.table.write_parquet(output_dir / collection_table.name() / f"{collection_id}.{benchmark.name()}.parquet")
     collection_data = data_schema.CollectionData.from_tables(collection_tables)
-    collection_data.graph(out_dir=data_dir / "graphs")
+    if generic_config.output_graphs:
+        collection_data.graph(out_dir=generic_config.get_output_dir() / "graphs")

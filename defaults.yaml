@@ -11,3 +11,14 @@ benchmark_config:
   gap:
     gap_benchmark: pr
     trials: 2
+collector_config:
+  generic:
+    poll_rate: 0.5
+    output_dir: data
+    output_graphs: false
+    hooks:
+      - file_data
+      - memory_usage
+      - process_metadata
+      - quanta_runtime
+      - tlb_perf

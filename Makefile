@@ -55,7 +55,6 @@ INTERACTIVE ?= i
 
 # Benchmarking variables
 COLLECTION_BENCHMARK ?= faux
-COLLECTION_POLL_RATE ?= .5
 BENCHMARK_DIR ?= /home/${UNAME}/kernmlops-benchmark
 
 # Provisioning variables
@@ -93,29 +92,24 @@ collect:
 	-e CONTAINER_CMD="bash -lc 'KERNMLOPS_CONFIG_FILE=${KERNMLOPS_CONFIG_FILE} make collect-data'" \
 	docker
 
+collect-raw:
+	@python python/kernmlops collect -v \
+	-c ${KERNMLOPS_CONFIG_FILE} \
+	--benchmark faux
+
 collect-data:
 	@python python/kernmlops collect -v \
-	-p ${COLLECTION_POLL_RATE} \
 	-c ${KERNMLOPS_CONFIG_FILE}
 
 benchmark-gap:
 	@python python/kernmlops collect -v \
-	-p ${COLLECTION_POLL_RATE} \
 	-c ${KERNMLOPS_CONFIG_FILE} \
 	--benchmark gap
 
 benchmark-linux-build:
 	@python python/kernmlops collect -v \
-	-p ${COLLECTION_POLL_RATE} \
 	-c ${KERNMLOPS_CONFIG_FILE} \
-	--benchmark linux-build
-
-benchmark-linux-build-baseline:
-	@python python/kernmlops collect -v \
-	-p ${COLLECTION_POLL_RATE} \
-	-c ${KERNMLOPS_CONFIG_FILE} \
-	--no-hooks \
-	--benchmark linux-build
+	--benchmark linux_build
 
 dump:
 	@python python/kernmlops collect dump
