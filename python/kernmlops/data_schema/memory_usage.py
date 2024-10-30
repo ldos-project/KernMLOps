@@ -1,6 +1,6 @@
 import polars as pl
-
 from data_schema.schema import (
+    UPTIME_TIMESTAMP,
     CollectionGraph,
     CollectionTable,
     GraphEngine,
@@ -16,7 +16,7 @@ class MemoryUsageTable(CollectionTable):
     @classmethod
     def schema(cls) -> pl.Schema:
         return pl.Schema({
-            "ts_uptime_us": pl.Int64(),
+            UPTIME_TIMESTAMP: pl.Int64(),
 
             "mem_total_bytes": pl.Int64(),
             "mem_free_bytes": pl.Int64(),
@@ -116,7 +116,7 @@ class MemoryUsageGraph(CollectionGraph):
         for plot_line in self.plot_lines:
             self.graph_engine.plot(
                 (
-                    (memory_df.select("ts_uptime_us") / 1_000_000.0) - start_uptime_sec
+                    (memory_df.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
                 ).to_series().to_list(),
                 (memory_df.select(plot_line) / (1_024.0)**3).to_series().to_list(),
                 label=plot_line.replace("bytes", "gb"),

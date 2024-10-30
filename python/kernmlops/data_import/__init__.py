@@ -6,7 +6,6 @@ import polars as pl
 def read_parquet_dir(data_dir: Path, benchmark_name: str | None) -> dict[str, pl.DataFrame]:
     kernmlops_dfs = dict[str, pl.DataFrame]()
     dataframe_dirs = [x for x in data_dir.iterdir() if x.is_dir()]
-    print(dataframe_dirs)
     for dataframe_dir in dataframe_dirs:
         dfs = [
           pl.read_parquet(x) for x in dataframe_dir.iterdir()

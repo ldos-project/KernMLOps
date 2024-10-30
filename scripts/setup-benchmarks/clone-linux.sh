@@ -4,13 +4,13 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-LINUX_BENCHMARK_NAME="linux-build"
+LINUX_BENCHMARK_NAME="linux_build"
 BENCHMARK_DIR_NAME="kernmlops-benchmark"
 
 LINUX_VERSION="${LINUX_VERSION:-6.11}"
 BENCHMARK_DIR="${BENCHMARK_DIR:-$HOME/$BENCHMARK_DIR_NAME}"
 
-LINUX_SOURCE_DIR="$BENCHMARK_DIR/linux-kernel"
+LINUX_SOURCE_DIR="$BENCHMARK_DIR/linux_kernel"
 LINUX_BUILD_DIR="$BENCHMARK_DIR/$LINUX_BENCHMARK_NAME"
 
 if [ -d $LINUX_SOURCE_DIR ]; then

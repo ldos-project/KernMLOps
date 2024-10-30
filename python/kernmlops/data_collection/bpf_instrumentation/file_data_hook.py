@@ -3,9 +3,8 @@ from pathlib import Path
 
 import polars as pl
 from bcc import BPF
-from data_schema import CollectionTable, FileDataTable
-
 from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
+from data_schema import CollectionTable, FileDataTable
 
 
 @dataclass(frozen=True)

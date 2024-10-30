@@ -1,5 +1,4 @@
 import polars as pl
-
 from data_schema.memory_usage import MemoryUsageGraph
 from data_schema.schema import (
     CollectionGraph,

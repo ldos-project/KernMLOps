@@ -1,14 +1,21 @@
 import subprocess
-from pathlib import Path
+from dataclasses import dataclass
+from typing import Literal, cast
 
 from data_schema import GraphEngine, demote
-
-from kernmlops_benchmark.benchmark import Benchmark
+from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
 from kernmlops_benchmark.errors import (
-    BenchmarkNotInCollectionData,
-    BenchmarkNotRunningError,
-    BenchmarkRunningError,
+  BenchmarkNotInCollectionData,
+  BenchmarkNotRunningError,
+  BenchmarkRunningError,
 )
+from kernmlops_config import ConfigBase
+
+
+@dataclass(frozen=True)
+class GapBenchmarkConfig(ConfigBase):
+  gap_benchmark: Literal["pr"] = "pr"
+  trials: int = 2
 
 
 class GapBenchmark(Benchmark):
@@ -17,10 +24,20 @@ class GapBenchmark(Benchmark):
     def name(cls) -> str:
         return "gap"
 
-    def __init__(self, benchmark_dir: Path, cpus: int | None):
-        self.benchmark_dir = benchmark_dir / self.name()
-        self.graph_algo = "pr"
-        self.trials = 2
+    @classmethod
+    def default_config(cls) -> ConfigBase:
+        return GapBenchmarkConfig()
+
+    @classmethod
+    def from_config(cls, config: ConfigBase) -> "Benchmark":
+        generic_config = cast(GenericBenchmarkConfig, getattr(config, "generic"))
+        gap_config = cast(GapBenchmarkConfig, getattr(config, cls.name()))
+        return GapBenchmark(generic_config=generic_config, config=gap_config)
+
+    def __init__(self, *, generic_config: GenericBenchmarkConfig, config: GapBenchmarkConfig):
+        self.generic_config = generic_config
+        self.config = config
+        self.benchmark_dir = self.generic_config.get_benchmark_dir() / self.name()
         self.process: subprocess.Popen | None = None
 
     def is_configured(self) -> bool:
@@ -29,25 +46,18 @@ class GapBenchmark(Benchmark):
     def setup(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
-        subprocess.check_call(
-            ["bash", "-c", "sync && echo 3 > /proc/sys/vm/drop_caches"],
-            stdout=subprocess.DEVNULL,
-        )
-        subprocess.check_call(
-            ["bash", "-c", "echo always > /sys/kernel/mm/transparent_hugepage/enabled"],
-            stdout=subprocess.DEVNULL,
-        )
+        self.generic_config.generic_setup()
 
     def run(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
         self.process = subprocess.Popen(
             [
-                str(self.benchmark_dir / self.graph_algo),
+                str(self.benchmark_dir / self.config.gap_benchmark),
                 "-f",
                 str(self.benchmark_dir / "graphs" / "kron25.sg"),
                 "-n",
-                str(self.trials),
+                str(self.config.trials),
             ],
             preexec_fn=demote(),
             stdout=subprocess.DEVNULL,

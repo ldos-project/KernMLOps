@@ -20,10 +20,14 @@ bash scripts/setup-benchmarks/setup-gap.sh
 # On ubuntu: apt install linux-headers-$(uname -r)
 # On redhat: dnf install kernel-devel kernel-headers
 
-# Run default benchmark and collect data for it inside docker
-make collect
-# Run data collection inside docker until manually terminated via Ctrl+C
+# Run default data collection inside docker until manually terminated via Ctrl+C
+make docker
 make collect-raw
+# Run gap benchmark inside docker
+make docker
+make benchmark-gap
+# Run yaml configured data collection inside docker
+make collect
 ```
 
 ## Tools
@@ -96,6 +100,28 @@ Users can run data collection with:
 ```shell
 make collect-raw
 ```
+
+## Configuration
+
+All default configuration options are shown in `defaults.yaml`, this can be generated
+via `make defaults`.
+
+To configure collection, users can create and modify a `overrides.yaml` file with
+just the overrides they wish to set, i.e.:
+
+```yaml
+---
+benchmark_config:
+  generic:
+    benchmark: gap
+  gap:
+    trials: 7
+```
+
+Then `make collect` or `make collect-data` will use the overrides set.
+
+If an unknown configuration parameter is set (i.e. `benchmark_cfg`) and
+error will be thrown before collection begins.
 
 ## Troubleshooting: Or How I Learned to Shoot My Foot
 

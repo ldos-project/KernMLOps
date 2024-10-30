@@ -2,9 +2,9 @@ import json
 from typing import Mapping
 
 import polars as pl
-
 from data_schema.process_metadata import ProcessMetadataTable
 from data_schema.schema import (
+    UPTIME_TIMESTAMP,
     CollectionGraph,
     CollectionTable,
     GraphEngine,
@@ -23,7 +23,7 @@ class QuantaRuntimeTable(CollectionTable):
             "cpu": pl.Int64(),
             "pid": pl.Int64(),
             "tgid": pl.Int64(),
-            "quanta_end_uptime_us": pl.Int64(),
+            UPTIME_TIMESTAMP: pl.Int64(),
             "quanta_run_length_us": pl.Int64(),
             "collection_id": pl.String(),
         })
@@ -96,7 +96,7 @@ class QuantaQueuedTable(CollectionTable):
             "cpu": pl.Int64(),
             "pid": pl.Int64(),
             "tgid": pl.Int64(),
-            "quanta_end_uptime_us": pl.Int64(),
+            UPTIME_TIMESTAMP: pl.Int64(),
             "quanta_queued_time_us": pl.Int64(),
             "collection_id": pl.String(),
         })
@@ -199,7 +199,7 @@ class QuantaRuntimeGraph(CollectionGraph):
         for cpu, quanta_df_group in quanta_df_by_cpu:
             self.graph_engine.scatter(
                 (
-                    (quanta_df_group.select("quanta_end_uptime_us") / 1_000_000.0) - start_uptime_sec
+                    (quanta_df_group.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
                 ).to_series().to_list(),
                 (quanta_df_group.select("quanta_run_length_us") / 1_000.0).to_series().to_list(),
                 label=f"CPU {cpu[0]}",
@@ -222,7 +222,7 @@ class QuantaRuntimeGraph(CollectionGraph):
             )
             self.graph_engine.plot(
                 (
-                    (collector_runtimes.select("quanta_end_uptime_us") / 1_000_000.0) - start_uptime_sec
+                    (collector_runtimes.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
                 ).to_series().to_list(),
                 (collector_runtimes.select("quanta_run_length_us") / 1_000.0).to_series().to_list(),
                 label="Collector Process" if collector_pid == pid else label[:35],
@@ -297,7 +297,7 @@ class QuantaQueuedGraph(CollectionGraph):
         for cpu, quanta_df_group in quanta_df_by_cpu:
             self.graph_engine.scatter(
                 (
-                    (quanta_df_group.select("quanta_end_uptime_us") / 1_000_000.0) - start_uptime_sec
+                    (quanta_df_group.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
                 ).to_series().to_list(),
                 (quanta_df_group.select("quanta_queued_time_us") / 1_000.0).to_series().to_list(),
                 label=f"CPU {cpu[0]}",
@@ -320,7 +320,7 @@ class QuantaQueuedGraph(CollectionGraph):
             )
             self.graph_engine.plot(
                 (
-                    (collector_runtimes.select("quanta_end_uptime_us") / 1_000_000.0) - start_uptime_sec
+                    (collector_runtimes.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
                 ).to_series().to_list(),
                 (collector_runtimes.select("quanta_queued_time_us") / 1_000.0).to_series().to_list(),
                 label="Collector Process" if collector_pid == pid else label[:35],

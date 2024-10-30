@@ -29,6 +29,16 @@ ifeq (${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT},)
 	endif
 endif
 
+# Collector config
+KERNMLOPS_CONFIG_FILE ?=
+# First ensure the user has not overridden this field
+ifeq (${KERNMLOPS_CONFIG_FILE},)
+	KERNMLOPS_CONFIG_FILE = defaults.yaml
+	ifneq ("$(wildcard overrides.yaml)","")
+		KERNMLOPS_CONFIG_FILE = overrides.yaml
+	endif
+endif
+
 BASE_IMAGE_NAME ?= kernmlops
 BCC_IMAGE_NAME ?= ${BASE_IMAGE_NAME}-deps
 IMAGE_NAME ?= ${UNAME}-${BASE_IMAGE_NAME}
@@ -79,38 +89,39 @@ format:
 
 # Python commands
 collect:
-	@${MAKE} -e CONTAINER_CMD="bash -lc 'make benchmark-gap'" docker
-
-collect-raw:
-	@${MAKE} -e CONTAINER_CMD="bash -lc 'make collect-data'" docker
+	@${MAKE} \
+	-e CONTAINER_CMD="bash -lc 'KERNMLOPS_CONFIG_FILE=${KERNMLOPS_CONFIG_FILE} make collect-data'" \
+	docker
 
 collect-data:
 	@python python/kernmlops collect -v \
 	-p ${COLLECTION_POLL_RATE} \
-	-d ${BENCHMARK_DIR} \
-	--benchmark ${COLLECTION_BENCHMARK}
+	-c ${KERNMLOPS_CONFIG_FILE}
 
 benchmark-gap:
 	@python python/kernmlops collect -v \
 	-p ${COLLECTION_POLL_RATE} \
-	-d ${BENCHMARK_DIR} \
+	-c ${KERNMLOPS_CONFIG_FILE} \
 	--benchmark gap
 
 benchmark-linux-build:
 	@python python/kernmlops collect -v \
 	-p ${COLLECTION_POLL_RATE} \
-	-d ${BENCHMARK_DIR} \
+	-c ${KERNMLOPS_CONFIG_FILE} \
 	--benchmark linux-build
 
 benchmark-linux-build-baseline:
 	@python python/kernmlops collect -v \
 	-p ${COLLECTION_POLL_RATE} \
-	-d ${BENCHMARK_DIR} \
+	-c ${KERNMLOPS_CONFIG_FILE} \
 	--no-hooks \
 	--benchmark linux-build
 
 dump:
 	@python python/kernmlops collect dump
+
+defaults:
+	@python python/kernmlops collect defaults
 
 
 # Provisioning commands
@@ -179,7 +190,6 @@ docker:
 
 
 # Miscellaneous commands
-
 clean-docker-images:
 	docker --context ${CONTAINER_CONTEXT} image list \
 	--filter "label=creator=${UNAME}" \

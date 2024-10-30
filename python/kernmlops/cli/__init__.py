@@ -1,14 +1,18 @@
 import sys
+import traceback
+from dataclasses import asdict
 from pathlib import Path
 
 import click
 import data_collection
 import data_import
 import data_schema
-from click_default_group import DefaultGroup
-from kernmlops_benchmark import FauxBenchmark, benchmarks
-
+import yaml
 from cli import collect
+from cli.config import KernmlopsConfig
+from click_default_group import DefaultGroup
+from kernmlops_benchmark import benchmarks
+from kernmlops_config import DEFAULT_CONFIG_FILE
 
 
 @click.group()
@@ -31,19 +35,20 @@ def cli_collect():
     type=float,
 )
 @click.option(
+    "-c",
+    "--config-file",
+    "config_file",
+    default=DEFAULT_CONFIG_FILE,
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+)
+@click.option(
     "-b",
     "--benchmark",
     "benchmark_name",
-    default=FauxBenchmark.name(),
-    type=click.Choice(list(benchmarks.keys())),
-)
-@click.option(
-    "--cpus",
-    "cpus",
     default=None,
-    required=False,
-    type=int,
-    help="Used to scale workloads, defaults to number physical cores",
+    type=click.Choice(list(benchmarks.keys())),
+    help="Used to override benchmark from config file.",
 )
 @click.option(
     "-v",
@@ -69,30 +74,20 @@ def cli_collect():
     required=True,
     type=click.Path(exists=True, file_okay=False, path_type=Path),
 )
-@click.option(
-    "-d",
-    "--benchmark-dir",
-    "benchmark_dir",
-    default=Path.home() / "kernmlops-benchmark",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-)
 def cli_collect_data(
     output_dir: Path,
-    benchmark_name: str,
-    benchmark_dir: Path,
-    cpus: int | None,
+    config_file: Path,
+    benchmark_name: str | None,
     poll_rate: float,
     no_hooks: bool,
     verbose: bool,
 ):
     """Run data collection tooling."""
     bpf_programs = [] if no_hooks else data_collection.bpf.hooks()
-    benchmark_args = {
-        "benchmark_dir": benchmark_dir,
-        "cpus": cpus,
-    }
-    benchmark = benchmarks[benchmark_name](**benchmark_args)  # pyright: ignore [reportCallIssue]
+    config_overrides = yaml.safe_load(config_file.read_text())
+    config = KernmlopsConfig().merge(config_overrides)
+    name = benchmark_name if benchmark_name else str(config.benchmark_config.generic.benchmark)
+    benchmark = benchmarks[name].from_config(config.benchmark_config)
     collect.run_collect(
         data_dir=output_dir,
         benchmark=benchmark,
@@ -186,11 +181,18 @@ def cli_collect_perf():
         print(data.dump())
 
 
+@cli_collect.command("defaults")
+def cli_collect_defaults():
+    """Output default collection config into yaml file defaults.yaml."""
+    DEFAULT_CONFIG_FILE.write_text(
+        "---\n" + yaml.dump(asdict(KernmlopsConfig()), sort_keys=False)
+    )
+
 
 def main():
     try:
         # TODO(Patrick): use logging
         cli.main(prog_name="kernmlops")
-    except Exception as e:
-        print("Error: ", e)
+    except Exception:
+        print(traceback.format_exc())
         sys.exit(1)

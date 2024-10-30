@@ -1,0 +1,13 @@
+---
+benchmark_config:
+  generic:
+    benchmark: faux
+    benchmark_dir: ''
+    cpus: 0
+    skip_clear_page_cache: false
+    transparent_hugepages: always
+  faux: {}
+  linux_build: {}
+  gap:
+    gap_benchmark: pr
+    trials: 2

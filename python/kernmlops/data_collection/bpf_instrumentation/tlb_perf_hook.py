@@ -8,9 +8,8 @@ from typing import Any, Final, Mapping, Protocol
 
 import polars as pl
 from bcc import BPF, PerfType
-from data_schema import CollectionTable, perf_table_types
-
 from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
+from data_schema import CollectionTable, perf_table_types
 
 
 class PerfHWCacheConfig:
@@ -268,7 +267,11 @@ int NAME_on(struct bpf_perf_event_data* ctx) {
   }
   struct perf_event_data data;
   __builtin_memset(&data, 0, sizeof(data));
+  u32 pid = bpf_get_current_pid_tgid();
+  u32 tgid = bpf_get_current_pid_tgid() >> 32;
   u64 ts = bpf_ktime_get_ns();
+  data.pid = pid;
+  data.tgid = tgid;
   data.ts_uptime_us = ts / 1000;
   data.count = value_buf.counter;
   data.enabled_time_us = value_buf.enabled / 1000;
@@ -281,6 +284,8 @@ int NAME_on(struct bpf_perf_event_data* ctx) {
 @dataclass(frozen=True)
 class PerfData:
   cpu: int
+  pid: int
+  tgid: int
   ts_uptime_us: int
   cumulative_count: int
   pmu_enabled_time_us: int
@@ -290,6 +295,8 @@ class PerfData:
   def from_event(cls, cpu: int, event: Any):
     return PerfData(
         cpu=cpu,
+        pid=event.pid,
+        tgid=event.tgid,
         ts_uptime_us=event.ts_uptime_us,
         cumulative_count=event.count,
         pmu_enabled_time_us=event.enabled_time_us,

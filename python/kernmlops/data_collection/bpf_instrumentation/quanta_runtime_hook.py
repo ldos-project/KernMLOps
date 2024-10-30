@@ -3,10 +3,9 @@ from pathlib import Path
 
 import polars as pl
 from bcc import BPF
-from data_schema import CollectionTable
-from data_schema.quanta_runtime import QuantaQueuedTable, QuantaRuntimeTable
-
 from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
+from data_schema import UPTIME_TIMESTAMP, CollectionTable
+from data_schema.quanta_runtime import QuantaQueuedTable, QuantaRuntimeTable
 
 # Note: collecting blocked time is not useful since parent processes blocking on children
 # obfuscates the meaning
@@ -66,11 +65,14 @@ class QuantaRuntimeBPFHook(BPFProgram):
   def data(self) -> list[CollectionTable]:
     return [
       QuantaRuntimeTable.from_df_id(
-        pl.DataFrame(self.quanta_runtime_data),
+        pl.DataFrame(self.quanta_runtime_data).rename({
+          "quanta_end_uptime_us": UPTIME_TIMESTAMP,
+        }),
         collection_id=self.collection_id,
       ),
       QuantaQueuedTable.from_df_id(
         pl.DataFrame(self.quanta_queue_data).rename({
+          "quanta_end_uptime_us": UPTIME_TIMESTAMP,
           "quanta_run_length_us": "quanta_queued_time_us",
         }),
         collection_id=self.collection_id,

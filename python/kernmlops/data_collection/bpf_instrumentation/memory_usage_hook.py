@@ -4,10 +4,9 @@ from pathlib import Path
 from typing import Mapping
 
 import polars as pl
+from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
 from data_schema import CollectionTable
 from data_schema.memory_usage import MemoryUsageTable
-
-from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
 
 
 # Documentation: https://access.redhat.com/solutions/406773

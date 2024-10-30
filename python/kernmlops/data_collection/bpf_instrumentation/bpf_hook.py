@@ -19,6 +19,17 @@ class BPFProgram(Protocol):
 
   def data(self) -> list[CollectionTable]: ...
 
+  # def last_k_ms(self, ms: int) -> list[CollectionTable]: ...
+
+  # def last_k_data(self, k: int) -> list[CollectionTable]:
+  #   return [
+  #     table.limit(k)
+  #     for table in self.data()
+  #   ]
+
+  # def last_data(self) -> list[CollectionTable]:
+  #   return self.last_data(1)
+
   def clear(self): ...
 
   def pop_data(self) -> list[CollectionTable]: ...

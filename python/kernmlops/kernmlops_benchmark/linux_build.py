@@ -1,26 +1,42 @@
 import subprocess
-from pathlib import Path
+from dataclasses import dataclass
+from typing import cast
 
-import psutil
 from data_schema import FileDataTable, GraphEngine, demote
-
-from kernmlops_benchmark.benchmark import Benchmark
+from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
 from kernmlops_benchmark.errors import (
     BenchmarkNotInCollectionData,
     BenchmarkNotRunningError,
     BenchmarkRunningError,
 )
+from kernmlops_config import ConfigBase
+
+
+@dataclass(frozen=True)
+class LinuxBuildBenchmarkConfig(ConfigBase):
+    pass
 
 
 class LinuxBuildBenchmark(Benchmark):
 
     @classmethod
     def name(cls) -> str:
-        return "linux-build"
+        return "linux_build"
 
-    def __init__(self, benchmark_dir: Path, cpus: int | None = None):
-        self.benchmark_dir = benchmark_dir / self.name()
-        self.cpus = cpus or (3 * psutil.cpu_count(logical=False))
+    @classmethod
+    def default_config(cls) -> ConfigBase:
+        return LinuxBuildBenchmarkConfig()
+
+    @classmethod
+    def from_config(cls, config: ConfigBase) -> "Benchmark":
+        generic_config = cast(GenericBenchmarkConfig, getattr(config, "generic"))
+        linux_config = cast(LinuxBuildBenchmarkConfig, getattr(config, cls.name()))
+        return LinuxBuildBenchmark(generic_config=generic_config, config=linux_config)
+
+    def __init__(self, *, generic_config: GenericBenchmarkConfig, config: LinuxBuildBenchmarkConfig):
+        self.generic_config = generic_config
+        self.config = config
+        self.benchmark_dir = self.generic_config.get_benchmark_dir() / self.name()
         self.process: subprocess.Popen | None = None
 
     def is_configured(self) -> bool:
@@ -31,7 +47,7 @@ class LinuxBuildBenchmark(Benchmark):
             raise BenchmarkRunningError()
         if (self.benchmark_dir / "Makefile").exists():
             subprocess.check_call(
-                ["make", "-C", str(self.benchmark_dir), "clean"],
+                ["make", "-C", self.benchmark_dir, "clean"],
                 preexec_fn=demote(),
                 stdout=subprocess.DEVNULL,
             )
@@ -39,28 +55,21 @@ class LinuxBuildBenchmark(Benchmark):
             [
                 "make",
                 "-C",
-                str(self.benchmark_dir / "../linux-kernel"),
-                f"O={str(self.benchmark_dir)}",
+                str(self.benchmark_dir / "../linux_kernel"),
+                f"O={self.benchmark_dir}",
                 "defconfig",
             ],
             preexec_fn=demote(),
             stdout=subprocess.DEVNULL,
         )
-        subprocess.check_call(
-            ["bash", "-c", "sync && echo 3 > /proc/sys/vm/drop_caches"],
-            stdout=subprocess.DEVNULL,
-        )
-        subprocess.check_call(
-            ["bash", "-c", "echo always > /sys/kernel/mm/transparent_hugepage/enabled"],
-            stdout=subprocess.DEVNULL,
-        )
+        self.generic_config.generic_setup()
 
     def run(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
-        jobs = f"-j{self.cpus}" if self.cpus else "-j"
+        jobs = f"-j{self.generic_config.cpus}" if self.generic_config.cpus else "-j"
         self.process = subprocess.Popen(
-            ["make", "-C", str(self.benchmark_dir), jobs],
+            ["make", "-C", self.benchmark_dir, jobs],
             preexec_fn=demote(),
             stdout=subprocess.DEVNULL,
         )

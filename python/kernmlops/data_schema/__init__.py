@@ -9,6 +9,7 @@ from data_schema.memory_usage import MemoryUsageTable
 from data_schema.process_metadata import ProcessMetadataTable
 from data_schema.quanta_runtime import QuantaQueuedTable, QuantaRuntimeTable
 from data_schema.schema import (
+    UPTIME_TIMESTAMP,
     CollectionData,
     CollectionGraph,
     CollectionTable,
@@ -58,6 +59,7 @@ def demote(user_id: int | None = None, group_id: int | None = None) -> Callable[
     return do_demote
 
 __all__ = [
+    "UPTIME_TIMESTAMP",
     "collection_id_column",
     "cumulative_pma_as_pdf",
     "demote",

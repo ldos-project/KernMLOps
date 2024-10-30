@@ -1,5 +1,4 @@
 import polars as pl
-
 from data_schema.schema import (
     CollectionGraph,
     CollectionTable,

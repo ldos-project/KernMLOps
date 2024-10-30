@@ -1,9 +1,51 @@
 """Abstract definition of a benchmark."""
 
+import os
+import subprocess
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Literal, cast
+
 from data_schema import GraphEngine
+from kernmlops_config import ConfigBase
 from typing_extensions import Protocol
 
-# TODO(Patrick): Add flush page-cache
+
+@dataclass(frozen=True)
+class GenericBenchmarkConfig(ConfigBase):
+  benchmark: str = "faux"
+  benchmark_dir: str = ""
+  cpus: int = 0
+  skip_clear_page_cache: bool = False
+  transparent_hugepages: Literal["always", "madvise", "never"] = "always"
+
+  def get_benchmark_dir(self) -> Path:
+    if self.benchmark_dir:
+      return Path(self.benchmark_dir)
+    elif "UNAME" in os.environ:
+      return Path(f"/home/{os.environ['UNAME']}/kernmlops-benchmark")
+    return Path.home() / "kernmlops-benchmark"
+
+  def generic_setup(self):
+    """This will set pertinent generic settings, should be called after specific benchmark setup."""
+    if not self.skip_clear_page_cache:
+      subprocess.check_call(
+          ["bash", "-c", "sync && echo 3 > /proc/sys/vm/drop_caches"],
+          stdout=subprocess.DEVNULL,
+      )
+    subprocess.check_call(
+        [
+          "bash",
+          "-c",
+          f"echo {self.transparent_hugepages} > /sys/kernel/mm/transparent_hugepage/enabled",
+        ],
+        stdout=subprocess.DEVNULL,
+    )
+
+
+@dataclass(frozen=True)
+class FauxBenchmarkConfig(ConfigBase):
+  pass
 
 
 class Benchmark(Protocol):
@@ -11,6 +53,12 @@ class Benchmark(Protocol):
 
   @classmethod
   def name(cls) -> str: ...
+
+  @classmethod
+  def default_config(cls) -> ConfigBase: ...
+
+  @classmethod
+  def from_config(cls, config: ConfigBase) -> "Benchmark": ...
 
   def is_configured(self) -> bool:
     """Returns True if the environment has been setup to run the benchmark."""
@@ -41,11 +89,25 @@ class FauxBenchmark(Benchmark):
   def name(cls) -> str:
     return "faux"
 
+  @classmethod
+  def default_config(cls) -> ConfigBase:
+    return FauxBenchmarkConfig()
+
+  @classmethod
+  def from_config(cls, config: ConfigBase) -> "Benchmark":
+    generic_config = cast(GenericBenchmarkConfig, getattr(config, "generic"))
+    faux_config = cast(FauxBenchmarkConfig, getattr(config, cls.name()))
+    return FauxBenchmark(generic_config=generic_config, config=faux_config)
+
+  def __init__(self, *, generic_config: GenericBenchmarkConfig, config: FauxBenchmarkConfig):
+    self.generic_config = generic_config
+    self.config = config
+
   def is_configured(self) -> bool:
     return True
 
   def setup(self) -> None:
-    pass
+    self.generic_config.generic_setup()
 
   def run(self) -> None:
     pass

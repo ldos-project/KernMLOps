@@ -2,6 +2,8 @@
 #include <uapi/linux/bpf_perf_event.h>
 
 typedef struct perf_event_data {
+  u32 pid;
+  u32 tgid;
   u64 ts_uptime_us;
   u32 count;
   u64 enabled_time_us;

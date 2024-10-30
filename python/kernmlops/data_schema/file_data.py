@@ -2,8 +2,8 @@
 
 # from matplotlib import pyplot as plt
 import polars as pl
-
 from data_schema.schema import (
+    UPTIME_TIMESTAMP,
     CollectionGraph,
     CollectionTable,
 )
@@ -21,7 +21,7 @@ class FileDataTable(CollectionTable):
             "cpu": pl.Int64(),
             "pid": pl.Int64(),
             "tgid": pl.Int64(),
-            "ts_uptime_us": pl.Int64(),
+            UPTIME_TIMESTAMP: pl.Int64(),
             "file_inode": pl.Int64(),
             "file_size_bytes": pl.Int64(),
             "file_name": pl.String(),
@@ -57,9 +57,9 @@ class FileDataTable(CollectionTable):
         if len(file_data) == 0:
             return None
         return file_data.sort(
-            "ts_uptime_us", descending=False
+            UPTIME_TIMESTAMP, descending=False
         ).head(n=1).select(
-            "ts_uptime_us"
+            UPTIME_TIMESTAMP
         ).to_series().to_list()[0]
 
     def get_last_occurrence_us(self, filename: str) -> int | None:
@@ -67,7 +67,7 @@ class FileDataTable(CollectionTable):
         if len(file_data) == 0:
             return None
         return file_data.sort(
-            "ts_uptime_us", descending=True
+            UPTIME_TIMESTAMP, descending=True
         ).head(n=1).select(
-            "ts_uptime_us"
+            UPTIME_TIMESTAMP
         ).to_series().to_list()[0]

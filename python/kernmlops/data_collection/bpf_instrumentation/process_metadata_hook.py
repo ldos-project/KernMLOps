@@ -8,11 +8,10 @@ from typing import Any, Mapping
 import osquery
 import osquery.extensions
 import polars as pl
+from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
 from data_schema import CollectionTable
 from data_schema.process_metadata import ProcessMetadataTable
 from osquery.extensions.ttypes import ExtensionStatus
-
-from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
 
 
 @dataclass(frozen=True)

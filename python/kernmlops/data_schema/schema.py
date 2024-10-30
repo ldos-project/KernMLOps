@@ -2,12 +2,14 @@
 
 import json
 from pathlib import Path
-from typing import Mapping, cast, override
+from typing import Final, Mapping, cast, override
 
 import plotext
 import polars as pl
 from matplotlib import pyplot
 from typing_extensions import Protocol
+
+UPTIME_TIMESTAMP: Final[str] = "ts_uptime_us"
 
 
 def collection_id_column() -> str:
@@ -386,7 +388,7 @@ def cumulative_pma_as_pdf(table: pl.DataFrame, *, counter_column: str, counter_c
     ]
     final_select.extend([counter_column_rename, "span_duration_us"])
     by_cpu_pdf_dfs = [
-        by_cpu_df.lazy().sort("ts_uptime_us").with_columns(
+        by_cpu_df.lazy().sort(UPTIME_TIMESTAMP).with_columns(
             pl.col(counter_column).shift(1, fill_value=0).alias(f"{counter_column}_shifted"),
             pl.col("pmu_running_time_us").shift(1, fill_value=0).alias("pmu_running_time_us_shifted"),
             pl.col("pmu_enabled_time_us").shift(1, fill_value=0).alias("pmu_enabled_time_us_shifted"),
@@ -443,7 +445,9 @@ class PerfCollectionTable(CollectionTable, Protocol):
     def schema(cls) -> pl.Schema:
         return pl.Schema({
             "cpu": pl.Int64(),
-            "ts_uptime_us": pl.Int64(),
+            "pid": pl.Int64(),
+            "tgid": pl.Int64(),
+            UPTIME_TIMESTAMP: pl.Int64(),
             "collection_id": pl.String(),
             cls.cumulative_column_name(): pl.Int64(),
             "pmu_enabled_time_us": pl.Int64(),
@@ -513,7 +517,7 @@ class RatePerfGraph(CollectionGraph, Protocol):
             for cpu, pdf_df_group in pdf_df_by_cpu:
                 self.graph_engine.plot(
                     (
-                        (pdf_df_group.select("ts_uptime_us") / 1_000_000.0) - start_uptime_sec
+                        (pdf_df_group.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
                     ).to_series().to_list(),
                     (
                         pdf_df_group.select(self._perf_table.name()) / (

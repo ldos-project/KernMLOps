@@ -5,6 +5,7 @@ import uuid
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from functools import lru_cache
+from pathlib import Path
 
 import polars as pl
 import psutil
@@ -23,6 +24,7 @@ class MachineSoftwareConfiguration:
     os: str
     kernel_version: str
     swap_size_bytes: int
+    transparent_hugepages: str
     huge_pages: int
     huge_page_size_bytes: int
     quanta_length: int # TODO(Patrick): add this
@@ -168,6 +170,18 @@ def proc_cpu_info() -> list[Mapping[str, str]]:
     return processors_data
 
 
+def transparent_hugepages() -> str:
+    raw_enabled = Path("/sys/kernel/mm/transparent_hugepage/enabled").read_text()
+    if "[always]" in raw_enabled:
+        return "always"
+    if "[madvise]" in raw_enabled:
+        return "madvise"
+    if "[never]" in raw_enabled:
+        return "never"
+    print("warning: could not parse transparent hugepage setting")
+    return ""
+
+
 def convert_to_bytes(value: int, unit: str) -> int:
     if unit.lower() in ["kib"]:
         return value * 1024
@@ -187,6 +201,7 @@ def machine_software_config() -> MachineSoftwareConfiguration:
     swap_size_bytes = swap.total
     huge_pages = int(mem_info.get("HugePages_Total", 0))
     huge_page_size_bytes = int(mem_info.get("Hugepagesize", "0 kB").split()[0]) * 1024
+    thp = transparent_hugepages()
 
     return MachineSoftwareConfiguration(
         os=os,
@@ -195,6 +210,7 @@ def machine_software_config() -> MachineSoftwareConfiguration:
         quanta_length=0,
         huge_pages=huge_pages,
         huge_page_size_bytes=huge_page_size_bytes,
+        transparent_hugepages=thp,
         is_vm=False,
     )
 
