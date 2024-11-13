@@ -314,6 +314,7 @@ class TLBPerfBPFHook(BPFProgram):
     self._perf_data = dict[str, list[PerfData]]()
     self.bpf_text = open(Path(__file__).parent / "bpf/tlb_perf.bpf.c", "r").read()
     self.loaded_custom_hw_event_configs = dict[str, int]()
+    self.group_fds: dict[int, int] | None = None
 
     # add perf handlers
     def init_perf_handler(perf_event: CustomHWEvent | str):
@@ -336,11 +337,40 @@ class TLBPerfBPFHook(BPFProgram):
     for perf_event in hw_specific_perf_events:
       init_perf_handler(perf_event)
 
+  def _attach_perf_event(
+      self,
+      ev_type: int,
+      ev_config: int,
+      fn_name: bytes,
+      sample_freq: int,
+  ) -> None:
+    if self.group_fds is None:
+      self.bpf.attach_perf_event(
+        ev_type=ev_type,
+        ev_config=ev_config,
+        fn_name=fn_name,
+        sample_freq=sample_freq,
+        cpu=-1,
+        group_fd=-1,
+      )
+      self.group_fds = self.bpf.open_perf_events[(ev_type, ev_config)]
+    else:
+      for cpu, group_fd in self.group_fds.items():
+        self.bpf.attach_perf_event(
+          ev_type=ev_type,
+          ev_config=ev_config,
+          fn_name=fn_name,
+          sample_freq=sample_freq,
+          cpu=cpu,
+          group_fd=group_fd,
+        )
+
+
   def load(self, collection_id: str):
     self.collection_id = collection_id
     self.bpf = BPF(text = self.bpf_text)
     # sample frequency is in hertz
-    self.bpf.attach_perf_event(
+    self._attach_perf_event(
       ev_type=PerfType.HW_CACHE,
       ev_config=PerfHWCacheConfig.config(
         cache=PerfHWCacheConfig.Cache.PERF_COUNT_HW_CACHE_DTLB,
@@ -350,7 +380,7 @@ class TLBPerfBPFHook(BPFProgram):
       fn_name=b"dtlb_misses_on",
       sample_freq=1000,
     )
-    self.bpf.attach_perf_event(
+    self._attach_perf_event(
       ev_type=PerfType.HW_CACHE,
       ev_config=PerfHWCacheConfig.config(
         cache=PerfHWCacheConfig.Cache.PERF_COUNT_HW_CACHE_ITLB,
@@ -361,7 +391,7 @@ class TLBPerfBPFHook(BPFProgram):
       sample_freq=1000,
     )
     for name, custom_hw_config in self.loaded_custom_hw_event_configs.items():
-      self.bpf.attach_perf_event(
+      self._attach_perf_event(
         ev_type=PerfType.RAW,
         ev_config=custom_hw_config,
         fn_name=bytes(f"{str(name)}_on", encoding="utf-8"),

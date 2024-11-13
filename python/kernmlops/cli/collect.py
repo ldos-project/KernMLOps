@@ -22,7 +22,8 @@ def poll_instrumentation(
         try:
             for bpf_program in bpf_programs:
                 bpf_program.poll()
-            sleep(poll_rate)
+            if poll_rate > 0:
+                sleep(poll_rate)
             return_code = benchmark.poll()
             # clean data when missed samples - or detect?
         except KeyboardInterrupt:

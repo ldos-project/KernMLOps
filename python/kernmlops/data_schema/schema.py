@@ -201,6 +201,7 @@ class CollectionData:
                     graph_engine.savefig(graph, out_dir)
                 graph_engine.clear()
         if use_matplot:
+            print("Hit 'Enter' to continue...")
             input()
 
     def dump(self, *, output_dir: Path | None, use_matplot: bool, no_trends: bool = False):
@@ -411,6 +412,44 @@ def cumulative_pma_as_pdf(table: pl.DataFrame, *, counter_column: str, counter_c
     return pl.concat(by_cpu_pdf_dfs).collect()
 
 
+def cumulative_pma_as_cdf(table: pl.DataFrame, *, counter_column: str, counter_column_rename: str) -> pl.DataFrame:
+    cumulative_columns = [
+        counter_column,
+        "pmu_enabled_time_us",
+        "pmu_running_time_us",
+    ]
+    final_select = [
+        column
+        for column in table.columns
+        if column not in cumulative_columns
+    ]
+    final_select.extend([counter_column_rename, "span_duration_us"])
+    by_cpu_cdf_dfs = [
+        by_cpu_df.lazy().sort(UPTIME_TIMESTAMP).with_columns(
+            pl.col(counter_column).shift(1, fill_value=0).alias(f"{counter_column}_shifted"),
+            pl.col("pmu_running_time_us").shift(1, fill_value=0).alias("pmu_running_time_us_shifted"),
+            pl.col("pmu_enabled_time_us").shift(1, fill_value=0).alias("pmu_enabled_time_us_shifted"),
+        ).with_columns(
+            (pl.col(counter_column) - pl.col(f"{counter_column}_shifted")).alias(f"{counter_column_rename}_raw"),
+            (pl.col("pmu_running_time_us") - pl.col("pmu_running_time_us_shifted")).alias("span_duration_us"),
+        ).with_columns(
+            (
+                (
+                    pl.col("span_duration_us")
+                ) / (
+                    pl.col("pmu_enabled_time_us") - pl.col("pmu_enabled_time_us_shifted")
+                )
+            ).alias("sampling_scaling"),
+        ).with_columns(
+            (pl.col(f"{counter_column_rename}_raw") * pl.col("sampling_scaling")).alias(f"{counter_column_rename}_pdf"),
+        ).with_columns(
+            pl.col(f"{counter_column_rename}_pdf").cum_sum().alias(counter_column_rename),
+        ).select(final_select)
+        for _, by_cpu_df in table.group_by("cpu")
+    ]
+    return pl.concat(by_cpu_cdf_dfs).collect()
+
+
 class PerfCollectionTable(CollectionTable, Protocol):
 
     @classmethod
@@ -462,6 +501,14 @@ class PerfCollectionTable(CollectionTable, Protocol):
     # the raw data is a cumulative representation, this returns the deltas
     def as_pdf(self) -> pl.DataFrame:
         return cumulative_pma_as_pdf(
+            self.filtered_table(),
+            counter_column=self.cumulative_column_name(),
+            counter_column_rename=self.name(),
+        )
+
+    # the raw data is a cumulative representation, this scales the counts by record time
+    def as_cdf(self) -> pl.DataFrame:
+        return cumulative_pma_as_cdf(
             self.filtered_table(),
             counter_column=self.cumulative_column_name(),
             counter_column_rename=self.name(),
@@ -534,3 +581,64 @@ class RatePerfGraph(CollectionGraph, Protocol):
             trend_graph = trend_graph_type.with_graph_engine(self.graph_engine)
             if trend_graph is not None:
                 trend_graph.plot_trends()
+
+
+class CumulativePerfGraph(CollectionGraph, Protocol):
+
+    graph_engine: GraphEngine
+    _perf_table: PerfCollectionTable
+
+    @classmethod
+    def perf_table_type(cls) -> type[PerfCollectionTable]: ...
+
+    @classmethod
+    def trend_graph(cls) -> type[CollectionGraph] | None:
+        """Returns a graph to use for trend lines."""
+        return None
+
+    @classmethod
+    def base_name(cls) -> str:
+        return f"{cls.perf_table_type().component_name()} Cumulative"
+
+    def name(self) -> str:
+        return f"{self.base_name()} for Collection {self.collection_data.id}"
+
+    def __init__(
+        self,
+        graph_engine: GraphEngine,
+        perf_table: PerfCollectionTable,
+    ):
+        self.graph_engine = graph_engine
+        self._perf_table = perf_table
+
+    @property
+    def collection_data(self) -> CollectionData:
+        return self.graph_engine.collection_data
+
+    def x_axis(self) -> str:
+        return "Benchmark Runtime (sec)"
+
+    def y_axis(self) -> str:
+        return f"{self._perf_table.component_name()} {self._perf_table.measured_event_name()}"
+
+    def plot(self) -> None:
+        cdf_df = self._perf_table.as_cdf()
+        start_uptime_sec = self.collection_data.start_uptime_sec
+
+        # group by and plot by cpu
+        def plot_cumulative(cdf_df: pl.DataFrame) -> None:
+            cdf_df_by_cpu = cdf_df.group_by("cpu")
+            for cpu, cdf_df_group in cdf_df_by_cpu:
+                self.graph_engine.plot(
+                    (
+                        (cdf_df_group.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
+                    ).to_series().to_list(),
+                    (
+                        cdf_df_group.select(self._perf_table.name())
+                    ).to_series().to_list(),
+                    label=f"CPU {cpu[0]}",
+                )
+        plot_cumulative(cdf_df)
+
+    def plot_trends(self) -> None:
+        pass
