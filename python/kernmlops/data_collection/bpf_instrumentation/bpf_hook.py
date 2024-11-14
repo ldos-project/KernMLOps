@@ -2,7 +2,9 @@
 
 
 from data_schema import CollectionTable
-from typing_extensions import Protocol
+from typing_extensions import Final, Protocol
+
+POLL_TIMEOUT_MS: Final[int] = 10
 
 
 class BPFProgram(Protocol):
