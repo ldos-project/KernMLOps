@@ -110,7 +110,7 @@ class FauxBenchmark(Benchmark):
     self.generic_config.generic_setup()
 
   def run(self) -> None:
-    pass
+    print("\nHit Ctrl+C to terminate...")
 
   def poll(self) -> int | None:
     """This benchmark will never self terminate."""
