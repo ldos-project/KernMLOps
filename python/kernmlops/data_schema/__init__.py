@@ -26,11 +26,8 @@ table_types: list[type[CollectionTable]] = [
     QuantaQueuedTable,
     ProcessMetadataTable,
     FileDataTable,
-    perf.DTLBPerfTable,
-    perf.ITLBPerfTable,
-    perf.TLBFlushPerfTable,
     MemoryUsageTable,
-]
+] + list(perf.perf_table_types.values())
 
 def demote(user_id: int | None = None, group_id: int | None = None) -> Callable[[], None]:
     def no_op():
