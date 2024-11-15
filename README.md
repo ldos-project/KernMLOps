@@ -4,6 +4,8 @@ This repository serves as the mono-repo for the KernMLOps research project.
 
 Currently, it only contains scripts for data collection of kernel performance.
 
+See CONTRIBUTING.md for an overview of how to expand this tool.
+
 Quick Setup:
 
 ```shell
