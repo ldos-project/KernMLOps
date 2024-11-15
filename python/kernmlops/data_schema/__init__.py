@@ -2,8 +2,9 @@
 
 import os
 from pwd import getpwnam
-from typing import Callable, Mapping
+from typing import Callable
 
+from data_schema import perf
 from data_schema.file_data import FileDataTable
 from data_schema.memory_usage import MemoryUsageTable
 from data_schema.process_metadata import ProcessMetadataTable
@@ -14,12 +15,10 @@ from data_schema.schema import (
     CollectionGraph,
     CollectionTable,
     GraphEngine,
-    PerfCollectionTable,
     SystemInfoTable,
     collection_id_column,
     cumulative_pma_as_pdf,
 )
-from data_schema.tlb_perf import DTLBPerfTable, ITLBPerfTable, TLBFlushPerfTable
 
 table_types: list[type[CollectionTable]] = [
     SystemInfoTable,
@@ -27,17 +26,11 @@ table_types: list[type[CollectionTable]] = [
     QuantaQueuedTable,
     ProcessMetadataTable,
     FileDataTable,
-    DTLBPerfTable,
-    ITLBPerfTable,
-    TLBFlushPerfTable,
+    perf.DTLBPerfTable,
+    perf.ITLBPerfTable,
+    perf.TLBFlushPerfTable,
     MemoryUsageTable,
 ]
-
-perf_table_types: Mapping[str, type[PerfCollectionTable]] = {
-    DTLBPerfTable.name(): DTLBPerfTable,
-    ITLBPerfTable.name(): ITLBPerfTable,
-    TLBFlushPerfTable.name(): TLBFlushPerfTable,
-}
 
 def demote(user_id: int | None = None, group_id: int | None = None) -> Callable[[], None]:
     def no_op():
@@ -64,7 +57,7 @@ __all__ = [
     "cumulative_pma_as_pdf",
     "demote",
     "table_types",
-    "perf_table_types",
+    "perf",
     "CollectionTable",
     "CollectionData",
     "CollectionGraph",

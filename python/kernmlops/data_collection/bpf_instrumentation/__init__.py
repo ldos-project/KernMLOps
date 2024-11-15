@@ -5,21 +5,21 @@ from typing import Final, Mapping
 from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
 from data_collection.bpf_instrumentation.file_data_hook import FileDataBPFHook
 from data_collection.bpf_instrumentation.memory_usage_hook import MemoryUsageHook
+from data_collection.bpf_instrumentation.perf import (
+    CustomHWConfigManager,
+    PerfBPFHook,
+)
 from data_collection.bpf_instrumentation.process_metadata_hook import (
     ProcessMetadataHook,
 )
 from data_collection.bpf_instrumentation.quanta_runtime_hook import QuantaRuntimeBPFHook
-from data_collection.bpf_instrumentation.tlb_perf_hook import (
-    CustomHWConfigManager,
-    TLBPerfBPFHook,
-)
 
 all_hooks: Final[Mapping[str, type[BPFProgram]]] = {
     FileDataBPFHook.name(): FileDataBPFHook,
     MemoryUsageHook.name(): MemoryUsageHook,
     ProcessMetadataHook.name(): ProcessMetadataHook,
     QuantaRuntimeBPFHook.name(): QuantaRuntimeBPFHook,
-    TLBPerfBPFHook.name(): TLBPerfBPFHook,
+    PerfBPFHook.name(): PerfBPFHook,
 }
 
 

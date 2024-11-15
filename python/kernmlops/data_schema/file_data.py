@@ -1,6 +1,3 @@
-
-
-# from matplotlib import pyplot as plt
 import polars as pl
 from data_schema.schema import (
     UPTIME_TIMESTAMP,

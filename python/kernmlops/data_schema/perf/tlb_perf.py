@@ -1,11 +1,16 @@
 import polars as pl
+from bcc import PerfType
 from data_schema.memory_usage import MemoryUsageGraph
+from data_schema.perf.perf_schema import (
+    CumulativePerfGraph,
+    CustomHWEventID,
+    PerfCollectionTable,
+    PerfHWCacheConfig,
+    RatePerfGraph,
+)
 from data_schema.schema import (
     CollectionGraph,
-    CumulativePerfGraph,
     GraphEngine,
-    PerfCollectionTable,
-    RatePerfGraph,
 )
 
 
@@ -14,6 +19,22 @@ class DTLBPerfTable(PerfCollectionTable):
     @classmethod
     def name(cls) -> str:
         return "dtlb_misses"
+
+    @classmethod
+    def ev_type(cls) -> int:
+        return PerfType.HW_CACHE
+
+    @classmethod
+    def ev_config(cls) -> int:
+      return PerfHWCacheConfig.config(
+        cache=PerfHWCacheConfig.Cache.PERF_COUNT_HW_CACHE_DTLB,
+        op=PerfHWCacheConfig.Op.PERF_COUNT_HW_CACHE_OP_READ,
+        result=PerfHWCacheConfig.Result.PERF_COUNT_HW_CACHE_RESULT_MISS,
+      )
+
+    @classmethod
+    def hw_ids(cls) -> list[CustomHWEventID]:
+        return []
 
     @classmethod
     def component_name(cls) -> str:
@@ -88,6 +109,22 @@ class ITLBPerfTable(PerfCollectionTable):
         return "itlb_misses"
 
     @classmethod
+    def ev_type(cls) -> int:
+        return PerfType.HW_CACHE
+
+    @classmethod
+    def ev_config(cls) -> int:
+      return PerfHWCacheConfig.config(
+        cache=PerfHWCacheConfig.Cache.PERF_COUNT_HW_CACHE_ITLB,
+        op=PerfHWCacheConfig.Op.PERF_COUNT_HW_CACHE_OP_READ,
+        result=PerfHWCacheConfig.Result.PERF_COUNT_HW_CACHE_RESULT_MISS,
+      )
+
+    @classmethod
+    def hw_ids(cls) -> list[CustomHWEventID]:
+        return []
+
+    @classmethod
     def component_name(cls) -> str:
         return "iTLB"
 
@@ -158,6 +195,21 @@ class TLBFlushPerfTable(PerfCollectionTable):
     @classmethod
     def name(cls) -> str:
         return "tlb_flushes"
+
+    @classmethod
+    def ev_type(cls) -> int:
+        return PerfType.RAW
+
+    @classmethod
+    def ev_config(cls) -> int:
+        return 0
+
+    @classmethod
+    def hw_ids(cls) -> list[CustomHWEventID]:
+        return [
+            CustomHWEventID(name="TLB_FLUSHES", umask="All"),
+            CustomHWEventID(name="TLB_FLUSH", umask="STLB_ANY"),
+        ]
 
     @classmethod
     def component_name(cls) -> str:

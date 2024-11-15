@@ -21,4 +21,4 @@ collector_config:
       - memory_usage
       - process_metadata
       - quanta_runtime
-      - tlb_perf
+      - perf
