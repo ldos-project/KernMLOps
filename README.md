@@ -46,6 +46,7 @@ make collect-raw
 You are looking for output that looks like this:
 
 ```shell
+Hit Ctrl+C to terminate...
 Started benchmark faux
 ```
 
