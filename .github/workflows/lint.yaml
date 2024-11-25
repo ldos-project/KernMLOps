@@ -1,11 +1,14 @@
-name: Build
+name: Lint / Pre-commit
+run-name: lint pre-commit performed by @${{ github.triggering_actor }}
 
 on:
   push:
-    branches:
-      - main
-    pull_request:
-      - '**'
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 # Only the latest workflow run is allowed to run for each PR / branch
 concurrency:
@@ -33,3 +36,5 @@ jobs:
         if: steps.cache-venv.outputs.cache-hit != 'true'
       - name: Run Ruff Linter 🚨
         run: . ./.venv/bin/activate && make lint
+      - name: Run pre-commit hooks
+        run: . ./.venv/bin/activate && make hooks && make pre-commit
