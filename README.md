@@ -6,6 +6,10 @@ Currently, it only contains scripts for data collection of kernel performance.
 
 See CONTRIBUTING.md for an overview of how to expand this tool.
 
+WARNING: Do not clone submodules, this will clone the linux kernel.
+Cloning the kernel is prohibitively expensive.
+That submodule is only necessary if you plan to use in-kernel inference.
+
 Quick Setup:
 
 ```shell
