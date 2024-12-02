@@ -26,8 +26,9 @@ print(len(test_df))
 
 
 class BlockIODataset(Dataset):
-    def __init__(self, data_df: pl.DataFrame):
-        self.data = data_df.sort(["device", "ts_uptime_us"]).select([
+    def __init__(self, data_df: pl.DataFrame, device: str):
+        self.device = device
+        raw_data = data_df.sort(["device", "ts_uptime_us"]).select([
             "cpu",
             "device",
             "sector",
@@ -40,9 +41,31 @@ class BlockIODataset(Dataset):
             "block_latency_us",
             "collection_id",
         ]).rows(named=True)
+        feature_data = list[list[float]]()
+        latency_data = list[float]()
+        for index in range(len(raw_data) - 3):
+            predict_index = index + 3
+            predictor_data = raw_data[index:predict_index + 1]
+            actual_block_latency = predictor_data[-1]["block_latency_us"]
+            cleaned_predictor_data = self._flatten_data(predictor_data)
+
+            feature_data.append(cleaned_predictor_data)
+            latency_data.append(actual_block_latency)
+        self.features = torch.tensor(feature_data, dtype=torch.float32, device=device)
+        self.latencies = torch.tensor(latency_data, dtype=torch.float32, device=device)
+
 
     def __len__(self) -> int:
-        return len(self.data) - 3
+        return len(self.features)
+
+    @classmethod
+    def row_length(cls) -> int:
+        return len(cls._flatten_data([
+            cls._null_data(),
+            cls._null_data(),
+            cls._null_data(),
+            cls._null_data(),
+        ]))
 
     @classmethod
     def _null_data(cls) -> Mapping[str, int]:
@@ -89,13 +112,7 @@ class BlockIODataset(Dataset):
 
 
     def __getitem__(self, index: int):
-        predict_index = index + 3
-        predictor_data = self.data[index:predict_index + 1]
-        actual_block_latency = predictor_data[-1]["block_latency_us"]
-        cleaned_predictor_data = self._flatten_data(predictor_data)
-
-        X = torch.tensor(cleaned_predictor_data, dtype=torch.float32)
-        return X, torch.tensor(actual_block_latency, dtype=torch.float32)
+        return self.features[index], self.latencies[index]
 
 
 device = (
@@ -111,20 +128,72 @@ print(f"Using {device} device")
 class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
-        self.flatten = nn.Flatten()
-        hidden_dim =  1024
+        #self.flatten = nn.Flatten()
+        hidden_dim =  256
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(4*10, hidden_dim),
+            nn.Linear(BlockIODataset.row_length(), hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, 1),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.Dropout(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.Dropout(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.Dropout(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.Dropout(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.Dropout(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.Dropout(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 2),
         )
 
     def forward(self, x):
-        x = self.flatten(x)
+        #x = self.flatten(x)
         logits = self.linear_relu_stack(x)
         return logits
 
@@ -182,23 +251,24 @@ def test_loop(dataloader, model, loss_fn):
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
 
-learning_rate = 1e-11
+learning_rate = 1e-4
 epochs = 3
-batch_size = 64
+batch_size = 256
 
+# TODO(Patrick): remove this
 model = NeuralNetwork().to(device)
 loss_fn = nn.L1Loss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 
-#train_data = BlockIODataset(train_df)
-test_data = BlockIODataset(test_df)
+#train_data = BlockIODataset(train_df, device=device)
+test_data = BlockIODataset(test_df, device=device)
 
 print("Loaded dataset")
 
 
-train_dataloader = DataLoader(test_data, batch_size=batch_size)
-test_dataloader = DataLoader(test_data, batch_size=batch_size)
+train_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
 print(model)
 
 
