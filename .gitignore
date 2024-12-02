@@ -187,3 +187,4 @@ module/*.img
 *.symvers
 *.symvers*
 *.order
+.tmp/
