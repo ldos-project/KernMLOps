@@ -3,6 +3,8 @@ from typing import Mapping
 import polars as pl
 import torch
 
+file_path_prefix = "data/tensors"
+
 train_df = pl.read_parquet("data/rainsong_curated/block_io/*.parquet").filter(
     pl.col("device").is_in([
         271581184,
@@ -50,8 +52,8 @@ def convert_parquet_to_tensor(data_df: pl.DataFrame, *, threshold: float, type: 
         latency_data.append([1 if fast_io else 0, 1 if slow_io else 0])
     features = torch.tensor(feature_data, dtype=torch.float32)
     latencies = torch.tensor(latency_data, dtype=torch.float32)
-    torch.save(features, f"data/tensors/rainsong_{type}_features.tensor")
-    torch.save(latencies, f"data/tensors/rainsong_{type}_latencies_{threshold}.tensor")
+    torch.save(features, f"{file_path_prefix}/rainsong_{type}_features.tensor")
+    torch.save(latencies, f"{file_path_prefix}/rainsong_{type}_latencies_{threshold}.tensor")
 
 def _null_data() -> Mapping[str, int]:
     return {
@@ -98,4 +100,4 @@ def _flatten_data(predictor_data: list[Mapping[str, int]]) -> list[int]:
 threshold = int(test_df.select("block_latency_us").quantile(.95, interpolation="nearest").to_series()[0])
 print(f"threshold: {threshold}")
 train_data = convert_parquet_to_tensor(train_df, threshold=threshold, type="train")
-#test_data = convert_parquet_to_tensor(test_df, threshold=threshold, type="test")
+test_data = convert_parquet_to_tensor(test_df, threshold=threshold, type="test")
