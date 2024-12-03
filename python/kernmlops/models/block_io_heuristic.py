@@ -1,12 +1,11 @@
 import random
-from typing import Callable, Mapping
+from typing import Mapping
 
 import polars as pl
-import torch
 
 file_path_prefix = "data/tensors"
 
-train_df = pl.read_parquet("data/rainsong_curated/block_io/*.parquet").filter(
+train_df = pl.read_parquet("data/rainsong_test_curated/block_io/*.parquet").filter(
     pl.col("device").is_in([
         271581184,
         271581185,
@@ -25,8 +24,8 @@ test_df = pl.read_parquet("data/rainsong_test_curated/block_io/*.parquet").filte
 print(len(test_df))
 
 
-def convert_parquet_to_tensor(data_df: pl.DataFrame, *, transformer: Callable[[list[Mapping[str, int]]], list[int] | None], threshold: float, type: str, suffix: str = "", even: bool = False):
-    raw_data = data_df.sort(["device", "ts_uptime_us"]).select([
+def test_heuristic(data_df: pl.DataFrame, *, threshold: float):
+    raw_data = data_df.select([
         "cpu",
         "device",
         "sector",
@@ -38,36 +37,67 @@ def convert_parquet_to_tensor(data_df: pl.DataFrame, *, transformer: Callable[[l
         "queue_length_4k_ios",
         "block_latency_us",
         "collection_id",
-    ]).rows(named=True)
-    feature_data = list[list[float]]()
-    latency_data = list[list[float]]()
+    ])
+    total_correct = {
+        126: 0,
+        127: 0,
+        128: 0,
+        250: 0,
+        254: 0,
+        255: 0,
+        256: 0,
+        300: 0,
+        350: 0,
+        400: 0,
+        450: 0,
+        500: 0,
+        600: 0,
+        750: 0,
+        1000: 0,
+        1250: 0,
+        1500: 0,
+        1750: 0,
+        2000: 0,
+    }
+    segments = total_correct.keys()
+    total_incorrect_slow = {
+        key: 0
+        for key in segments
+    }
+    total_incorrect_fast = {
+        key: 0
+        for key in segments
+    }
+    total_count = 0
     total_fast = 0
     total_slow = 0
-    for index in range(len(raw_data) - 3):
-        predict_index = index + 3
-        predictor_data = raw_data[index:predict_index + 1]
-        actual_block_latency = predictor_data[-1]["block_latency_us"]
+    for row in raw_data.iter_rows(named=True):
+        actual_block_latency = row["block_latency_us"]
         fast_io = actual_block_latency < threshold
         slow_io = not fast_io
-        if even and fast_io and random.randint(0, 20) < 18:
+        if fast_io and random.randint(0, 20) < 18:
             continue
-        cleaned_predictor_data = transformer(predictor_data)
-        if not cleaned_predictor_data:
+        exploded_flags = _explode_flags(row["block_io_flags"])
+        if exploded_flags[0] != 0:
             continue
+        total_count += 1
         if fast_io:
             total_fast += 1
         if slow_io:
             total_slow += 1
 
-        feature_data.append(cleaned_predictor_data)
-        latency_data.append([1 if fast_io else 0, 1 if slow_io else 0])
-    features = torch.tensor(feature_data, dtype=torch.float32)
-    latencies = torch.tensor(latency_data, dtype=torch.float32)
-    even_extension = "even." if even else ""
+        for segment_threshold in segments:
+            expect_slow = int(row["queue_length_segment_ios"]) > int(segment_threshold)
+            if expect_slow == slow_io:
+                total_correct[segment_threshold] = total_correct[segment_threshold] + 1
+            elif expect_slow:
+                total_incorrect_slow[segment_threshold] = total_incorrect_slow[segment_threshold] + 1
+            else:
+                total_incorrect_fast[segment_threshold] = total_incorrect_fast[segment_threshold] + 1
     print(f"Fast IO: {total_fast}")
     print(f"Slow IO: {total_slow}")
-    torch.save(features, f"{file_path_prefix}/rainsong_{type}_features.flags.{even_extension}{suffix}tensor")
-    torch.save(latencies, f"{file_path_prefix}/rainsong_{type}_latencies_{threshold}.flags.{even_extension}{suffix}tensor")
+    for segment_threshold, correct in total_correct.items():
+        print(f"Test Error for Segment threshold {segment_threshold}: \n Accuracy: {(100*correct/total_count):>0.1f}% Falsely Slow: {(100*total_incorrect_slow[segment_threshold]/total_count):>0.1f}%, Falsely Fast: {(100*total_incorrect_fast[segment_threshold]/total_count):>0.1f}%\n")
 
 req_opf = {
     0: "Read",
@@ -176,9 +206,10 @@ def _reads_only(predictor_data: list[Mapping[str, int]]) -> list[int] | None:
     return data
 
 
-threshold = int(test_df.select("block_latency_us").quantile(.95, interpolation="nearest").to_series()[0])
+threshold = 750 # 350 #p90 #int(test_df.select("block_latency_us").quantile(.9, interpolation="nearest").to_series()[0])
 print(f"threshold: {threshold}")
-convert_parquet_to_tensor(train_df, transformer=_flatten_data, threshold=threshold, type="train", even=False)
-convert_parquet_to_tensor(test_df, transformer=_flatten_data, threshold=threshold, type="test", even=True)
-convert_parquet_to_tensor(train_df, transformer=_reads_only, threshold=threshold, type="train", suffix="reads_only.", even=False)
-convert_parquet_to_tensor(test_df, transformer=_reads_only, threshold=threshold, type="test", suffix="reads_only.", even=False)
+percentiles = [.50, .60, .70, .75, .80, .85, .90, .95, .99]
+for percentile in percentiles:
+    latency_threshold = int(test_df.select("block_latency_us").quantile(percentile, interpolation="nearest").to_series()[0])
+    print(f"p{percentile}: {latency_threshold}us")
+test_heuristic(train_df, threshold=threshold)
