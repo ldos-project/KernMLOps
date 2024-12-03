@@ -1,4 +1,5 @@
 import math
+import uuid
 
 import torch
 from torch import nn
@@ -30,12 +31,14 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
         #self.flatten = nn.Flatten()
-        hidden_dim =  64
+        hidden_dim =  256
         self.linear_relu_stack = nn.Sequential(
             nn.Linear(4*10, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.Dropout(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 2),
@@ -67,7 +70,7 @@ def train_loop(dataloader, model: NeuralNetwork, loss_fn, optimizer):
         optimizer.step()
         optimizer.zero_grad()
 
-        if batch % 5000 == 0:
+        if batch % 500 == 0:
             loss, current = loss.item(), batch * batch_size + len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
@@ -101,18 +104,19 @@ def test_loop(dataloader, model, loss_fn):
 
 
 learning_rate = 1e-5
-epochs = 3
+epochs = 10
 batch_size = 1024
 
 model = NeuralNetwork().to(device)
-loss_fn = nn.CrossEntropyLoss()
+pos_weights = torch.tensor([1, 19], device=device)
+loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weights)
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 file_path_prefix = "data/tensors"
 train_feature_tensor = torch.load(f"{file_path_prefix}/rainsong_train_features.tensor")
 train_latency_tensor = torch.load(f"{file_path_prefix}/rainsong_train_latencies_1460.tensor")
-test_feature_tensor = torch.load(f"{file_path_prefix}/rainsong_test_features.tensor")
-test_latency_tensor = torch.load(f"{file_path_prefix}/rainsong_test_latencies_1460.tensor")
+test_feature_tensor = torch.load(f"{file_path_prefix}/rainsong_test_features.even.tensor")
+test_latency_tensor = torch.load(f"{file_path_prefix}/rainsong_test_latencies_1460.even.tensor")
 
 train_data = BlockIODataset(features=train_feature_tensor, latencies=train_latency_tensor, device=device)
 test_data = BlockIODataset(features=test_feature_tensor, latencies=test_latency_tensor, device=device)
@@ -129,3 +133,6 @@ for t in range(epochs):
     train_loop(train_dataloader, model, loss_fn, optimizer)
     test_loop(test_dataloader, model, loss_fn)
 print("Done!")
+model_file_path = f"{file_path_prefix}/models/rainsong_block_model_{epochs}.{uuid.uuid4()}.model"
+print(f"Writing model to {model_file_path}")
+torch.save(model, model_file_path)
