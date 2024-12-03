@@ -108,17 +108,18 @@ model = NeuralNetwork().to(device)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-train_feature_tensor = torch.load("data/tensors/rainsong_train_features.tensor")
-train_latency_tensor = torch.load("data/tensors/rainsong_train_latencies_1460.tensor")
-test_feature_tensor = torch.load("data/tensors/rainsong_test_features.tensor")
-test_latency_tensor = torch.load("data/tensors/rainsong_test_latencies_1460.tensor")
+file_path_prefix = "data/tensors"
+train_feature_tensor = torch.load(f"{file_path_prefix}/rainsong_train_features.tensor")
+train_latency_tensor = torch.load(f"{file_path_prefix}/rainsong_train_latencies_1460.tensor")
+test_feature_tensor = torch.load(f"{file_path_prefix}/rainsong_test_features.tensor")
+test_latency_tensor = torch.load(f"{file_path_prefix}/rainsong_test_latencies_1460.tensor")
 
 train_data = BlockIODataset(features=train_feature_tensor, latencies=train_latency_tensor, device=device)
 test_data = BlockIODataset(features=test_feature_tensor, latencies=test_latency_tensor, device=device)
 
 print("Loaded dataset")
 
-train_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
 print(model)
 
