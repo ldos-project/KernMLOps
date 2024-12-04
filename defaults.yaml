@@ -11,14 +11,21 @@ benchmark_config:
   gap:
     gap_benchmark: pr
     trials: 2
+  stress_ng:
+    stress_ng_benchmark: stress-ng
+    args:
+      - --vm
+      - "1"
+      - --vm-ops
+      - "1000000"
+      - --timeout
+      - 10s
 collector_config:
   generic:
-    poll_rate: 0.5
+    poll_rate: 0.1
     output_dir: data
     output_graphs: false
     hooks:
-      - file_data
       - memory_usage
-      - process_metadata
-      - quanta_runtime
+      - disk_usage
       - perf

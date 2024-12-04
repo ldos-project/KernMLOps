@@ -1,22 +1,22 @@
 import shutil
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal, cast
 
 from data_schema import GraphEngine, demote
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
 from kernmlops_benchmark.errors import (
-  BenchmarkNotInCollectionData,
-  BenchmarkNotRunningError,
-  BenchmarkRunningError,
+    BenchmarkNotInCollectionData,
+    BenchmarkNotRunningError,
+    BenchmarkRunningError,
 )
 from kernmlops_config import ConfigBase
 
 
 @dataclass(frozen=True)
 class StressNgBenchmarkConfig(ConfigBase):
-  stress_ng_benchmark: Literal["stress-ng"] = "stress-ng"
-  trials: int = 2
+    stress_ng_benchmark: Literal["stress-ng"] = "stress-ng"
+    args: list[str] = field(default_factory=list)
 
 
 class StressNgBenchmark(Benchmark):
@@ -52,16 +52,10 @@ class StressNgBenchmark(Benchmark):
     def run(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
+
+        print([self.benchmark_path] + self.config.args)
         self.process = subprocess.Popen(
-            [
-                self.benchmark_path,
-                "--vm",
-                "1",
-                "--vm-ops",
-                "1000000",
-                "--timeout",
-                "10s",
-            ],
+            [self.benchmark_path] + self.config.args,
             preexec_fn=demote(),
             stdout=subprocess.DEVNULL,
         )
