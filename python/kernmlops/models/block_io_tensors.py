@@ -221,6 +221,21 @@ class ReadsOnlyFilter(RowFilter):
         return (row["block_io_flags"] & REQ_OP_MASK) != 0
 
 
+class EvenReadsOnlyFilter(RowFilter):
+
+    @classmethod
+    def name(cls) -> str:
+        return "even_reads_only"
+
+    @classmethod
+    def skip_row(cls, row: Mapping[str, Any]) -> bool:
+        if (row["block_io_flags"] & REQ_OP_MASK) != 0:
+            return True
+        if row["block_latency_us"] < 320:
+            return random.randint(0, 10) < 9 # 90% chance to skip
+        return False
+
+
 def _null_data() -> Mapping[str, int]:
     return {
         "cpu": 0,
@@ -237,6 +252,13 @@ def _null_data() -> Mapping[str, int]:
     }
 
 
+def _check_already_generated_files(files: list[Path]) -> bool:
+    for file in files:
+        if not file.exists():
+            return False
+    return True
+
+
 class BlockIOTransformer(DatasetTransformer):
 
     @classmethod
@@ -249,7 +271,7 @@ class BlockIOTransformer(DatasetTransformer):
 
     @classmethod
     def row_filters(cls) -> list[RowFilter]:
-        return [NoopFilter(), EvenFastReadFilter(), ReadsOnlyFilter()]
+        return [NoopFilter(), EvenFastReadFilter(), ReadsOnlyFilter(), EvenReadsOnlyFilter()]
 
     @classmethod
     def row_prediction_transformers(cls) -> list[RowPrediction]:
@@ -279,6 +301,17 @@ class BlockIOTransformer(DatasetTransformer):
             row_transformer_dir = f"{self.row_transformer().feature_length()}_{self.num_rows()}_{self.row_transformer().name()}"
             out_dir = root_out_dir / self.name() / row_transformer_dir / row_filter.name()
             out_dir.mkdir(parents=True, exist_ok=True)
+            features_out_file = out_dir / f"{tensor_type}_features.tensor"
+            predictions_out_files = [
+                out_dir / f"{tensor_type}_predictions_{row_prediction.name()}.tensor"
+                for row_prediction in self.row_prediction_transformers()
+            ]
+            if _check_already_generated_files(
+                [features_out_file] + predictions_out_files,
+            ):
+                print(f"{str(features_out_file)} already generated, skipping...")
+                continue
+
 
             feature_data = list[list[float]]()
             latency_data = {
@@ -312,7 +345,7 @@ class BlockIOTransformer(DatasetTransformer):
                 latency_name: torch.tensor(latency_datum, dtype=torch.float32)
                 for latency_name, latency_datum in latency_data.items()
             }
-            torch.save(features, out_dir / f"{tensor_type}_features.tensor")
+            torch.save(features, features_out_file)
             for prediction_name, latencies in latencies.items():
                 torch.save(latencies, out_dir / f"{tensor_type}_predictions_{prediction_name}.tensor")
 

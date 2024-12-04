@@ -1,3 +1,4 @@
+import random
 from typing import Mapping
 
 import polars as pl
@@ -72,8 +73,8 @@ def test_heuristic(data_df: pl.DataFrame, *, threshold: float):
         actual_block_latency = row["block_latency_us"]
         fast_io = actual_block_latency < threshold
         slow_io = not fast_io
-        #if fast_io and random.randint(0, 20) < 18:
-        #    continue
+        if fast_io and random.randint(0, 20) < 18:
+            continue
         exploded_flags = _explode_flags(row["block_io_flags"])
         if exploded_flags[0] != 0:
             continue

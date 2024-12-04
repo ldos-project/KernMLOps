@@ -111,8 +111,8 @@ loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weights)
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 tensors_path = "data/tensors"
-features_subdirectory = "block_io/3_4_segment_spartan_flags"
-train_dataset = "even" # "all" # "reads_only"
+features_subdirectory = "block_io/6_4_segment_minimal_flags"
+train_dataset = "even" # "all" # "even_reads_only" # "reads_only"
 latency_cutoff = "p95_1460us"
 
 file_path_prefix = f"{tensors_path}/{features_subdirectory}"
@@ -122,7 +122,7 @@ train_predictions_path = f"{file_path_prefix}/{train_dataset}/train_predictions_
 train_feature_tensor = torch.load(train_feature_path)
 train_latency_tensor = torch.load(train_predictions_path)
 
-test_datasets = ["all", "reads_only", "even"]
+test_datasets = ["all", "reads_only", "even", "even_reads_only"]
 test_feature_paths_tensors = {
     test_dataset: torch.load(f"{file_path_prefix}/{test_dataset}/test_features.tensor")
     for test_dataset in test_datasets
