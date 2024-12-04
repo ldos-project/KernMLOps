@@ -1,5 +1,6 @@
 import math
 import uuid
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -159,6 +160,8 @@ for t in range(epochs):
         test_loop(test_dataloader, model, loss_fn, test_dataset)
 
 print("Done!")
-model_file_path = f"{file_path_prefix}/models/rainsong_block_model_{epochs}.{uuid.uuid4()}.model"
-print(f"Writing model to {model_file_path}")
+model_dir = Path(f"{file_path_prefix}/{train_dataset}/models")
+model_dir.mkdir(parents=True, exist_ok=True)
+model_file_path = model_dir / f"/epochs_{epochs}.{uuid.uuid4()}.model"
+print(f"Writing model to {str(model_file_path)}")
 torch.save(model, model_file_path)
