@@ -95,7 +95,7 @@ class SegmentSpartanTransformer(RowTransformer):
 
     @classmethod
     def name(cls) -> str:
-        return "segment_spartan_flags"
+        return "segment_spartan"
 
     @classmethod
     def feature_length(cls) -> int:
