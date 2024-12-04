@@ -31,19 +31,9 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
         #self.flatten = nn.Flatten()
-        hidden_dim = 128
+        hidden_dim = 256
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(4*18, hidden_dim),
-            nn.RReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.RReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.RReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.Dropout(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.RReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(4*3, hidden_dim),
             nn.RReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.RReLU(),
@@ -120,36 +110,54 @@ pos_weights = torch.tensor([1, 19], device=device)
 loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weights)
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-file_path_prefix = "/var/local/pkenney/tensors"
-train_feature_tensor = torch.load(f"{file_path_prefix}/rainsong_train_features.flags.reduced_reads.tensor")
-train_latency_tensor = torch.load(f"{file_path_prefix}/rainsong_train_latencies_350.flags.reduced_reads.tensor")
-test_feature_tensor = torch.load(f"{file_path_prefix}/rainsong_test_features.flags.tensor")
-test_latency_tensor = torch.load(f"{file_path_prefix}/rainsong_test_latencies_350.flags.tensor")
-#test_feature_reads_tensor = torch.load(f"{file_path_prefix}/rainsong_test_features.flags.reads_only.tensor")
-#test_latency_reads_tensor = torch.load(f"{file_path_prefix}/rainsong_test_latencies_350.flags.reads_only.tensor")
-test_feature_even_reads_tensor = torch.load(f"{file_path_prefix}/rainsong_test_features.flags.even.reads_only.tensor")
-test_latency_even_reads_tensor = torch.load(f"{file_path_prefix}/rainsong_test_latencies_350.flags.even.reads_only.tensor")
+tensors_path = "data/tensors"
+features_subdirectory = "block_io/3_4_segment_spartan_flags"
+train_dataset = "even" # "all" # "reads_only"
+latency_cutoff = "p95_1460us"
+
+file_path_prefix = f"{tensors_path}/{features_subdirectory}"
+train_feature_path = f"{file_path_prefix}/{train_dataset}/train_features.tensor"
+train_predictions_path = f"{file_path_prefix}/{train_dataset}/train_predictions_{latency_cutoff}.tensor"
+
+train_feature_tensor = torch.load(train_feature_path)
+train_latency_tensor = torch.load(train_predictions_path)
+
+test_datasets = ["all", "reads_only", "even"]
+test_feature_paths_tensors = {
+    test_dataset: torch.load(f"{file_path_prefix}/{test_dataset}/test_features.tensor")
+    for test_dataset in test_datasets
+}
+test_predictions_tensors = {
+    test_dataset: torch.load(f"{file_path_prefix}/{test_dataset}/test_predictions_{latency_cutoff}.tensor")
+    for test_dataset in test_datasets
+}
 
 train_data = BlockIODataset(features=train_feature_tensor, latencies=train_latency_tensor, device=device)
-test_data = BlockIODataset(features=test_feature_tensor, latencies=test_latency_tensor, device=device)
-#test_read_data = BlockIODataset(features=test_feature_reads_tensor, latencies=test_latency_reads_tensor, device=device)
-test_even_read_data = BlockIODataset(features=test_feature_even_reads_tensor, latencies=test_latency_even_reads_tensor, device=device)
+test_data = {
+    test_dataset: BlockIODataset(
+        features=test_feature_paths_tensors[test_dataset],
+        latencies=test_predictions_tensors[test_dataset],
+        device=device
+    )
+    for test_dataset in test_datasets
+}
 
 print("Loaded dataset")
 
 train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
-#test_read_dataloader = DataLoader(test_read_data, batch_size=batch_size, shuffle=True)
-test_even_read_dataloader = DataLoader(test_even_read_data, batch_size=batch_size, shuffle=True)
+test_dataloaders = {
+    test_dataset: DataLoader(test_datum, batch_size=batch_size, shuffle=True)
+    for test_dataset, test_datum in test_data.items()
+}
 print(model)
 
 
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     train_loop(train_dataloader, model, loss_fn, optimizer)
-    test_loop(test_dataloader, model, loss_fn, "all")
-    #test_loop(test_read_dataloader, model, loss_fn, "reads only")
-    test_loop(test_even_read_dataloader, model, loss_fn, "even reads only")
+    for test_dataset, test_dataloader in test_dataloaders.items():
+        test_loop(test_dataloader, model, loss_fn, test_dataset)
+
 print("Done!")
 model_file_path = f"{file_path_prefix}/models/rainsong_block_model_{epochs}.{uuid.uuid4()}.model"
 print(f"Writing model to {model_file_path}")
