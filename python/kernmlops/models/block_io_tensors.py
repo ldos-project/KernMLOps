@@ -1,71 +1,9 @@
 import random
-from typing import Callable, Mapping
+from pathlib import Path
+from typing import Any, Mapping, Protocol
 
 import polars as pl
 import torch
-
-file_path_prefix = "data/tensors"
-
-train_df = pl.read_parquet("data/rainsong_curated/block_io/*.parquet").filter(
-    pl.col("device").is_in([
-        271581184,
-        271581185,
-        271581186,
-    ])
-)
-
-test_df = pl.read_parquet("data/rainsong_test_curated/block_io/*.parquet").filter(
-    pl.col("device").is_in([
-        271581184,
-        271581185,
-        271581186,
-    ])
-)
-
-
-def convert_parquet_to_tensor(data_df: pl.DataFrame, *, transformer: Callable[[list[Mapping[str, int]]], list[int] | None], threshold: float, type: str, suffix: str = "", even: bool = False):
-    raw_data = data_df.sort(["device", "ts_uptime_us"]).select([
-        "cpu",
-        "device",
-        "sector",
-        "segments",
-        "block_io_bytes",
-        "ts_uptime_us",
-        "block_io_flags",
-        "queue_length_segment_ios",
-        "queue_length_4k_ios",
-        "block_latency_us",
-        "collection_id",
-    ]).rows(named=True)
-    feature_data = list[list[float]]()
-    latency_data = list[list[float]]()
-    total_fast = 0
-    total_slow = 0
-    for index in range(len(raw_data) - 3):
-        predict_index = index + 3
-        predictor_data = raw_data[index:predict_index + 1]
-        actual_block_latency = predictor_data[-1]["block_latency_us"]
-        fast_io = actual_block_latency < threshold
-        slow_io = not fast_io
-        if even and fast_io and random.randint(0, 20) < 8:
-            continue
-        cleaned_predictor_data = transformer(predictor_data)
-        if not cleaned_predictor_data:
-            continue
-        if fast_io:
-            total_fast += 1
-        if slow_io:
-            total_slow += 1
-
-        feature_data.append(cleaned_predictor_data)
-        latency_data.append([1 if fast_io else 0, 1 if slow_io else 0])
-    features = torch.tensor(feature_data, dtype=torch.float32)
-    latencies = torch.tensor(latency_data, dtype=torch.float32)
-    even_extension = "reduced_reads." if even else ""
-    print(f"Fast IO: {total_fast}")
-    print(f"Slow IO: {total_slow}")
-    torch.save(features, f"{file_path_prefix}/rainsong_{type}_features.flags.{even_extension}{suffix}tensor")
-    torch.save(latencies, f"{file_path_prefix}/rainsong_{type}_latencies_{threshold}.flags.{even_extension}{suffix}tensor")
 
 req_opf = {
     0: "Read",
@@ -102,6 +40,187 @@ def _explode_flags(flags: int) -> list[int]:
     exploded_flags.append(1 if flags & REQ_NOWAIT else 0)
     return exploded_flags # length 9
 
+
+class RowTransformer(Protocol):
+
+    @classmethod
+    def name(cls) -> str: ...
+
+    @classmethod
+    def feature_length(cls) -> int: ...
+
+    @classmethod
+    def convert_row(cls, row: Mapping[str, Any], present_ts_us: int) -> list[float]: ...
+
+
+class RowFilter(Protocol):
+
+    @classmethod
+    def name(cls) -> str: ...
+
+    @classmethod
+    def skip_row(cls, row: Mapping[str, Any]) -> bool: ...
+
+
+class RowPrediction(Protocol):
+
+    @classmethod
+    def name(cls) -> str: ...
+
+    @classmethod
+    def prediction(cls, row: Mapping[str, Any]) -> list[float]: ...
+
+
+class DatasetTransformer(Protocol):
+
+    @classmethod
+    def name(cls) -> str: ...
+
+    @classmethod
+    def row_transformer(cls) -> RowTransformer: ...
+
+    @classmethod
+    def row_filters(cls) -> list[RowFilter]: ...
+
+    @classmethod
+    def row_prediction_transformers(cls) -> list[RowPrediction]: ...
+
+    @classmethod
+    def num_rows(cls) -> int: ...
+
+    def convert_and_save_parquet(self, data_df: pl.DataFrame, tensor_dir: str) -> str: ...
+
+
+class SegmentSpartanTransformer(RowTransformer):
+
+    @classmethod
+    def name(cls) -> str:
+        return "segment_spartan_flags"
+
+    @classmethod
+    def feature_length(cls) -> int:
+        return 3
+
+    @classmethod
+    def convert_row(cls, row: Mapping[str, Any], present_ts_us: int) -> list[float]:
+        data = list[float]()
+        data.append(row["segments"])
+        data.append(row["queue_length_segment_ios"])
+        data.append(row["block_latency_us"] if row["ts_uptime_us"] + row["block_latency_us"] < present_ts_us else 0)
+        return data
+
+
+class SegmentMinimalFlagsTransformer(RowTransformer):
+
+    @classmethod
+    def name(cls) -> str:
+        return "segment_minimal_flags"
+
+    @classmethod
+    def feature_length(cls) -> int:
+        return 6
+
+    @classmethod
+    def convert_row(cls, row: Mapping[str, Any], present_ts_us: int) -> list[float]:
+        data = list[float]()
+        data.append(row["device"])
+        data.append(row["segments"])
+        data.append(-(row["ts_uptime_us"] - present_ts_us) if row["ts_uptime_us"] > 0 else 0)
+        data.append(row["block_io_flags"] & REQ_OP_MASK)
+        data.append(row["queue_length_segment_ios"])
+        data.append(row["block_latency_us"] if row["ts_uptime_us"] + row["block_latency_us"] < present_ts_us else 0)
+        return data
+
+
+class P95Prediction(RowPrediction):
+
+    @classmethod
+    def threshold(cls) -> int:
+        return 1460
+
+    @classmethod
+    def name(cls) -> str:
+        return f"p95_{cls.threshold()}us"
+
+    @classmethod
+    def prediction(cls, row: Mapping[str, Any]) -> list[float]:
+        actual_block_latency = row["block_latency_us"]
+        fast_io = actual_block_latency < cls.threshold()
+        slow_io = not fast_io
+        return [1 if fast_io else 0, 1 if slow_io else 0]
+
+
+class P90Prediction(RowPrediction):
+
+    @classmethod
+    def threshold(cls) -> int:
+        return 320
+
+    @classmethod
+    def name(cls) -> str:
+        return f"p90_{cls.threshold()}us"
+
+    @classmethod
+    def prediction(cls, row: Mapping[str, Any]) -> list[float]:
+        actual_block_latency = row["block_latency_us"]
+        fast_io = actual_block_latency < cls.threshold()
+        slow_io = not fast_io
+        return [1 if fast_io else 0, 1 if slow_io else 0]
+
+
+class P85Prediction(RowPrediction):
+
+    @classmethod
+    def threshold(cls) -> int:
+        return 160
+
+    @classmethod
+    def name(cls) -> str:
+        return f"p85_{cls.threshold()}us"
+
+    @classmethod
+    def prediction(cls, row: Mapping[str, Any]) -> list[float]:
+        actual_block_latency = row["block_latency_us"]
+        fast_io = actual_block_latency < cls.threshold()
+        slow_io = not fast_io
+        return [1 if fast_io else 0, 1 if slow_io else 0]
+
+
+class NoopFilter(RowFilter):
+
+    @classmethod
+    def name(cls) -> str:
+        return "all"
+
+    @classmethod
+    def skip_row(cls, row: Mapping[str, Any]) -> bool:
+        return False
+
+
+class EvenFastReadFilter(RowFilter):
+
+    @classmethod
+    def name(cls) -> str:
+        return "even"
+
+    @classmethod
+    def skip_row(cls, row: Mapping[str, Any]) -> bool:
+        if row["block_latency_us"] < 320:
+            return random.randint(0, 10) < 9 # 90% chance to skip
+        return False
+
+
+class ReadsOnlyFilter(RowFilter):
+
+    @classmethod
+    def name(cls) -> str:
+        return "reads_only"
+
+    @classmethod
+    def skip_row(cls, row: Mapping[str, Any]) -> bool:
+        return (row["block_io_flags"] & REQ_OP_MASK) != 0
+
+
 def _null_data() -> Mapping[str, int]:
     return {
         "cpu": 0,
@@ -113,71 +232,109 @@ def _null_data() -> Mapping[str, int]:
         "block_io_flags": 0,
         "queue_length_segment_ios": 0,
         "queue_length_4k_ios": 0,
-        "block_latency_us": 0, # consider making this large
+        "block_latency_us": 10_000,
         "collection_id": 0,
     }
 
-def _flatten_data(predictor_data: list[Mapping[str, int]]) -> list[int] | None:
-    data = list[int]()
-    start_ts_us = predictor_data[-1]["ts_uptime_us"]
-    device = predictor_data[-1]["device"]
-    collection_id = predictor_data[-1]["collection_id"]
 
-    def _append_row(row: Mapping[str, int]):
-        data.append(row["cpu"])
-        data.append(row["device"])
-        data.append(row["sector"])
-        data.append(row["segments"])
-        data.append(row["block_io_bytes"])
-        data.append(-(row["ts_uptime_us"] - start_ts_us) if row["ts_uptime_us"] > 0 else 0)
-        data.extend(_explode_flags(row["block_io_flags"]))
-        data.append(row["queue_length_segment_ios"])
-        data.append(row["queue_length_4k_ios"])
-        data.append(row["block_latency_us"] if row["ts_uptime_us"] + row["block_latency_us"] < start_ts_us else 0)
+class BlockIOTransformer(DatasetTransformer):
 
-    for row in predictor_data:
-        if row["device"] == device and row["collection_id"] == collection_id:
-            _append_row(row)
-        else:
-            _append_row(_null_data())
+    @classmethod
+    def name(cls) -> str:
+        return "block_io"
 
-    return data
+    @classmethod
+    def row_transformer(cls) -> RowTransformer:
+        return SegmentSpartanTransformer()
 
-def _reads_only(predictor_data: list[Mapping[str, int]]) -> list[int] | None:
-    data = list[int]()
-    start_ts_us = predictor_data[-1]["ts_uptime_us"]
-    device = predictor_data[-1]["device"]
-    collection_id = predictor_data[-1]["collection_id"]
-    exploded_flags = _explode_flags(predictor_data[-1]["block_io_flags"])
-    # only include reads
-    if exploded_flags[0] != 0:
-        return None
+    @classmethod
+    def row_filters(cls) -> list[RowFilter]:
+        return [NoopFilter(), EvenFastReadFilter(), ReadsOnlyFilter()]
 
-    def _append_row(row: Mapping[str, int]):
-        data.append(row["cpu"])
-        data.append(row["device"])
-        data.append(row["sector"])
-        data.append(row["segments"])
-        data.append(row["block_io_bytes"])
-        data.append(-(row["ts_uptime_us"] - start_ts_us) if row["ts_uptime_us"] > 0 else 0)
-        data.extend(_explode_flags(row["block_io_flags"]))
-        data.append(row["queue_length_segment_ios"])
-        data.append(row["queue_length_4k_ios"])
-        data.append(row["block_latency_us"] if row["ts_uptime_us"] + row["block_latency_us"] < start_ts_us else 0)
+    @classmethod
+    def row_prediction_transformers(cls) -> list[RowPrediction]:
+        return [P85Prediction(), P90Prediction(), P95Prediction()]
 
-    for row in predictor_data:
-        if row["device"] == device and row["collection_id"] == collection_id:
-            _append_row(row)
-        else:
-            _append_row(_null_data())
+    @classmethod
+    def num_rows(cls) -> int:
+        return 4
 
-    return data
+    def convert_and_save_parquet(self, data_df: pl.DataFrame, *, tensor_type: str, tensor_dir: str) -> str:
+        root_out_dir = Path(tensor_dir)
+        raw_data = data_df.sort(["device", "ts_uptime_us"]).select([
+            "cpu",
+            "device",
+            "sector",
+            "segments",
+            "block_io_bytes",
+            "ts_uptime_us",
+            "block_io_flags",
+            "queue_length_segment_ios",
+            "queue_length_4k_ios",
+            "block_latency_us",
+            "collection_id",
+        ]).rows(named=True)
+
+        for row_filter in self.row_filters():
+            row_transformer_dir = f"{self.row_transformer().feature_length()}_{self.num_rows()}_{self.row_transformer().name()}"
+            out_dir = root_out_dir / self.name() / row_transformer_dir / row_filter.name()
+            out_dir.mkdir(parents=True, exist_ok=True)
+
+            feature_data = list[list[float]]()
+            latency_data = {
+                row_prediction.name(): list[list[float]]()
+                for row_prediction in self.row_prediction_transformers()
+            }
+            for index in range(len(raw_data) - self.num_rows() + 1):
+                predict_index = index + self.num_rows() - 1
+                predictor_data = raw_data[index:predict_index + 1]
+                if row_filter.skip_row(predictor_data[-1]):
+                    continue
+
+                cleaned_data = list[int]()
+                start_ts_us = predictor_data[-1]["ts_uptime_us"]
+                device = predictor_data[-1]["device"]
+                collection_id = predictor_data[-1]["collection_id"]
+
+                for row in predictor_data:
+                    if row["device"] == device and row["collection_id"] == collection_id:
+                        cleaned_data.extend(self.row_transformer().convert_row(row, present_ts_us=start_ts_us))
+                    else:
+                        cleaned_data.extend(self.row_transformer().convert_row(_null_data(), present_ts_us=start_ts_us))
+
+                feature_data.append(cleaned_data)
+                for row_prediction in self.row_prediction_transformers():
+                    latency_data[row_prediction.name()].append(
+                        row_prediction.prediction(predictor_data[-1])
+                    )
+            features = torch.tensor(feature_data, dtype=torch.float32)
+            latencies = {
+                latency_name: torch.tensor(latency_datum, dtype=torch.float32)
+                for latency_name, latency_datum in latency_data.items()
+            }
+            torch.save(features, out_dir / f"{tensor_type}_features.tensor")
+            for prediction_name, latencies in latencies.items():
+                torch.save(latencies, out_dir / f"{tensor_type}_predictions_{prediction_name}.tensor")
 
 
-threshold = 350 #int(test_df.select("block_latency_us").quantile(.95, interpolation="nearest").to_series()[0])
-print(f"threshold: {threshold}")
-#convert_parquet_to_tensor(train_df, transformer=_reads_only, threshold=threshold, type="train", suffix="reads_only.", even=True)
-#convert_parquet_to_tensor(test_df, transformer=_reads_only, threshold=threshold, type="test", suffix="reads_only.", even=False)
-#convert_parquet_to_tensor(test_df, transformer=_reads_only, threshold=threshold, type="test", suffix="reads_only.", even=True)
-#convert_parquet_to_tensor(train_df, transformer=_flatten_data, threshold=threshold, type="train", even=True)
-convert_parquet_to_tensor(test_df, transformer=_flatten_data, threshold=threshold, type="test", even=False)
+
+tensor_dir = "data/tensors"
+
+train_df = pl.read_parquet("data/rainsong_curated/block_io/*.parquet").filter(
+    pl.col("device").is_in([
+        271581184,
+        271581185,
+        271581186,
+    ])
+)
+
+test_df = pl.read_parquet("data/rainsong_test_curated/block_io/*.parquet").filter(
+    pl.col("device").is_in([
+        271581184,
+        271581185,
+        271581186,
+    ])
+)
+
+BlockIOTransformer().convert_and_save_parquet(train_df, tensor_type="train", tensor_dir=tensor_dir)
+BlockIOTransformer().convert_and_save_parquet(test_df, tensor_type="test", tensor_dir=tensor_dir)

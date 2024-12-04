@@ -11,7 +11,6 @@ train_df = pl.read_parquet("data/rainsong_curated/block_io/*.parquet").filter(
         271581186,
     ])
 )
-print(len(train_df))
 
 test_df = pl.read_parquet("data/rainsong_test_curated/block_io/*.parquet").filter(
     pl.col("device").is_in([
@@ -20,7 +19,6 @@ test_df = pl.read_parquet("data/rainsong_test_curated/block_io/*.parquet").filte
         271581186,
     ])
 )
-print(len(test_df))
 
 
 def test_heuristic(data_df: pl.DataFrame, *, threshold: float):
