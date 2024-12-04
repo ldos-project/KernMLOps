@@ -106,6 +106,11 @@ benchmark-gap:
 	-c ${KERNMLOPS_CONFIG_FILE} \
 	--benchmark gap
 
+benchmark-stress-ng:
+	@python python/kernmlops collect -v \
+	-c ${KERNMLOPS_CONFIG_FILE} \
+	--benchmark stress_ng
+
 benchmark-linux-build:
 	@python python/kernmlops collect -v \
 	-c ${KERNMLOPS_CONFIG_FILE} \

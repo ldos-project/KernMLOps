@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import polars as pl
 from bcc import PerfType
 from data_schema.memory_usage import MemoryUsageGraph
@@ -45,7 +47,7 @@ class DTLBPerfTable(PerfCollectionTable):
         return "Misses"
 
     @classmethod
-    def from_df(cls, table: pl.DataFrame) -> "DTLBPerfTable":
+    def from_df(cls, table: pl.DataFrame) -> DTLBPerfTable:
         return DTLBPerfTable(table=table.cast(cls.schema(), strict=True))  # pyright: ignore [reportArgumentType]
 
     def __init__(self, table: pl.DataFrame):
@@ -133,7 +135,7 @@ class ITLBPerfTable(PerfCollectionTable):
         return "Misses"
 
     @classmethod
-    def from_df(cls, table: pl.DataFrame) -> "ITLBPerfTable":
+    def from_df(cls, table: pl.DataFrame) -> ITLBPerfTable:
         return ITLBPerfTable(table=table.cast(cls.schema(), strict=True))  # pyright: ignore [reportArgumentType]
 
     def __init__(self, table: pl.DataFrame):
@@ -220,7 +222,7 @@ class TLBFlushPerfTable(PerfCollectionTable):
         return "Flushes"
 
     @classmethod
-    def from_df(cls, table: pl.DataFrame) -> "TLBFlushPerfTable":
+    def from_df(cls, table: pl.DataFrame) -> TLBFlushPerfTable:
         return TLBFlushPerfTable(table=table.cast(cls.schema(), strict=True))  # pyright: ignore [reportArgumentType]
 
     def __init__(self, table: pl.DataFrame):

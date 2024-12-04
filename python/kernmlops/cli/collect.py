@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 from pathlib import Path
-from time import sleep
+from time import sleep, time
 from typing import cast
 
 import data_collection
@@ -17,13 +17,17 @@ def poll_instrumentation(
   bpf_programs: list[data_collection.bpf.BPFProgram],
   poll_rate: float = .5,
 ) -> int:
+    loop_start = None
     return_code = benchmark.poll()
     while return_code is None:
         try:
             for bpf_program in bpf_programs:
                 bpf_program.poll()
             if poll_rate > 0:
-                sleep(poll_rate)
+                sleep_time = poll_rate - (time() - loop_start) if loop_start else poll_rate
+                if sleep_time > 0:
+                    sleep(sleep_time)
+                loop_start = time()
             return_code = benchmark.poll()
             # clean data when missed samples - or detect?
         except KeyboardInterrupt:

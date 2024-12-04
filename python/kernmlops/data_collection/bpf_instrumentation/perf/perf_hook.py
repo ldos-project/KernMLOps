@@ -129,7 +129,7 @@ class PerfBPFHook(BPFProgram):
         ev_type=event.ev_type(),
         ev_config=hw_config,
         fn_name=bytes(f"{str(event.name())}_on", encoding="utf-8"),
-        sample_freq=1000,
+        sample_freq=10,
       )
     for event_name in self._perf_data.keys():
       self.bpf[event_name].open_perf_buffer(self._perf_handler(event_name), page_cnt=64)

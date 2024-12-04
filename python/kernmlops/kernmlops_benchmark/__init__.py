@@ -14,12 +14,14 @@ from kernmlops_benchmark.errors import (
 )
 from kernmlops_benchmark.gap import GapBenchmark
 from kernmlops_benchmark.linux_build import LinuxBuildBenchmark
+from kernmlops_benchmark.stress_ng import StressNgBenchmark
 from kernmlops_config import ConfigBase
 
 benchmarks: Mapping[str, type[Benchmark]] = {
     FauxBenchmark.name(): FauxBenchmark,
     LinuxBuildBenchmark.name(): LinuxBuildBenchmark,
     GapBenchmark.name(): GapBenchmark,
+    StressNgBenchmark.name(): StressNgBenchmark,
 }
 
 BenchmarkConfig = make_dataclass(
