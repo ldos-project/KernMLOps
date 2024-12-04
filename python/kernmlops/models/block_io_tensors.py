@@ -13,7 +13,6 @@ train_df = pl.read_parquet("data/rainsong_curated/block_io/*.parquet").filter(
         271581186,
     ])
 )
-print(len(train_df))
 
 test_df = pl.read_parquet("data/rainsong_test_curated/block_io/*.parquet").filter(
     pl.col("device").is_in([
@@ -22,7 +21,6 @@ test_df = pl.read_parquet("data/rainsong_test_curated/block_io/*.parquet").filte
         271581186,
     ])
 )
-print(len(test_df))
 
 
 def convert_parquet_to_tensor(data_df: pl.DataFrame, *, transformer: Callable[[list[Mapping[str, int]]], list[int] | None], threshold: float, type: str, suffix: str = "", even: bool = False):
@@ -49,7 +47,7 @@ def convert_parquet_to_tensor(data_df: pl.DataFrame, *, transformer: Callable[[l
         actual_block_latency = predictor_data[-1]["block_latency_us"]
         fast_io = actual_block_latency < threshold
         slow_io = not fast_io
-        if even and fast_io and random.randint(0, 20) < 18:
+        if even and fast_io and random.randint(0, 20) < 8:
             continue
         cleaned_predictor_data = transformer(predictor_data)
         if not cleaned_predictor_data:
@@ -63,7 +61,7 @@ def convert_parquet_to_tensor(data_df: pl.DataFrame, *, transformer: Callable[[l
         latency_data.append([1 if fast_io else 0, 1 if slow_io else 0])
     features = torch.tensor(feature_data, dtype=torch.float32)
     latencies = torch.tensor(latency_data, dtype=torch.float32)
-    even_extension = "even." if even else ""
+    even_extension = "reduced_reads." if even else ""
     print(f"Fast IO: {total_fast}")
     print(f"Slow IO: {total_slow}")
     torch.save(features, f"{file_path_prefix}/rainsong_{type}_features.flags.{even_extension}{suffix}tensor")
@@ -115,7 +113,7 @@ def _null_data() -> Mapping[str, int]:
         "block_io_flags": 0,
         "queue_length_segment_ios": 0,
         "queue_length_4k_ios": 0,
-        "block_latency_us": 0,
+        "block_latency_us": 0, # consider making this large
         "collection_id": 0,
     }
 
@@ -162,7 +160,7 @@ def _reads_only(predictor_data: list[Mapping[str, int]]) -> list[int] | None:
         data.append(row["segments"])
         data.append(row["block_io_bytes"])
         data.append(-(row["ts_uptime_us"] - start_ts_us) if row["ts_uptime_us"] > 0 else 0)
-        data.append(row["block_io_flags"])
+        data.extend(_explode_flags(row["block_io_flags"]))
         data.append(row["queue_length_segment_ios"])
         data.append(row["queue_length_4k_ios"])
         data.append(row["block_latency_us"] if row["ts_uptime_us"] + row["block_latency_us"] < start_ts_us else 0)
@@ -176,9 +174,10 @@ def _reads_only(predictor_data: list[Mapping[str, int]]) -> list[int] | None:
     return data
 
 
-threshold = int(test_df.select("block_latency_us").quantile(.95, interpolation="nearest").to_series()[0])
+threshold = 350 #int(test_df.select("block_latency_us").quantile(.95, interpolation="nearest").to_series()[0])
 print(f"threshold: {threshold}")
-convert_parquet_to_tensor(train_df, transformer=_flatten_data, threshold=threshold, type="train", even=False)
-convert_parquet_to_tensor(test_df, transformer=_flatten_data, threshold=threshold, type="test", even=True)
-convert_parquet_to_tensor(train_df, transformer=_reads_only, threshold=threshold, type="train", suffix="reads_only.", even=False)
-convert_parquet_to_tensor(test_df, transformer=_reads_only, threshold=threshold, type="test", suffix="reads_only.", even=False)
+#convert_parquet_to_tensor(train_df, transformer=_reads_only, threshold=threshold, type="train", suffix="reads_only.", even=True)
+#convert_parquet_to_tensor(test_df, transformer=_reads_only, threshold=threshold, type="test", suffix="reads_only.", even=False)
+#convert_parquet_to_tensor(test_df, transformer=_reads_only, threshold=threshold, type="test", suffix="reads_only.", even=True)
+#convert_parquet_to_tensor(train_df, transformer=_flatten_data, threshold=threshold, type="train", even=True)
+convert_parquet_to_tensor(test_df, transformer=_flatten_data, threshold=threshold, type="test", even=False)

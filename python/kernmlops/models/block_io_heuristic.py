@@ -1,11 +1,10 @@
-import random
 from typing import Mapping
 
 import polars as pl
 
 file_path_prefix = "data/tensors"
 
-train_df = pl.read_parquet("data/rainsong_test_curated/block_io/*.parquet").filter(
+train_df = pl.read_parquet("data/rainsong_curated/block_io/*.parquet").filter(
     pl.col("device").is_in([
         271581184,
         271581185,
@@ -75,8 +74,8 @@ def test_heuristic(data_df: pl.DataFrame, *, threshold: float):
         actual_block_latency = row["block_latency_us"]
         fast_io = actual_block_latency < threshold
         slow_io = not fast_io
-        if fast_io and random.randint(0, 20) < 18:
-            continue
+        #if fast_io and random.randint(0, 20) < 18:
+        #    continue
         exploded_flags = _explode_flags(row["block_io_flags"])
         if exploded_flags[0] != 0:
             continue
@@ -206,7 +205,7 @@ def _reads_only(predictor_data: list[Mapping[str, int]]) -> list[int] | None:
     return data
 
 
-threshold = 750 # 350 #p90 #int(test_df.select("block_latency_us").quantile(.9, interpolation="nearest").to_series()[0])
+threshold = 1460 # 350 #p90 #int(test_df.select("block_latency_us").quantile(.9, interpolation="nearest").to_series()[0])
 print(f"threshold: {threshold}")
 percentiles = [.50, .60, .70, .75, .80, .85, .90, .95, .99]
 for percentile in percentiles:

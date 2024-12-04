@@ -31,16 +31,24 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
         #self.flatten = nn.Flatten()
-        hidden_dim =  256
+        hidden_dim = 128
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(4*10, hidden_dim),
-            nn.ReLU(),
+            nn.Linear(4*18, hidden_dim),
+            nn.RReLU(),
             nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
+            nn.RReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.RReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.Dropout(),
             nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
+            nn.RReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.RReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.RReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.RReLU(),
             nn.Linear(hidden_dim, 2),
         )
 
@@ -75,7 +83,7 @@ def train_loop(dataloader, model: NeuralNetwork, loss_fn, optimizer):
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
 
-def test_loop(dataloader, model, loss_fn):
+def test_loop(dataloader, model, loss_fn, test_content):
     # Set the model to evaluation mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.eval()
@@ -100,38 +108,48 @@ def test_loop(dataloader, model, loss_fn):
 
     test_loss /= num_batches
     correct /= size
-    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+    print(f"Test Error ({test_content}): \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
 
 learning_rate = 1e-5
 epochs = 10
-batch_size = 1024
+batch_size = 4096
 
 model = NeuralNetwork().to(device)
 pos_weights = torch.tensor([1, 19], device=device)
 loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weights)
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-file_path_prefix = "data/tensors"
-train_feature_tensor = torch.load(f"{file_path_prefix}/rainsong_train_features.tensor")
-train_latency_tensor = torch.load(f"{file_path_prefix}/rainsong_train_latencies_1460.tensor")
-test_feature_tensor = torch.load(f"{file_path_prefix}/rainsong_test_features.even.tensor")
-test_latency_tensor = torch.load(f"{file_path_prefix}/rainsong_test_latencies_1460.even.tensor")
+file_path_prefix = "/var/local/pkenney/tensors"
+train_feature_tensor = torch.load(f"{file_path_prefix}/rainsong_train_features.flags.reduced_reads.tensor")
+train_latency_tensor = torch.load(f"{file_path_prefix}/rainsong_train_latencies_350.flags.reduced_reads.tensor")
+test_feature_tensor = torch.load(f"{file_path_prefix}/rainsong_test_features.flags.tensor")
+test_latency_tensor = torch.load(f"{file_path_prefix}/rainsong_test_latencies_350.flags.tensor")
+#test_feature_reads_tensor = torch.load(f"{file_path_prefix}/rainsong_test_features.flags.reads_only.tensor")
+#test_latency_reads_tensor = torch.load(f"{file_path_prefix}/rainsong_test_latencies_350.flags.reads_only.tensor")
+test_feature_even_reads_tensor = torch.load(f"{file_path_prefix}/rainsong_test_features.flags.even.reads_only.tensor")
+test_latency_even_reads_tensor = torch.load(f"{file_path_prefix}/rainsong_test_latencies_350.flags.even.reads_only.tensor")
 
 train_data = BlockIODataset(features=train_feature_tensor, latencies=train_latency_tensor, device=device)
 test_data = BlockIODataset(features=test_feature_tensor, latencies=test_latency_tensor, device=device)
+#test_read_data = BlockIODataset(features=test_feature_reads_tensor, latencies=test_latency_reads_tensor, device=device)
+test_even_read_data = BlockIODataset(features=test_feature_even_reads_tensor, latencies=test_latency_even_reads_tensor, device=device)
 
 print("Loaded dataset")
 
 train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+#test_read_dataloader = DataLoader(test_read_data, batch_size=batch_size, shuffle=True)
+test_even_read_dataloader = DataLoader(test_even_read_data, batch_size=batch_size, shuffle=True)
 print(model)
 
 
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     train_loop(train_dataloader, model, loss_fn, optimizer)
-    test_loop(test_dataloader, model, loss_fn)
+    test_loop(test_dataloader, model, loss_fn, "all")
+    #test_loop(test_read_dataloader, model, loss_fn, "reads only")
+    test_loop(test_even_read_dataloader, model, loss_fn, "even reads only")
 print("Done!")
 model_file_path = f"{file_path_prefix}/models/rainsong_block_model_{epochs}.{uuid.uuid4()}.model"
 print(f"Writing model to {model_file_path}")
