@@ -55,7 +55,7 @@ INTERACTIVE ?= i
 
 # Benchmarking variables
 COLLECTION_BENCHMARK ?= faux
-BENCHMARK_DIR ?= ${HOME}/kernmlops-benchmark
+BENCHMARK_DIR ?= /home/${UNAME}/kernmlops-benchmark
 
 # Provisioning variables
 PROVISIONING_USER ?= ${UNAME}
@@ -173,7 +173,7 @@ docker:
 	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR} \
 	-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR}:ro \
 	-v ${KERNEL_DEV_MODULES_DIR}/:${KERNEL_DEV_MODULES_DIR}:ro \
-	-v ${BENCHMARK_DIR}/:${HOME}/kernmlops-benchmark \
+	-v ${BENCHMARK_DIR}/:/home/${UNAME}/kernmlops-benchmark \
 	-v ${BENCHMARK_DIR}/:${BENCHMARK_DIR} \
 	-v /sys/kernel/:/sys/kernel \
 	${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT} \
