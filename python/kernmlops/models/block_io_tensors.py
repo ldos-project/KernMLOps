@@ -132,6 +132,46 @@ class SegmentMinimalFlagsTransformer(RowTransformer):
         return data
 
 
+class SegmentSpartanFlagsTransformer(RowTransformer):
+
+    @classmethod
+    def name(cls) -> str:
+        return "segment_spartan_flags"
+
+    @classmethod
+    def feature_length(cls) -> int:
+        return 6
+
+    @classmethod
+    def convert_row(cls, row: Mapping[str, Any], present_ts_us: int) -> list[float]:
+        data = list[float]()
+        data.append(row["segments"])
+        data.append(row["block_io_flags"] & REQ_OP_MASK)
+        data.append(row["queue_length_segment_ios"])
+        data.append(row["block_latency_us"] if row["ts_uptime_us"] + row["block_latency_us"] < present_ts_us else 0)
+        return data
+
+
+class SegmentSpartanAllFlagsTransformer(RowTransformer):
+
+    @classmethod
+    def name(cls) -> str:
+        return "segment_spartan_all_flags"
+
+    @classmethod
+    def feature_length(cls) -> int:
+        return 12
+
+    @classmethod
+    def convert_row(cls, row: Mapping[str, Any], present_ts_us: int) -> list[float]:
+        data = list[float]()
+        data.append(row["segments"])
+        data.extend(_explode_flags(row["block_io_flags"]))
+        data.append(row["queue_length_segment_ios"])
+        data.append(row["block_latency_us"] if row["ts_uptime_us"] + row["block_latency_us"] < present_ts_us else 0)
+        return data
+
+
 class P95Prediction(RowPrediction):
 
     @classmethod
@@ -184,6 +224,17 @@ class P85Prediction(RowPrediction):
         fast_io = actual_block_latency < cls.threshold()
         slow_io = not fast_io
         return [1 if fast_io else 0, 1 if slow_io else 0]
+
+
+class LatencyPrediction(RowPrediction):
+
+    @classmethod
+    def name(cls) -> str:
+        return "latency_us"
+
+    @classmethod
+    def prediction(cls, row: Mapping[str, Any]) -> list[float]:
+        return [row["block_latency_us"], row["block_io_latency_us"]]
 
 
 class NoopFilter(RowFilter):
@@ -275,11 +326,11 @@ class BlockIOTransformer(DatasetTransformer):
 
     @classmethod
     def row_prediction_transformers(cls) -> list[RowPrediction]:
-        return [P85Prediction(), P90Prediction(), P95Prediction()]
+        return [P85Prediction(), P90Prediction(), P95Prediction(), LatencyPrediction()]
 
     @classmethod
     def num_rows(cls) -> int:
-        return 4
+        return 7
 
     def convert_and_save_parquet(self, data_df: pl.DataFrame, *, tensor_type: str, tensor_dir: str) -> str:
         root_out_dir = Path(tensor_dir)
@@ -348,7 +399,7 @@ class BlockIOTransformer(DatasetTransformer):
             torch.save(features, features_out_file)
             for prediction_name, latencies in latencies.items():
                 torch.save(latencies, out_dir / f"{tensor_type}_predictions_{prediction_name}.tensor")
-
+            print(f"Generated: {str(features_out_file)}")
 
 
 tensor_dir = "data/tensors"
