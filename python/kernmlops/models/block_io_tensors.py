@@ -299,6 +299,7 @@ def _null_data() -> Mapping[str, int]:
         "queue_length_segment_ios": 0,
         "queue_length_4k_ios": 0,
         "block_latency_us": 10_000,
+        "block_io_latency_us": 10_000,
         "collection_id": 0,
     }
 
