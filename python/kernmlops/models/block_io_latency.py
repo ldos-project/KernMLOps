@@ -73,14 +73,23 @@ def train_loop(dataloader, model: NeuralNetwork, loss_fn, optimizer):
             loss, current = loss.item(), batch * batch_size + len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
+percentiles = {
+    85: 160,
+    90: 320,
+    95: 1460,
+}
 
-def test_loop(dataloader, model, loss_fn, test_content):
+def test_loop(dataloader, model, loss_fn, test_content, *, classification: bool):
     # Set the model to evaluation mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.eval()
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
     test_loss, correct = 0, 0
+    correct_percentiles = {}
+    if not classification:
+        for percentile in percentiles.keys():
+            correct_percentiles[percentile] = 0
 
     # Evaluating the model with torch.no_grad() ensures that no gradients are computed during test mode
     # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
@@ -95,18 +104,28 @@ def test_loop(dataloader, model, loss_fn, test_content):
                 print(y)
                 first = False
             test_loss += loss_fn(pred, y).item()
-            correct += (pred.argmax(1) == y[:,1]).type(torch.float32).sum().item()
+            if classification:
+                correct += (pred.argmax(1) == y[:,1]).type(torch.float32).sum().item()
+            else:
+                correct += (torch.isclose(pred, y, atol=10, rtol=.05)).type(torch.float32).sum().item()
+                for percentile in correct_percentiles.keys():
+                    cutoff = percentiles[percentile]
+                    correct_percentiles[percentile] += ((pred[:,0] > cutoff).float() == (y[:,0] > cutoff).float()).type(torch.float32).sum().item()
 
     test_loss /= num_batches
     correct /= size
     print(f"Test Error ({test_content}): \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+    for percentile, correct_percentile in correct_percentiles.items():
+        print(f"    p{percentile} Accuracy: {(100*(correct_percentile / size)):>0.1f}%\n")
+
 
 tensors_path = "data/tensors"
 rows = 4
-cols = 6
+cols = 3
 features_subdirectory = f"block_io/{cols}_{rows}_segment_spartan"
 train_dataset = "even" # "all" # "even_reads_only" # "reads_only"
 latency_cutoff = "p95_1460us"
+classification = latency_cutoff != "latency_us"
 
 learning_rate = 1e-5
 epochs = 5
@@ -115,6 +134,8 @@ batch_size = 4096
 model = NeuralNetwork(rows * cols).to(device)
 pos_weights = torch.tensor([1, 19], device=device)
 loss_fn = nn.BCEWithLogitsLoss() # pos_weight=pos_weights)
+if not classification:
+    loss_fn = nn.L1Loss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 file_path_prefix = f"{tensors_path}/{features_subdirectory}"
@@ -158,7 +179,7 @@ for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     train_loop(train_dataloader, model, loss_fn, optimizer)
     for test_dataset, test_dataloader in test_dataloaders.items():
-        test_loop(test_dataloader, model, loss_fn, test_dataset)
+        test_loop(test_dataloader, model, loss_fn, test_dataset, classification=classification)
 
 print("Done!")
 model_dir = Path(f"{file_path_prefix}/{train_dataset}/models")
