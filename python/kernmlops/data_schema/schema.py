@@ -1,4 +1,5 @@
 # Abstract definition of CollectionTable and logical collection
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -72,6 +73,34 @@ class CollectionTable(Protocol):
 # TODO(Patrick): Add simple class for holding tables from multiple collections
 class CollectionsTable[T: CollectionTable]:
     pass
+
+
+class BenchmarkRunInfoTable(CollectionTable):
+
+    @classmethod
+    def name(cls) -> str:
+        return "benchmark_run_info"
+
+    @classmethod
+    def schema(cls) -> pl.Schema:
+        return pl.Schema()
+
+    @classmethod
+    def from_df(cls, table: pl.DataFrame) -> BenchmarkRunInfoTable:
+        return BenchmarkRunInfoTable(table=table)
+
+    def __init__(self, table: pl.DataFrame):
+        self._table = table
+
+    @property
+    def table(self) -> pl.DataFrame:
+        return self._table
+
+    def filtered_table(self) -> pl.DataFrame:
+        return self.table
+
+    def graphs(self) -> list[type[CollectionGraph]]:
+        return []
 
 
 class SystemInfoTable(CollectionTable):

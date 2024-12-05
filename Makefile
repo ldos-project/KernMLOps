@@ -1,5 +1,6 @@
 SHELL := /bin/bash
 
+USER_PATH=/home
 UNAME ?= $(shell whoami)
 UID ?= $(shell id -u)
 GID ?= $(shell id -g)
@@ -55,7 +56,7 @@ INTERACTIVE ?= i
 
 # Benchmarking variables
 COLLECTION_BENCHMARK ?= faux
-BENCHMARK_DIR ?= /home/${UNAME}/kernmlops-benchmark
+BENCHMARK_DIR ?= ${USER_PATH}/${UNAME}/kernmlops-benchmark
 
 # Provisioning variables
 PROVISIONING_USER ?= ${UNAME}
@@ -110,6 +111,11 @@ benchmark-stress-ng:
 	@python python/kernmlops collect -v \
 	-c ${KERNMLOPS_CONFIG_FILE} \
 	--benchmark stress_ng
+
+benchmark-group:
+	@python python/kernmlops collect -v \
+	-c ${KERNMLOPS_CONFIG_FILE} \
+	--benchmark benchmark_group
 
 benchmark-linux-build:
 	@python python/kernmlops collect -v \
@@ -173,7 +179,7 @@ docker:
 	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR} \
 	-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR}:ro \
 	-v ${KERNEL_DEV_MODULES_DIR}/:${KERNEL_DEV_MODULES_DIR}:ro \
-	-v ${BENCHMARK_DIR}/:/home/${UNAME}/kernmlops-benchmark \
+	-v ${BENCHMARK_DIR}/:${USER_PATH}/${UNAME}/kernmlops-benchmark \
 	-v ${BENCHMARK_DIR}/:${BENCHMARK_DIR} \
 	-v /sys/kernel/:/sys/kernel \
 	${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT} \

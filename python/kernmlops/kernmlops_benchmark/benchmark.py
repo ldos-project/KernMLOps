@@ -1,4 +1,5 @@
 """Abstract definition of a benchmark."""
+from __future__ import annotations
 
 import os
 import subprocess
@@ -9,7 +10,6 @@ from typing import Literal, cast
 from data_schema import GraphEngine
 from kernmlops_config import ConfigBase
 from typing_extensions import Protocol
-
 
 @dataclass(frozen=True)
 class GenericBenchmarkConfig(ConfigBase):
@@ -51,6 +51,10 @@ class FauxBenchmarkConfig(ConfigBase):
 class Benchmark(Protocol):
   """Runnable benchmark that terminates naturally in finite time."""
 
+  def __init__(self):
+    self.start_timestamp: int = 0
+    self.finish_timestamp: int = 0
+
   @classmethod
   def name(cls) -> str: ...
 
@@ -58,7 +62,7 @@ class Benchmark(Protocol):
   def default_config(cls) -> ConfigBase: ...
 
   @classmethod
-  def from_config(cls, config: ConfigBase) -> "Benchmark": ...
+  def from_config(cls, config: ConfigBase) -> Benchmark: ...
 
   def is_configured(self) -> bool:
     """Returns True if the environment has been setup to run the benchmark."""
@@ -81,6 +85,7 @@ class Benchmark(Protocol):
     """Given a collection of data, plot important events for this benchmark."""
     ...
 
+  def to_run_info_dict(self) -> dict[str, list]: ...
 
 class FauxBenchmark(Benchmark):
   """Benchmark that does nothing and allows users to collect the running system's data."""
@@ -94,7 +99,7 @@ class FauxBenchmark(Benchmark):
     return FauxBenchmarkConfig()
 
   @classmethod
-  def from_config(cls, config: ConfigBase) -> "Benchmark":
+  def from_config(cls, config: ConfigBase) -> Benchmark:
     generic_config = cast(GenericBenchmarkConfig, getattr(config, "generic"))
     faux_config = cast(FauxBenchmarkConfig, getattr(config, cls.name()))
     return FauxBenchmark(generic_config=generic_config, config=faux_config)

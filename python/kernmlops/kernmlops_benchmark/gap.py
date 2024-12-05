@@ -1,6 +1,7 @@
 import subprocess
 from dataclasses import dataclass
 from typing import Literal, cast
+import time
 
 from data_schema import GraphEngine, demote
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
@@ -39,6 +40,7 @@ class GapBenchmark(Benchmark):
         self.config = config
         self.benchmark_dir = self.generic_config.get_benchmark_dir() / self.name()
         self.process: subprocess.Popen | None = None
+        super().__init__()
 
     def is_configured(self) -> bool:
         return self.benchmark_dir.is_dir()
@@ -62,10 +64,12 @@ class GapBenchmark(Benchmark):
             preexec_fn=demote(),
             stdout=subprocess.DEVNULL,
         )
+        self.start_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
 
     def poll(self) -> int | None:
         if self.process is None:
             raise BenchmarkNotRunningError()
+        self.finish_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
         return self.process.poll()
 
     def wait(self) -> None:
@@ -77,9 +81,17 @@ class GapBenchmark(Benchmark):
         if self.process is None:
             raise BenchmarkNotRunningError()
         self.process.terminate()
+        self.finish_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
 
     @classmethod
     def plot_events(cls, graph_engine: GraphEngine) -> None:
         if graph_engine.collection_data.benchmark != cls.name():
             raise BenchmarkNotInCollectionData()
         # TODO(Patrick): plot when a trial starts/ends
+
+    def to_run_info_dict(self) -> dict[str, list]:
+        return {
+            "benchmark": [self.name()],
+            "start_ts_us": [self.start_timestamp],
+            "finish_ts_us": [self.finish_timestamp],
+        }

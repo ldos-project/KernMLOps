@@ -17,12 +17,14 @@ from data_schema.schema import (
     CollectionTable,
     GraphEngine,
     SystemInfoTable,
+    BenchmarkRunInfoTable,
     collection_id_column,
     cumulative_pma_as_pdf,
 )
 
 table_types: list[type[CollectionTable]] = [
     SystemInfoTable,
+    BenchmarkRunInfoTable,
     QuantaRuntimeTable,
     QuantaQueuedTable,
     ProcessMetadataTable,
