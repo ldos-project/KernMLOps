@@ -37,6 +37,12 @@ def test_heuristic(data_df: pl.DataFrame, *, threshold: float):
         "collection_id",
     ])
     total_correct = {
+        63: 0,
+        64: 0,
+        65: 0,
+        95: 0,
+        96: 0,
+        97: 0,
         126: 0,
         127: 0,
         128: 0,
@@ -204,7 +210,7 @@ def _reads_only(predictor_data: list[Mapping[str, int]]) -> list[int] | None:
     return data
 
 
-threshold = 1460 # 350 #p90 #int(test_df.select("block_latency_us").quantile(.9, interpolation="nearest").to_series()[0])
+threshold = 160 # 1460 # 320 #p90 #int(test_df.select("block_latency_us").quantile(.9, interpolation="nearest").to_series()[0])
 print(f"threshold: {threshold}")
 percentiles = [.50, .60, .70, .75, .80, .85, .90, .95, .99]
 for percentile in percentiles:
