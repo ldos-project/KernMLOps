@@ -15,6 +15,11 @@ benchmark_config:
     operation_count: 1000000
     read_proportion: 0.25
     update_proportion: 0.75
+  linnos:
+    type: baseline
+    device_0: /dev/nvme0n1
+    device_1: /dev/nvme1n1
+    device_2: /dev/nvme2n1
 collector_config:
   generic:
     poll_rate: 0.5
@@ -25,4 +30,5 @@ collector_config:
       - memory_usage
       - process_metadata
       - quanta_runtime
+      - block_io
       - perf

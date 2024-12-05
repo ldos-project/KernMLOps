@@ -1,6 +1,5 @@
 # Abstract definition of CollectionTable and logical collection
 
-import json
 from pathlib import Path
 from typing import Final, Mapping, cast
 
@@ -207,10 +206,13 @@ class CollectionData:
     def dump(self, *, output_dir: Path | None, use_matplot: bool, no_trends: bool = False):
         self.graph(out_dir=output_dir, no_trends=no_trends, use_matplot=use_matplot)
         for name, table in self.tables.items():
-            if name == SystemInfoTable.name():
-                print(f"{name}: {json.dumps(table.table.row(0, named=True), indent=4)}")
-            else:
+            with pl.Config(tbl_cols=-1):
                 print(f"{name}: {table.table}")
+
+    def normalize_uptime_sec(self, table_df: pl.DataFrame) -> list[float]:
+        return (
+            (table_df.select(UPTIME_TIMESTAMP) / 1_000_000.0) - self.start_uptime_sec
+        ).to_series().to_list()
 
     @classmethod
     def from_tables(
@@ -327,14 +329,25 @@ class GraphEngine:
     def scatter(self, x_data: list[float], y_data: list[float], *, label: str) -> None:
         self._plt.scatter(x_data, y_data, label=label)
 
-    def plot(self, x_data: list[float], y_data: list[float], *, label: str, y_axis: str | None = None) -> None:
+    def plot(
+        self,
+        x_data: list[float],
+        y_data: list[float],
+        *,
+        label: str,
+        y_axis: str | None = None,
+        linestyle: str | None = None,
+    ) -> None:
         if not y_axis or y_axis == self._y_axis:
-            self._plt.plot(x_data, y_data, label=label)
+            if not linestyle or self._plt is plotext:
+                self._plt.plot(x_data, y_data, label=label)
+            else:
+                self._plt.plot(x_data, y_data, label=label, linestyle=linestyle)  # pyright: ignore[reportCallIssue]
         elif self._ax is not None:
             if self._ax2 is None:
                 self._ax2 = self._ax.twinx()
                 self._ax2.set_ylabel(y_axis)
-            self._ax2.plot(x_data, y_data, label=label)
+            self._ax2.plot(x_data, y_data, label=label, linestyle=linestyle)
         elif self._plt is plotext:
             plotext.plot(x_data, y_data, label=label, yside="right")
             plotext.ylabel(label=y_axis, yside="right")

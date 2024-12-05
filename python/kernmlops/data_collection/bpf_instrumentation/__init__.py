@@ -2,6 +2,7 @@
 
 from typing import Final, Mapping
 
+from data_collection.bpf_instrumentation.blk_io_hook import BlockIOBPFHook
 from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
 from data_collection.bpf_instrumentation.file_data_hook import FileDataBPFHook
 from data_collection.bpf_instrumentation.memory_usage_hook import MemoryUsageHook
@@ -19,6 +20,7 @@ all_hooks: Final[Mapping[str, type[BPFProgram]]] = {
     MemoryUsageHook.name(): MemoryUsageHook,
     ProcessMetadataHook.name(): ProcessMetadataHook,
     QuantaRuntimeBPFHook.name(): QuantaRuntimeBPFHook,
+    BlockIOBPFHook.name(): BlockIOBPFHook,
     PerfBPFHook.name(): PerfBPFHook,
 }
 

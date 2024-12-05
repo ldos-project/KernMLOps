@@ -111,13 +111,10 @@ class MemoryUsageGraph(CollectionGraph):
 
     def plot_trends(self) -> None:
         memory_df = self._memory_usage_table.filtered_table()
-        start_uptime_sec = self.collection_data.start_uptime_sec
 
         for plot_line in self.plot_lines:
             self.graph_engine.plot(
-                (
-                    (memory_df.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
-                ).to_series().to_list(),
+                self.collection_data.normalize_uptime_sec(memory_df),
                 (memory_df.select(plot_line) / (1_024.0)**3).to_series().to_list(),
                 label=plot_line.replace("bytes", "gb"),
                 y_axis=self.y_axis(),

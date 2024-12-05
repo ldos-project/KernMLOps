@@ -85,8 +85,9 @@ def run_collect(
     for bpf_program in bpf_programs:
         collection_tables.extend(bpf_program.pop_data())
     for collection_table in collection_tables:
-        if verbose:
-            print(f"{collection_table.name()}: {collection_table.table}")
+        with pl.Config(tbl_cols=-1):
+            if verbose:
+                print(f"{collection_table.name()}: {collection_table.table}")
         Path(output_dir / collection_table.name()).mkdir(parents=True, exist_ok=True)
         collection_table.table.write_parquet(output_dir / collection_table.name() / f"{collection_id}.{benchmark.name()}.parquet")
     collection_data = data_schema.CollectionData.from_tables(collection_tables)

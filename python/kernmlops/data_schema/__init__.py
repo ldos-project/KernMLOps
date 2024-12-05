@@ -5,6 +5,7 @@ from pwd import getpwnam
 from typing import Callable
 
 from data_schema import perf
+from data_schema.block_io import BlockIOLatencyTable, BlockIOQueueTable, BlockIOTable
 from data_schema.file_data import FileDataTable
 from data_schema.memory_usage import MemoryUsageTable
 from data_schema.process_metadata import ProcessMetadataTable
@@ -27,6 +28,9 @@ table_types: list[type[CollectionTable]] = [
     ProcessMetadataTable,
     FileDataTable,
     MemoryUsageTable,
+    BlockIOLatencyTable,
+    BlockIOQueueTable,
+    BlockIOTable,
 ] + list(perf.perf_table_types.values())
 
 def demote(user_id: int | None = None, group_id: int | None = None) -> Callable[[], None]:

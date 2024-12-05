@@ -163,7 +163,6 @@ class RatePerfGraph(CollectionGraph, Protocol):
 
     def plot(self) -> None:
         pdf_df = self._perf_table.as_pdf()
-        start_uptime_sec = self.collection_data.start_uptime_sec
         print(f"Total {self._perf_table.component_name()} {self._perf_table.measured_event_name()}: {self._perf_table.total_cumulative()}")
 
         # group by and plot by cpu
@@ -171,9 +170,7 @@ class RatePerfGraph(CollectionGraph, Protocol):
             pdf_df_by_cpu = pdf_df.group_by("cpu")
             for cpu, pdf_df_group in pdf_df_by_cpu:
                 self.graph_engine.plot(
-                    (
-                        (pdf_df_group.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
-                    ).to_series().to_list(),
+                    self.collection_data.normalize_uptime_sec(pdf_df_group),
                     (
                         pdf_df_group.select(self._perf_table.name()) / (
                             pdf_df_group.select("span_duration_us") / 1_000.0
@@ -231,16 +228,13 @@ class CumulativePerfGraph(CollectionGraph, Protocol):
 
     def plot(self) -> None:
         cdf_df = self._perf_table.as_cdf()
-        start_uptime_sec = self.collection_data.start_uptime_sec
 
         # group by and plot by cpu
         def plot_cumulative(cdf_df: pl.DataFrame) -> None:
             cdf_df_by_cpu = cdf_df.group_by("cpu")
             for cpu, cdf_df_group in cdf_df_by_cpu:
                 self.graph_engine.plot(
-                    (
-                        (cdf_df_group.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
-                    ).to_series().to_list(),
+                    self.collection_data.normalize_uptime_sec(cdf_df_group),
                     (
                         cdf_df_group.select(self._perf_table.name())
                     ).to_series().to_list(),

@@ -77,7 +77,7 @@ RUN apt update -y \
 COPY --chown=root requirements.txt /root/requirements.txt
 RUN pip install \
   --break-system-packages \
-  --user --no-warn-script-location \
+  --no-warn-script-location \
   -r /root/requirements.txt
 RUN ln -s /usr/bin/python3.12 /usr/bin/python
 

@@ -170,6 +170,7 @@ kernel
 vmlinux.h
 
 tmp
+tmp.txt
 .vscode
 data
 

@@ -13,6 +13,7 @@ from kernmlops_benchmark.errors import (
     BenchmarkRunningError,
 )
 from kernmlops_benchmark.gap import GapBenchmark
+from kernmlops_benchmark.linnos import LinnosBenchmark
 from kernmlops_benchmark.linux_build import LinuxBuildBenchmark
 from kernmlops_benchmark.mongodb import MongoDbBenchmark
 from kernmlops_config import ConfigBase
@@ -22,6 +23,7 @@ benchmarks: Mapping[str, type[Benchmark]] = {
     LinuxBuildBenchmark.name(): LinuxBuildBenchmark,
     GapBenchmark.name(): GapBenchmark,
     MongoDbBenchmark.name(): MongoDbBenchmark,
+    LinnosBenchmark.name(): LinnosBenchmark,
 }
 
 BenchmarkConfig = make_dataclass(
@@ -49,6 +51,7 @@ __all__ = [
     "BenchmarkNotConfiguredError",
     "BenchmarkNotRunningError",
     "FauxBenchmark",
+    "LinnosBenchmark",
     "LinuxBuildBenchmark",
     "GapBenchmark",
     "benchmarks",

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import polars as pl
 from bcc import BPF
-from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
+from data_collection.bpf_instrumentation.bpf_hook import POLL_TIMEOUT_MS, BPFProgram
 from data_schema import UPTIME_TIMESTAMP, CollectionTable
 from data_schema.quanta_runtime import QuantaQueuedTable, QuantaRuntimeTable
 
@@ -57,7 +57,7 @@ class QuantaRuntimeBPFHook(BPFProgram):
     self.bpf["quanta_queue_times"].open_perf_buffer(self._queue_event_handler, page_cnt=64)
 
   def poll(self):
-    self.bpf.perf_buffer_poll()
+    self.bpf.perf_buffer_poll(timeout=POLL_TIMEOUT_MS)
 
   def close(self):
     self.bpf.cleanup()
