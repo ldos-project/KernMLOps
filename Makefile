@@ -56,6 +56,7 @@ INTERACTIVE ?= i
 # Benchmarking variables
 COLLECTION_BENCHMARK ?= faux
 BENCHMARK_DIR ?= /home/${UNAME}/kernmlops-benchmark
+YCSB_BENCHMARK_DIR ?= ${BENCHMARK_DIR}/ycsb
 
 # Provisioning variables
 PROVISIONING_USER ?= ${UNAME}
@@ -105,6 +106,24 @@ benchmark-gap:
 	@python python/kernmlops collect -v \
 	-c ${KERNMLOPS_CONFIG_FILE} \
 	--benchmark gap
+
+start-mongodb:
+	mkdir -p "$(YCSB_BENCHMARK_DIR)/mongo_db"
+	@mongod --dbpath "$(YCSB_BENCHMARK_DIR)/mongo_db" --fork --logpath /var/log/mongodb.log || { echo "Error is expected, just means that the server was already running"; true; }
+
+benchmark-mongodb:
+	@${MAKE} start-mongodb
+	@python python/kernmlops collect -v \
+		-c ${KERNMLOPS_CONFIG_FILE} \
+		--benchmark mongodb
+
+load-mongodb:
+	@echo "Loading MongoDB benchmark"
+	@${MAKE} start-mongodb
+	@python $(YCSB_BENCHMARK_DIR)/ycsb-0.17.0/bin/ycsb load mongodb -s \
+		-P "$(YCSB_BENCHMARK_DIR)/ycsb-0.17.0/workloads/workloada" \
+		-p recordcount=1000000 \
+		-p mongodb.url=mongodb://localhost:27017/ycsb
 
 benchmark-linux-build:
 	@python python/kernmlops collect -v \
@@ -163,6 +182,7 @@ docker:
 	@if [ ! -d "${KERNEL_DEV_MODULES_DIR}" ]; then \
 		echo "Kernel dev headers not installed: ${KERNEL_DEV_MODULES_DIR}" && exit 1; \
 	fi
+
 	@mkdir -p ${BENCHMARK_DIR}
 	@docker --context ${CONTAINER_CONTEXT} run --rm \
 	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR} \
@@ -183,6 +203,13 @@ docker:
 	${IMAGE_NAME}:${VERSION} \
 	${CONTAINER_CMD} || true
 
+install-ycsb:
+	@echo "Installing ycsb..."
+	@source scripts/setup-benchmarks/install_ycsb.sh
+
+setup-mongodb:
+	@echo "Setting up storage for mongodb benchmark..."
+	@source scripts/setup-benchmarks/setup_mongodb_dir.sh
 
 # Miscellaneous commands
 clean-docker-images:

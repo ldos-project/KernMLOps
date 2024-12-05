@@ -50,6 +50,18 @@ RUN apt update -y \
     bison \
     && apt clean
 
+# Install MongoDB
+RUN apt-get update && \
+    apt-get install -y gnupg curl && \
+    curl -fsSL https://pgp.mongodb.com/server-6.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-6.0.gpg && \
+    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list && \
+    apt-get update && \
+    apt-get install -y mongodb-org && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+
+
 # Base development image
 FROM ${BUILD_IMAGE} AS dev
 
@@ -86,6 +98,9 @@ RUN echo "export SRC_DIR=${SRC_DIR}" >> /root/.profile
 RUN echo "export UNAME=${UNAME}" >> /root/.profile
 RUN echo "export GID=${GID}" >> /root/.profile
 RUN echo "export LIB_PFM4_DIR=/dependencies/libpfm4" >> /root/.profile
+RUN apt-get update && \
+    apt-get install -y openjdk-11-jdk && \
+    echo 'export PATH=$PATH:/usr/lib/jvm/java-11-openjdk-amd64/bin' >> /root/.profile
 
 WORKDIR /home/${UNAME}
 

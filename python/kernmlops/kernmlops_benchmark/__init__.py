@@ -14,12 +14,14 @@ from kernmlops_benchmark.errors import (
 )
 from kernmlops_benchmark.gap import GapBenchmark
 from kernmlops_benchmark.linux_build import LinuxBuildBenchmark
+from kernmlops_benchmark.mongodb import MongoDbBenchmark
 from kernmlops_config import ConfigBase
 
 benchmarks: Mapping[str, type[Benchmark]] = {
     FauxBenchmark.name(): FauxBenchmark,
     LinuxBuildBenchmark.name(): LinuxBuildBenchmark,
     GapBenchmark.name(): GapBenchmark,
+    MongoDbBenchmark.name(): MongoDbBenchmark,
 }
 
 BenchmarkConfig = make_dataclass(

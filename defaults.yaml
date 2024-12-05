@@ -11,6 +11,10 @@ benchmark_config:
   gap:
     gap_benchmark: pr
     trials: 2
+  mongodb:
+    operation_count: 1000000
+    read_proportion: 0.25
+    update_proportion: 0.75
 collector_config:
   generic:
     poll_rate: 0.5
