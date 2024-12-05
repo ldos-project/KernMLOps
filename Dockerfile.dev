@@ -18,6 +18,7 @@ RUN apt update -y \
     python3-pip \
     python3-setuptools \
     bpfcc-tools \
+    kmod \
     && apt clean
 
 # Install OSQuery
