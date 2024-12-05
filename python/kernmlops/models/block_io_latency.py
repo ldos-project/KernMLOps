@@ -29,12 +29,12 @@ class BlockIODataset(Dataset):
 
 
 class NeuralNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, input_dim: int):
         super().__init__()
         #self.flatten = nn.Flatten()
         hidden_dim = 256
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(4*3, hidden_dim),
+            nn.Linear(input_dim, hidden_dim),
             nn.RReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.RReLU(),
@@ -101,20 +101,21 @@ def test_loop(dataloader, model, loss_fn, test_content):
     correct /= size
     print(f"Test Error ({test_content}): \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
-
-learning_rate = 1e-5
-epochs = 10
-batch_size = 4096
-
-model = NeuralNetwork().to(device)
-pos_weights = torch.tensor([1, 19], device=device)
-loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weights)
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
 tensors_path = "data/tensors"
-features_subdirectory = "block_io/6_4_segment_minimal_flags"
+rows = 4
+cols = 6
+features_subdirectory = f"block_io/{cols}_{rows}_segment_spartan"
 train_dataset = "even" # "all" # "even_reads_only" # "reads_only"
 latency_cutoff = "p95_1460us"
+
+learning_rate = 1e-5
+epochs = 5
+batch_size = 4096
+
+model = NeuralNetwork(rows * cols).to(device)
+pos_weights = torch.tensor([1, 19], device=device)
+loss_fn = nn.BCEWithLogitsLoss() # pos_weight=pos_weights)
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 file_path_prefix = f"{tensors_path}/{features_subdirectory}"
 train_feature_path = f"{file_path_prefix}/{train_dataset}/train_features.tensor"
@@ -162,6 +163,6 @@ for t in range(epochs):
 print("Done!")
 model_dir = Path(f"{file_path_prefix}/{train_dataset}/models")
 model_dir.mkdir(parents=True, exist_ok=True)
-model_file_path = model_dir / f"/epochs_{epochs}.{uuid.uuid4()}.model"
+model_file_path = model_dir / f"epochs_{epochs}_{latency_cutoff}.{uuid.uuid4()}.model"
 print(f"Writing model to {str(model_file_path)}")
 torch.save(model, model_file_path)
