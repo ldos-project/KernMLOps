@@ -179,7 +179,7 @@ int __init init_module(void)
 	atomic64_set(&number_maps, 0);
 
 	/*Allocating Major number*/
-	if((alloc_chrdev_region(&dev, 0, 1, "fstore_Dev")) <0){
+	if((alloc_chrdev_region(&dev, 0, 1, "fstore_dev")) <0){
 					pr_err("Cannot allocate major number\n");
 					return -1;
 	}
