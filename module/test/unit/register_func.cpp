@@ -1,46 +1,14 @@
+#include "../../fstore/fstore.h"
 #include <cassert>
 #include <cerrno>
-#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
 #include <iostream>
 #include <linux/bpf.h>
-#include <optional>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-
-enum fstore_cmd {
-  REGISTER_MAP = 0x0,
-  UNREGISTER_MAP = 0x1,
-};
-
-std::optional<uint64_t> convert8byteStringHash(char* string) {
-  uint64_t hash = 0;
-  uint8_t i = 0;
-  for (; string[i] != '\0' && i < 8; i++) {
-    hash |= ((uint64_t)string[i]) << (i * 8);
-  }
-  if (string[i] != '\0') {
-    return std::nullopt;
-  }
-  return hash;
-}
-
-consteval uint64_t unsafeHashConvert(const char* string) {
-  uint64_t hash = 0;
-  uint8_t i = 0;
-  for (; string[i] != '\0' && i < 8; i++) {
-    hash |= ((uint64_t)string[i]) << (i * 8);
-  }
-  return hash;
-}
-
-struct register_input {
-  uint64_t map_name;
-  uint32_t fd;
-};
 
 int main() {
   union bpf_attr attr = {

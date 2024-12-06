@@ -11,6 +11,7 @@
 #include <linux/kdev_t.h>
 #include <linux/hashtable.h>
 #include <linux/types.h>
+#include "fstore.h"
 
 struct bpf_map* blah;
 
@@ -42,10 +43,7 @@ struct file_operations fops = {
 #define FSTORE_SIZE (1 << FSTORE_LOGSIZE)
 DEFINE_HASHTABLE(fstore_map, FSTORE_LOGSIZE);
 
-typedef struct register_input {
-	u64 map_name;
-	u32 fd;
-} register_t;
+typedef struct register_input register_t;
 
 typedef struct hash_node
 {
@@ -54,11 +52,6 @@ typedef struct hash_node
 } hash_t;
 
 struct bpf_map* bpf_map_get(u32 ufd);
-
-enum fstore_cmd {
-	REGISTER_MAP = 0x0,
-	UNREGISTER_MAP = 0x1,
-};
 
 /**
  * register a map with the name given by a u64.
@@ -128,7 +121,6 @@ int fstore_unregister(u64 map_name) {
 
 	return i;
 }
-
 
 /*
 static int fstore_get_all(
