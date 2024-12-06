@@ -8,6 +8,7 @@ import python.kernmlops.data_import as di
 curated_data = "data/curated"
 r = di.read_parquet_dir(curated_data)
 metrics = r.keys()
+time_granularity = 1e5
 
 def update_metrics_dict(merged_metrics: dict[int, list[float]], df: pl.DataFrame) -> None:
     for row_idx, (timestamp, value) in enumerate(df.iter_rows()):
@@ -17,7 +18,7 @@ def update_metrics_dict(merged_metrics: dict[int, list[float]], df: pl.DataFrame
 
 def to_time_series(df: pl.DataFrame, target_metric: str, uptime_metric: str) -> pl.DataFrame:
     # every 100ms
-    df = df.with_columns([pl.col(uptime_metric) // 1e5])
+    df = df.with_columns([pl.col(uptime_metric) // time_granularity])
     df = df.group_by(uptime_metric).agg(pl.col(target_metric).max())
     df = df.sort(uptime_metric)
     df = df.with_columns([pl.col(target_metric).diff()])
@@ -81,8 +82,16 @@ disk_metric_pairs = [
 
 for table_name, target_metric in perf_metric_pairs:
     merged_metrics = merge_metrics_by_cpu(r[table_name], target_metric)
-    plot_metrics(merged_metrics, target_metric)
+    for row in r["benchmark_run_info"].iter_rows():
+        start, end = row[2] // time_granularity, row[3] // time_granularity
+        filtered_metrics = {k: v for k, v in merged_metrics.items() if start <= k <= end}
+        plot_metrics(filtered_metrics, target_metric)
+
 
 for table_name, target_metric in disk_metric_pairs:
     merged_metrics = to_time_series(r[table_name], target_metric, "ts_uptime_us")
-    plot_metrics(merged_metrics, target_metric)
+    for row in r["benchmark_run_info"].iter_rows():
+        start, end = row[2] // time_granularity, row[3] // time_granularity
+        filtered_metrics = {k: v for k, v in merged_metrics.items() if start <= k <= end}
+        plot_metrics(filtered_metrics, target_metric)
+    

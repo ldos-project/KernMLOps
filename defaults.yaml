@@ -28,8 +28,6 @@ benchmark_config:
           args:
             - --vm
             - "1"
-            - --vm-ops
-            - "1000000"
             - --timeout
             - 10s
       - name: stress_ng
@@ -37,9 +35,31 @@ benchmark_config:
           stress_ng_benchmark: stress-ng
           args:
             - --vm
-            - "2"
-            - --vm-ops
-            - "1000000"
+            - "1"
+            - --timeout
+            - 10s
+      - name: stress_ng
+        config:
+          stress_ng_benchmark: stress-ng
+          args:
+            - --vm
+            - "1"
+            - --timeout
+            - 10s
+      - name: stress_ng
+        config:
+          stress_ng_benchmark: stress-ng
+          args:
+            - --vm
+            - "1"
+            - --timeout
+            - 10s
+      - name: stress_ng
+        config:
+          stress_ng_benchmark: stress-ng
+          args:
+            - --vm
+            - "1"
             - --timeout
             - 10s
 collector_config:

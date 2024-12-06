@@ -188,6 +188,7 @@ docker:
 	${CONTAINER_CPUSET} \
 	--pid=host \
 	--privileged \
+	--cgroupns=host \
 	--hostname=${CONTAINER_HOSTNAME} \
 	--workdir=${CONTAINER_WORKDIR} ${CONTAINER_OPTS} -${INTERACTIVE}t \
 	${IMAGE_NAME}:${VERSION} \
