@@ -14,11 +14,12 @@ TEST_BLD = $(patsubst %.cpp,%,$(subst test/,build/,${TEST_SRC}))
 all: fstore/fstore.ko
 
 /tmp/deploy: fstore/fstore.ko
+	-sudo rmmod fstore
 	sudo insmod $<
 	touch $@
 
 undeploy:
-	sudo rmmod fstore
+	-sudo rmmod fstore
 	rm -f /tmp/deploy
 
 ${TEST_BLD}: build/% : test/%.cpp ${KHEADS}

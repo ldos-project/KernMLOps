@@ -68,7 +68,7 @@ int fstore_register(u32 fd, u64 map_name)
 	int err = 0;
 	/* acquire space to create map */
 	u64 index = atomic64_inc_return_acquire(&number_maps);
-	if(index < FSTORE_SIZE) { err = -ENOSPC; goto cleanup_count; }
+	if(index >= FSTORE_SIZE) { err = -ENOSPC; goto cleanup_count; }
 
 	/* Check if value exists in map */
 	int i = 0;
@@ -80,7 +80,7 @@ int fstore_register(u32 fd, u64 map_name)
 
 	struct bpf_map* map;
 	map = bpf_map_get(fd);
-	if(!map) {
+	if(IS_ERR(map)) {
 		err = -EBADF;
 		goto cleanup_count;
 	}
@@ -107,7 +107,8 @@ static void fstore_delete(hash_t* item)
 {
 	hash_del_rcu(&item->hnode);
 	atomic64_dec_return_release(&number_maps);
-	bpf_map_put(item->map);
+	struct bpf_map* map = item->map;
+	if(IS_ERR(map)) bpf_map_put(map);
 	kfree(item);
 }
 
@@ -153,6 +154,8 @@ static long fstore_ioctl(struct file *file,
 			sizeof(register_t)) )
 		{
 			pr_err("Getting initial struct impossible\n");
+			err = -EINVAL;
+			break;
 		}
 		err = fstore_register(input.fd, input.map_name);
 		break;
