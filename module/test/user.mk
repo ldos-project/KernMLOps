@@ -1,10 +1,10 @@
-BUILD ?= build
-ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-OUT_DIR := ${BUILD}/$(notdir ${ROOT_DIR:/=})/
+BUILD ?= build/
+ROOT_DIR := $(CURDIR)
+OUT_DIR := ${BUILD}/$(notdir ${ROOT_DIR:/=})
 
 TEST_SRC := $(wildcard *.cpp)
 BLD_OUT := $(patsubst %.cpp,%,${TEST_SRC})
-FULL_OUT := $(addprefix ${OUT_DIR},${BLD_OUT})
+FULL_OUT := $(addprefix ${OUT_DIR}/,${BLD_OUT})
 
 echo:
 	@echo BUILD ${BUILD}
@@ -17,7 +17,7 @@ echo:
 ${OUT_DIR}:
 	mkdir -p $@
 
-${FULL_OUT}: ${OUT_DIR}% : %.cpp ../../fstore/fstore.h | ${OUT_DIR}
+${FULL_OUT}: ${OUT_DIR}/% : %.cpp ../../fstore/fstore.h | ${OUT_DIR}
 	${CXX} -O3 -I/usr/src/linux-headers-$(shell uname -r)/include/ \
 		-std=gnu++2b $< -o $@
 

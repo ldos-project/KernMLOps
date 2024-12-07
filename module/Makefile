@@ -4,7 +4,11 @@ KHEADS ?= $(shell pwd)/kheads
 MODULE ?= $(shell pwd)/module
 KERNEL ?= $(shell pwd)/linux
 
-BUILD := $(realpath build)
+BUILD := build
+
+REAL_BUILD := $(realpath build)
+
+EXPORT_VARS := $(if ${BUILD}, BUILD=${REAL_BUILD}) KBUILD=${KBUILD}
 
 SUDO ?= ""
 
@@ -24,10 +28,10 @@ undeploy:
 	rm -f /tmp/deploy
 
 kdev_test: ${KHEADS} | build
-	+${MAKE} BUILD=${BUILD} -C test kdev_test
+	+${MAKE} ${EXPORT_VARS} -C test kdev_test
 
 unit_test: ${KHEADS} /tmp/deploy
-	+${MAKE} BUILD=${BUILD} -C test unit_test
+	+${MAKE} ${EXPORT_VARS} -C test unit_test
 
 test: kdev_test unit_test
 
@@ -38,8 +42,10 @@ echo:
 	@echo KHEADS ${KHEADS}
 	@echo SUDO ${SUDO}
 	@echo BUILD ${BUILD}
+	@echo REAL_BUILD ${REAL_BUILD}
+	@echo EXPORT_VARS ${EXPORT_VARS}
 	@echo test:
-	@${MAKE} BUILD=${BUILD} -C test echo
+	@${MAKE} ${EXPORT_VARS} -C test echo
 
 ${DIRS}:
 	mkdir -p $@

@@ -13,8 +13,6 @@
 #include <linux/types.h>
 #include "fstore.h"
 
-struct bpf_map* blah;
-
 atomic64_t number_maps;
 
 dev_t dev = 0;
