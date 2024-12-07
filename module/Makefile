@@ -6,7 +6,7 @@ KERNEL ?= $(shell pwd)/linux
 
 BUILD := build
 
-REAL_BUILD := $(realpath build)
+REAL_BUILD = $(realpath build)
 
 EXPORT_VARS := $(if ${BUILD}, BUILD=${REAL_BUILD}) KBUILD=${KBUILD}
 
