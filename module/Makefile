@@ -16,7 +16,7 @@ DIRS = ${KBUILD} ${MODULE} ${BUILD}
 
 .PHONY: test
 
-all: fstore/fstore.ko
+all: ${MODULE}/lib
 
 /tmp/deploy: fstore/fstore.ko
 	-sudo rmmod fstore
