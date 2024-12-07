@@ -14,3 +14,6 @@ echo:
 
 test:
 	@$(foreach path,${DIRS},${MAKE} ${EXPORT_BUILD} -C ${path} test)
+
+undeploy:
+	@$(foreach path,${DIRS},${MAKE} ${EXPORT_BUILD} -C ${path} undeploy)

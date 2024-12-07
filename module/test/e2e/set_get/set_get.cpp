@@ -1,3 +1,4 @@
+#include "set_get.h"
 #include "../../../fstore/fstore.h"
 #include <cassert>
 #include <cerrno>
@@ -34,7 +35,7 @@ int main() {
   int fd = open("/dev/fstore_device", O_RDWR);
   if (fd < 0) {
     auto err = errno;
-    std::cerr << "Failed to open module: " << err << ", " << std::strerror(err) << std::endl;
+    std::cerr << "Failed to open fstore: " << err << ", " << std::strerror(err) << std::endl;
     return -EBADF;
   }
 
@@ -46,16 +47,38 @@ int main() {
   err = ioctl(fd, REGISTER_MAP, (unsigned long)&reg);
   assert(err == 0);
 
-  bzero(attr, sizeof(attr));
+  bzero(&attr, sizeof(attr));
 
   __u32 zero_key = 0;
   __u64 sample_value = SAMPLE_VALUE;
 
   attr.map_fd = ebpf_fd;
-  attr.key = ptr_to_u64(&zero_key);
-  attr.value = ptr_to_u64(&sample_value);
+  attr.key = (__u64)&zero_key;
+  attr.value = (__u64)&sample_value;
   attr.flags = BPF_EXIST;
 
   err = syscall(SYS_bpf, BPF_MAP_UPDATE_ELEM, &attr, sizeof(attr));
   assert(err == 0);
+
+  int gsfd = open("/dev/set_get_device", O_RDWR);
+  if (gsfd < 0) {
+    auto err = errno;
+    std::cerr << "Failed to open get_set: " << err << ", " << std::strerror(err) << std::endl;
+    return -EBADF;
+  }
+
+  get_set_args gsa = {
+      .key = 0,
+      .value = 0,
+      .map_name = unsafeHashConvert("hello"),
+  };
+
+  err = ioctl(gsfd, GET_ONE, (unsigned long)&gsa);
+  assert(err == 0);
+  assert(gsa.value == SAMPLE_VALUE);
+
+  err = ioctl(fd, UNREGISTER_MAP, unsafeHashConvert("hello"));
+  assert(err == 1);
+
+  return 0;
 }

@@ -24,6 +24,7 @@ all: ${MODULE}/lib
 	touch $@
 
 undeploy:
+	+${MAKE} -C test undeploy
 	-sudo rmmod fstore
 	rm -f /tmp/deploy
 
@@ -33,7 +34,10 @@ kdev_test: ${KHEADS} | build
 unit_test: ${KHEADS} /tmp/deploy
 	+${MAKE} ${EXPORT_VARS} -C test unit_test
 
-test: kdev_test unit_test
+e2e_test: ${KHEADS} /tmp/deploy
+	+${MAKE} ${EXPORT_VARS} -C test e2e_test
+
+test: kdev_test unit_test e2e_test
 
 echo:
 	@echo KBUILD ${KBUILD}

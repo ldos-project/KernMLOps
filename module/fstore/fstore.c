@@ -27,6 +27,12 @@ int fstore_register(u32 fd, u64 map_name);
 EXPORT_SYMBOL_GPL(fstore_register);
 int fstore_unregister(u64 map_name);
 EXPORT_SYMBOL_GPL(fstore_unregister);
+int fstore_get(u64 map_name,
+		void* key,
+		size_t key_size,
+		void* value,
+		size_t value_size);
+EXPORT_SYMBOL_GPL(fstore_get);
 
 struct file_operations fops = {
 	.owner = THIS_MODULE,
@@ -99,7 +105,7 @@ static void fstore_delete(hash_t* item)
 	hash_del_rcu(&item->hnode);
 	atomic64_dec_return_release(&number_maps);
 	struct bpf_map* map = item->map;
-	if(IS_ERR(map)) bpf_map_put(map);
+	if(!IS_ERR(map)) bpf_map_put(map);
 	kfree(item);
 }
 
@@ -120,16 +126,38 @@ int fstore_unregister(u64 map_name) {
 	return i;
 }
 
-/*
-static int fstore_get_all(
-		u64 map_name,
-		char* buffer,
-		size_t size,
-		size_t* copied_size)
+int bpf_map_copy_value(struct bpf_map *map, void *key, void *value,
+			      __u64 flags);
+
+int fstore_get(u64 map_name,
+		void* key,
+		size_t key_size,
+		void* value,
+		size_t value_size)
 {
-	return 0;
+	int err = 0;
+	struct bpf_map* map;
+	int i = 0;
+	hash_t* item = NULL;
+	hash_for_each_possible_rcu_notrace(fstore_map, item, hnode, map_name) {
+		i++;
+		map = item->map;
+		if(IS_ERR(map)) err = -EKEYEXPIRED;
+		else bpf_map_inc(map);
+	}
+	// If either of these are hit we can safely exit
+	if(err == -EKEYEXPIRED) return -EKEYEXPIRED;
+	if(i == 0) return -ENOKEY;
+
+	if(IS_ERR(key) ||
+		IS_ERR(value) ||
+		key_size < map->key_size ||
+		value_size < map->value_size) err = -EINVAL;
+	else err = bpf_map_copy_value(map, key, value, 0);
+
+	bpf_map_put(map);
+	return err;
 }
-*/
 
 static long fstore_ioctl(struct file *file,
 				unsigned int cmd,

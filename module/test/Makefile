@@ -24,4 +24,7 @@ unit_test:
 e2e_test:
 	@${MAKE} ${EXPORT_VARS} -C e2e test
 
+undeploy:
+	+${MAKE} -C e2e undeploy
+
 test: kdev_test unit_test
