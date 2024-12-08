@@ -3,6 +3,7 @@ import subprocess
 from dataclasses import dataclass, field
 from typing import Literal, cast
 import time
+import psutil
 
 from data_schema import GraphEngine, demote
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
@@ -60,11 +61,15 @@ class StressNgBenchmark(Benchmark):
             stdout=subprocess.DEVNULL,
         )
 
-        self.start_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
-
     def poll(self) -> int | None:
         if self.process is None:
             raise BenchmarkNotRunningError()
+        if self.process is None:
+            raise BenchmarkNotRunningError()
+        if not self.start_timestamp:
+            p = psutil.Process(self.process.pid)
+            if p.status() != "disk-sleep":
+                self.start_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
         self.finish_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
 
         return self.process.poll()

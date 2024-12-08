@@ -34,6 +34,10 @@ class GenericBenchmarkConfig(ConfigBase):
           stdout=subprocess.DEVNULL,
       )
     subprocess.check_call(
+        ["bash", "-c", f"/KernMLOps/scripts/flush_cache"],
+        stdout=subprocess.DEVNULL,
+    )
+    subprocess.check_call(
         [
           "bash",
           "-c",
