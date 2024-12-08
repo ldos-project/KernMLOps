@@ -10,6 +10,7 @@ import subprocess
 from data_schema import GraphEngine, demote
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
 from kernmlops_benchmark.stress_ng import StressNgBenchmark, StressNgBenchmarkConfig
+from kernmlops_benchmark.stress_ng_set import StressNgSetBenchmark, StressNgSetBenchmarkConfig
 from kernmlops_benchmark.errors import (
     BenchmarkNotInCollectionData,
     BenchmarkNotRunningError,
@@ -52,7 +53,7 @@ class BenchmarkGroup(Benchmark):
         super().__init__()
         self.generic_config = generic_config
         self.config = config
-        self.benchmarks: list[StressNgBenchmark] = []
+        self.benchmarks: list[StressNgBenchmark | StressNgSetBenchmark] = []
         for benchmark_config_dict in self.config.benchmarks:
             benchmark_config: ChildBenchmarkConfig = make_dataclass(
                 "ChildBenchmarkConfig",
@@ -66,6 +67,16 @@ class BenchmarkGroup(Benchmark):
                 self.benchmarks.append(
                     StressNgBenchmark(
                         generic_config=generic_config, config=stress_ng_config
+                    )
+                )
+            elif benchmark_config.name == StressNgSetBenchmark.name():
+                stress_ng_set_config: StressNgSetBenchmarkConfig = make_dataclass(
+                    "StressNgSetBenchmarkConfig",
+                    ((k, type(v)) for k, v in benchmark_config.config.items()),
+                )(**benchmark_config.config)
+                self.benchmarks.append(
+                    StressNgSetBenchmark(
+                        generic_config=generic_config, config=stress_ng_set_config
                     )
                 )
             else:
