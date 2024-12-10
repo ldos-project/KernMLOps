@@ -275,3 +275,49 @@ class TLBFlushCumulativeGraph(CumulativePerfGraph):
                 perf_table=perf_table
             )
         return None
+
+
+class DTLBWalkDurationPerfTable(PerfCollectionTable):
+
+    @classmethod
+    def name(cls) -> str:
+        return "dtlb_walk_duration"
+
+    @classmethod
+    def ev_type(cls) -> int:
+        return PerfType.RAW
+
+    @classmethod
+    def ev_config(cls) -> int:
+        return 0
+
+    @classmethod
+    def hw_ids(cls) -> list[CustomHWEventID]:
+        return [
+            CustomHWEventID(name="DTLB_LOAD_MISSES", umask="WALK_DURATION"),
+        ]
+
+    @classmethod
+    def component_name(cls) -> str:
+        return "dTLB"
+
+    @classmethod
+    def measured_event_name(cls) -> str:
+        return "Walk Durations"
+
+    @classmethod
+    def from_df(cls, table: pl.DataFrame) -> "DTLBWalkDurationPerfTable":
+        return DTLBWalkDurationPerfTable(table=table.cast(cls.schema(), strict=True))  # pyright: ignore [reportArgumentType]
+
+    def __init__(self, table: pl.DataFrame):
+        self._table = table
+
+    @property
+    def table(self) -> pl.DataFrame:
+        return self._table
+
+    def filtered_table(self) -> pl.DataFrame:
+        return self.table
+
+    def graphs(self) -> list[type[CollectionGraph]]:
+        return []
