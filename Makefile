@@ -78,13 +78,13 @@ pre-commit:
 	@pre-commit run -a
 
 lint:
-	ruff check
-	ruff check --select I
-	pyright
+	ruff check python
+	ruff check --select I python
+	pyright python
 
 format:
-	ruff check --fix
-	ruff check --select I --fix
+	ruff check --fix python
+	ruff check --select I --fix python
 
 
 # Python commands
