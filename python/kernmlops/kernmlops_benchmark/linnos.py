@@ -1,5 +1,5 @@
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from random import shuffle
 from typing import Literal, cast
 
@@ -13,12 +13,21 @@ from kernmlops_benchmark.errors import (
 from kernmlops_config import ConfigBase
 
 
+def _default_devices() -> list[str]:
+    return ["/dev/nvme0n1", "/dev/nvme1n1", "/dev/nvme2n1"]
+
+
+def _default_traces() -> list[str]:
+    return ["azure", "bing_i", "cosmos"]
+
+
 @dataclass(frozen=True)
 class LinnosBenchmarkConfig(ConfigBase):
+  use_root: bool = False # required for accessing raw devices
+  shuffle_traces: bool = False
   type: Literal["baseline", "failover"] = "baseline"
-  device_0: str = "/dev/nvme0n1"
-  device_1: str = "/dev/nvme1n1"
-  device_2: str = "/dev/nvme2n1"
+  devices: list[str] = field(default_factory=_default_devices) # devices cannot contain '-'
+  traces: list[str] = field(default_factory=_default_traces)
 
 
 class LinnosBenchmark(Benchmark):
@@ -50,56 +59,54 @@ class LinnosBenchmark(Benchmark):
         if self.process is not None:
             raise BenchmarkRunningError()
         self.generic_config.generic_setup()
-        subprocess.Popen(
-            [
-                "bash",
-                "gen_azure.sh",
-            ],
-            cwd=str(self.benchmark_dir / "trace_tools"),
-            preexec_fn=demote(),
-            stdout=subprocess.DEVNULL,
-        )
-        subprocess.Popen(
-            [
-                "bash",
-                "gen_bing_i.sh",
-            ],
-            cwd=str(self.benchmark_dir / "trace_tools"),
-            preexec_fn=demote(),
-            stdout=subprocess.DEVNULL,
-        )
-        subprocess.Popen(
-            [
-                "bash",
-                "gen_cosmos.sh",
-            ],
-            cwd=str(self.benchmark_dir / "trace_tools"),
-            preexec_fn=demote(),
-            stdout=subprocess.DEVNULL,
-        )
+        for trace in self.config.traces:
+            subprocess.Popen(
+                [
+                    "bash",
+                    f"gen_{trace}.sh",
+                ],
+                cwd=str(self.benchmark_dir / "trace_tools"),
+                preexec_fn=demote(),
+                stdout=subprocess.DEVNULL,
+            )
 
     def run(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
         traces = [
-            str(self.benchmark_dir / "trace_tools" / "azure" / "azure1.trace"),
-            str(self.benchmark_dir / "trace_tools" / "bing_i" / "bing_i1.trace"),
-            str(self.benchmark_dir / "trace_tools" / "cosmos" / "cosmos1.trace"),
+            str(self.benchmark_dir / "trace_tools" / trace / f"{trace}1.trace")
+            for trace in self.config.traces
         ]
-        shuffle(traces)
-        # this must be run as root
-        self.process = subprocess.Popen(
-            [
-                str(self.benchmark_dir / "io_replayer" / "replayer"),
-                self.config.type,
-                "3ssds",
-                "3",
-                f"{self.config.device_0}-{self.config.device_1}-{self.config.device_2}",
-                *traces,
-            ],
-            cwd=str(self.benchmark_dir / "io_replayer"),
-            stdout=subprocess.DEVNULL,
-        )
+        if self.config.shuffle_traces:
+            shuffle(traces)
+        # this must be run as root if accessing raw devices
+        if not self.config.use_root:
+            self.process = subprocess.Popen(
+                [
+                    str(self.benchmark_dir / "io_replayer" / "replayer"),
+                    self.config.type,
+                    "logfile",
+                    str(len(self.config.devices)),
+                    ",".join(self.config.devices),
+                    *traces,
+                ],
+                cwd=str(self.benchmark_dir / "io_replayer"),
+                preexec_fn=demote(),
+            )
+        else:
+            self.process = subprocess.Popen(
+                [
+                    str(self.benchmark_dir / "io_replayer" / "replayer"),
+                    self.config.type,
+                    "logfile",
+                    str(len(self.config.devices)),
+                    ",".join(self.config.devices),
+                    *traces,
+                ],
+                cwd=str(self.benchmark_dir / "io_replayer"),
+                preexec_fn=demote(),
+                stdout=subprocess.DEVNULL,
+            )
 
     def poll(self) -> int | None:
         if self.process is None:

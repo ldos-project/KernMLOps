@@ -16,10 +16,17 @@ benchmark_config:
     read_proportion: 0.25
     update_proportion: 0.75
   linnos:
+    use_root: false
+    shuffle_traces: false
     type: baseline
-    device_0: /dev/nvme0n1
-    device_1: /dev/nvme1n1
-    device_2: /dev/nvme2n1
+    devices:
+      - /dev/nvme0n1
+      - /dev/nvme1n1
+      - /dev/nvme2n1
+    traces:
+      - azure
+      - bing_i
+      - cosmos
 collector_config:
   generic:
     poll_rate: 0.5
