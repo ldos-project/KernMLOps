@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 import polars as pl
 from bcc import BPF
@@ -7,6 +8,7 @@ from data_collection.bpf_instrumentation.bpf_hook import POLL_TIMEOUT_MS, BPFPro
 from data_schema import CollectionTable
 from data_schema.huge_pages import (
   CollapseHugePageDataTable,
+  CollapseHugePageDataTableRaw,
   TraceMMCollapseHugePageDataTable,
   TraceMMKhugepagedScanPMDDataTable,
 )
@@ -79,12 +81,20 @@ class CollapseHugePageBPFHook(BPFProgram):
 
   def data(self) -> list[CollectionTable]:
     return [
-            CollapseHugePageDataTable.from_df_id(
-                pl.DataFrame(self.collapse_huge_pages),
-                collection_id = self.collection_id,),
-            TraceMMCollapseHugePageDataTable.from_df_id(
-                pl.DataFrame(self.trace_mm_collapse_huge_pages),
-                collection_id = self.collection_id,),
+            CollapseHugePageDataTable.from_tables(
+              collapse_table=cast(
+                CollapseHugePageDataTableRaw,
+                CollapseHugePageDataTableRaw.from_df_id(
+                  pl.DataFrame(self.collapse_huge_pages),
+                  collection_id = self.collection_id,),
+              ),
+              trace_mm_table=cast(
+                TraceMMCollapseHugePageDataTable,
+                TraceMMCollapseHugePageDataTable.from_df_id(
+                  pl.DataFrame(self.trace_mm_collapse_huge_pages),
+                  collection_id = self.collection_id,),
+              ),
+            ),
             TraceMMKhugepagedScanPMDDataTable.from_df_id(
                 pl.DataFrame(self.trace_mm_khugepaged_scan_pmds),
                 collection_id = self.collection_id,),
