@@ -194,15 +194,23 @@ class BlockIOTable(CollectionTable):
                 "collection_id",
             ],
             how="inner",
-        ).with_columns(
+        ).filter(
+            ((pl.col("finish_ts_uptime_us") - pl.col(UPTIME_TIMESTAMP)) > 0) &
+            ((pl.col("finish_ts_uptime_us") - pl.col(UPTIME_TIMESTAMP)) < pl.col("block_latency_us"))
+        )
+        block_df = block_df.unique([
+            "cpu",
+            "device",
+            "sector",
+            "segments",
+            "block_io_bytes",
+            UPTIME_TIMESTAMP,
+            "block_io_flags",
+        ]).with_columns(
             (pl.col("finish_ts_uptime_us") - pl.col(UPTIME_TIMESTAMP)).alias("measured_latency_us"),
             pl.col("block_io_flags").map_elements(
                 flags_print, return_dtype=pl.String,
             ).alias("block_io_flags_string"),
-        ).filter(
-            pl.col("measured_latency_us") > 0
-        ).filter(
-            (pl.col("measured_latency_us") - 100) < pl.col("block_latency_us")
         ).sort(UPTIME_TIMESTAMP, descending=False)
         return cls.from_df(block_df)
 

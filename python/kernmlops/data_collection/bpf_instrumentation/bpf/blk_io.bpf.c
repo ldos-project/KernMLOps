@@ -57,6 +57,8 @@ static int block_4k_ios(u32 bytes) {
 
 // copied from linux kernel
 static inline unsigned short blk_rq_nr_phys_segments_dup(struct request* rq) {
+  if ((rq->cmd_flags & REQ_IDLE) && (rq->cmd_flags & REQ_FUA) && (rq->cmd_flags & REQ_META))
+    return 0;
   if (rq->rq_flags & RQF_SPECIAL_PAYLOAD)
     return 1;
   return rq->nr_phys_segments;
