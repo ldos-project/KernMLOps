@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-USER_PATH=/home
+USER_PATH=/users
 UNAME ?= $(shell whoami)
 UID ?= $(shell id -u)
 GID ?= $(shell id -g)

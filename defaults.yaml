@@ -22,46 +22,16 @@ benchmark_config:
       - 10s
   benchmark_group:
     benchmarks:
-      - name: stress_ng
+      - name: stress_ng_set
         config:
-          stress_ng_benchmark: stress-ng
+          stress_ng_benchmark: stress-ng-set
           args:
-            - --vm
-            - "1"
-            - --timeout
-            - 10s
-      - name: stress_ng
+            - 1.txt
+      - name: stress_ng_set
         config:
-          stress_ng_benchmark: stress-ng
+          stress_ng_benchmark: stress-ng-set
           args:
-            - --vm
-            - "1"
-            - --timeout
-            - 10s
-      - name: stress_ng
-        config:
-          stress_ng_benchmark: stress-ng
-          args:
-            - --vm
-            - "1"
-            - --timeout
-            - 10s
-      - name: stress_ng
-        config:
-          stress_ng_benchmark: stress-ng
-          args:
-            - --vm
-            - "1"
-            - --timeout
-            - 10s
-      - name: stress_ng
-        config:
-          stress_ng_benchmark: stress-ng
-          args:
-            - --vm
-            - "1"
-            - --timeout
-            - 10s
+            - 2.txt
 collector_config:
   generic:
     poll_rate: 0.1
