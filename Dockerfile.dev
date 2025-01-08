@@ -48,6 +48,7 @@ RUN apt update -y \
     flex \
     libelf-dev \
     bison \
+    stress-ng \
     && apt clean
 
 # Base development image

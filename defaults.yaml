@@ -20,18 +20,20 @@ benchmark_config:
       - "1000000"
       - --timeout
       - 10s
+  stress_ng_benchmarks:
+    num_exps: 5
   benchmark_group:
     benchmarks:
       - name: stress_ng_set
         config:
           stress_ng_benchmark: stress-ng-set
           args:
-            - 1.txt
+            - "1"
       - name: stress_ng_set
         config:
           stress_ng_benchmark: stress-ng-set
           args:
-            - 2.txt
+            - "2"
 collector_config:
   generic:
     poll_rate: 0.1

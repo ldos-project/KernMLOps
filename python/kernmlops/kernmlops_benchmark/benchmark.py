@@ -11,6 +11,7 @@ from data_schema import GraphEngine
 from kernmlops_config import ConfigBase
 from typing_extensions import Protocol
 
+
 @dataclass(frozen=True)
 class GenericBenchmarkConfig(ConfigBase):
   benchmark: str = "faux"
@@ -28,15 +29,17 @@ class GenericBenchmarkConfig(ConfigBase):
 
   def generic_setup(self):
     """This will set pertinent generic settings, should be called after specific benchmark setup."""
+    os.system("pkill -9 stress-ng")
     if not self.skip_clear_page_cache:
       subprocess.check_call(
           ["bash", "-c", "sync && echo 3 > /proc/sys/vm/drop_caches"],
           stdout=subprocess.DEVNULL,
       )
     subprocess.check_call(
-        ["bash", "-c", f"/KernMLOps/scripts/flush_cache"],
+        ["bash", "-c", "/KernMLOps/scripts/flush_cache"],
         stdout=subprocess.DEVNULL,
     )
+
     subprocess.check_call(
         [
           "bash",

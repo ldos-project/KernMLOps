@@ -1,10 +1,9 @@
-import shutil
 import subprocess
+import time
 from dataclasses import dataclass, field
 from typing import Literal, cast
-import time
-import psutil
 
+import psutil
 from data_schema import GraphEngine, demote
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
 from kernmlops_benchmark.errors import (
@@ -13,6 +12,7 @@ from kernmlops_benchmark.errors import (
     BenchmarkRunningError,
 )
 from kernmlops_config import ConfigBase
+
 
 @dataclass(frozen=True)
 class StressNgSetBenchmarkConfig(ConfigBase):
@@ -40,7 +40,7 @@ class StressNgSetBenchmark(Benchmark):
         super().__init__()
         self.generic_config = generic_config
         self.config = config
-        self.benchmark_path = "/KernMLOps/scripts/run_stress-ng-args.sh"
+        self.benchmark_path = "/KernMLOps/scripts/run_stress_ng"
         self.process: subprocess.Popen | None = None
 
     def is_configured(self) -> bool:
@@ -62,8 +62,6 @@ class StressNgSetBenchmark(Benchmark):
         )
 
     def poll(self) -> int | None:
-        if self.process is None:
-            raise BenchmarkNotRunningError()
         if self.process is None:
             raise BenchmarkNotRunningError()
         if not self.start_timestamp:
