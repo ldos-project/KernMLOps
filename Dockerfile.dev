@@ -72,6 +72,7 @@ RUN apt update -y \
   &&  apt install -y \
   vim \
   pkg-config \
+  bpftrace \
   zsh \
   && apt clean
 
