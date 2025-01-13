@@ -10,6 +10,7 @@ KERNEL_VERSION ?= $(shell uname -r)
 KERNEL_DEV_HEADERS_DIR ?= /usr/src/kernels/${KERNEL_VERSION}
 KERNEL_DEV_SPECIFIC_HEADERS_MOUNT ?=
 KERNEL_DEV_MODULES_DIR ?= /lib/modules/${KERNEL_VERSION}
+LOWER_UNAME = $(shell echo ${UNAME} | tr A-Z a-z)
 
 # Kernel dev header locations are different on red hat and ubuntu
 # First ensure the user has not overridden this field
@@ -41,7 +42,7 @@ endif
 
 BASE_IMAGE_NAME ?= kernmlops
 BCC_IMAGE_NAME ?= ${BASE_IMAGE_NAME}-deps
-IMAGE_NAME ?= ${UNAME}-${BASE_IMAGE_NAME}
+IMAGE_NAME ?= ${LOWER_UNAME}-${BASE_IMAGE_NAME}
 SRC_DIR ?= $(shell pwd)
 VERSION ?= $(shell git log --pretty="%h" -1 Dockerfile.dev requirements.txt)
 
