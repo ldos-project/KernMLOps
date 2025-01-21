@@ -21,7 +21,9 @@ benchmark_config:
       - --timeout
       - 10s
   stress_ng_benchmarks:
-    num_exps: 5
+    starting_idx: 1
+    num_exps: 1000
+    num_reps: 1
   benchmark_group:
     benchmarks:
       - name: stress_ng_set
@@ -36,10 +38,9 @@ benchmark_config:
             - "2"
 collector_config:
   generic:
-    poll_rate: 0.1
+    poll_rate: 0.005
     output_dir: data
     output_graphs: false
     hooks:
       - memory_usage
       - disk_usage
-      - perf

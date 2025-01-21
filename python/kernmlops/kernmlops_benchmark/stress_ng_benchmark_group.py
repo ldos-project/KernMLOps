@@ -19,7 +19,9 @@ from kernmlops_config import ConfigBase
 
 @dataclass(frozen=True)
 class StressNgBenchmarkGroupConfig(ConfigBase):
+    starting_idx: int = 0
     num_exps: int = 0
+    num_reps: int = 1
 
 class StressNgBenchmarkGroup(Benchmark):
     @classmethod
@@ -45,16 +47,17 @@ class StressNgBenchmarkGroup(Benchmark):
         self.generic_config = generic_config
         self.config = config
         self.benchmarks: list[StressNgSetBenchmark] = []
-        for exp_id in range(1, self.config.num_exps + 1):
-            stress_ng_set_config = StressNgSetBenchmarkConfig(
-                stress_ng_benchmark="stress-ng-set",
-                args=[str(exp_id)],
-            )
-            self.benchmarks.append(
-                StressNgSetBenchmark(
-                    generic_config=generic_config, config=stress_ng_set_config
+        for exp_id in range(self.config.starting_idx, self.config.starting_idx + self.config.num_exps):
+            for _ in range(self.config.num_reps):
+                stress_ng_set_config = StressNgSetBenchmarkConfig(
+                    stress_ng_benchmark="stress-ng-set",
+                    args=[str(exp_id)],
                 )
-            )
+                self.benchmarks.append(
+                    StressNgSetBenchmark(
+                        generic_config=generic_config, config=stress_ng_set_config
+                    )
+                )
         self.processes: list[subprocess.Popen] = []
         self.running_process_idx: int = -1
 
