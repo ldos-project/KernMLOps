@@ -33,6 +33,12 @@ int fstore_get(u64 map_name,
 		void* value,
 		size_t value_size);
 EXPORT_SYMBOL_GPL(fstore_get);
+int fstore_get_value_size(u64 map_name,
+		size_t* size);
+EXPORT_SYMBOL_GPL(fstore_get_value_size);
+int fstore_get_num_keys(u64 map_name,
+		size_t* size);
+EXPORT_SYMBOL_GPL(fstore_get_num_keys);
 
 struct file_operations fops = {
 	.owner = THIS_MODULE,
@@ -156,6 +162,42 @@ int fstore_get(u64 map_name,
 	else err = bpf_map_copy_value(map, key, value, 0);
 
 	bpf_map_put(map);
+	return err;
+}
+
+int fstore_get_value_size(u64 map_name,
+			size_t* size) {
+	int err = 0;
+	struct bpf_map* map;
+	int i = 0;
+	hash_t* item = NULL;
+	hash_for_each_possible_rcu_notrace(fstore_map, item, hnode, map_name) {
+		i++;
+		map = item->map;
+		if(IS_ERR(map)) err = -EKEYEXPIRED;
+		else *size = map->value_size;
+	}
+	// If either of these are hit we can safely exit
+	if(err == -EKEYEXPIRED) return -EKEYEXPIRED;
+	if(i == 0) return -ENOKEY;
+	return err;
+}
+
+int fstore_get_num_keys(u64 map_name,
+			size_t* size) {
+	int err = 0;
+	struct bpf_map* map;
+	int i = 0;
+	hash_t* item = NULL;
+	hash_for_each_possible_rcu_notrace(fstore_map, item, hnode, map_name) {
+		i++;
+		map = item->map;
+		if(IS_ERR(map)) err = -EKEYEXPIRED;
+		else *size = map->max_entries;
+	}
+	// If either of these are hit we can safely exit
+	if(err == -EKEYEXPIRED) return -EKEYEXPIRED;
+	if(i == 0) return -ENOKEY;
 	return err;
 }
 

@@ -40,6 +40,12 @@ int fstore_get(u64 map_name,
 		void* value,
 		size_t value_size);
 
+int fstore_get_value_size(u64 map_name,
+			size_t* size);
+
+int fstore_get_num_keys(u64 map_name,
+			size_t* size);
+
 typedef struct get_set_args gsa_t;
 
 static long get_set_ioctl(struct file* file,
@@ -49,6 +55,7 @@ static long get_set_ioctl(struct file* file,
 	int err = -EINVAL;
 	gsa_t* uptr = (gsa_t*) data;
 	gsa_t gsa;
+	size_t size = 0;
 	switch (cmd) {
 	case GET_ONE:
 		if( copy_from_user(&gsa, (gsa_t*) data, sizeof(gsa_t)) )
@@ -56,6 +63,18 @@ static long get_set_ioctl(struct file* file,
 			pr_err("Getting initial struct impossible\n");
 			err = -EINVAL;
 			break;
+		}
+		err = fstore_get_value_size(gsa.map_name, &size);
+		if( err != 0 ) {
+			return err;
+		} else if( size != 8 ) {
+			return -EMSGSIZE;
+		}
+		err = fstore_get_num_keys(gsa.map_name, &size);
+		if( err != 0 ) {
+			return err;
+		} else if( size != 100) {
+			return -ENOMEM;
 		}
 		err = fstore_get(gsa.map_name,
 				&gsa.key, sizeof(gsa.key),

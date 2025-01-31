@@ -10,10 +10,10 @@ echo:
 	@echo OUT_DIR ${OUT_DIR}
 	@echo EXPORT_BUILD ${EXPORT_BUILD}
 	@echo DIRS ${DIRS}
-	@$(foreach path,${DIRS},echo ${path}: && ${MAKE} ${EXPORT_BUILD} -C ${path} echo)
+	@$(foreach path,${DIRS},echo ${path}: && ${MAKE} ${EXPORT_BUILD} -C ${path} echo;)
 
 test:
-	@$(foreach path,${DIRS},${MAKE} ${EXPORT_BUILD} -C ${path} test)
+	@$(foreach path,${DIRS},${MAKE} ${EXPORT_BUILD} -C ${path} test;)
 
 undeploy:
-	@$(foreach path,${DIRS},${MAKE} ${EXPORT_BUILD} -C ${path} undeploy)
+	@$(foreach path,${DIRS},${MAKE} ${EXPORT_BUILD} -C ${path} undeploy;)

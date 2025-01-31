@@ -29,7 +29,7 @@ int main() {
   }
 
   register_input reg = {
-      .map_name = unsafeHashConvert("hello"),
+      .map_name = unsafeHashConvert(NAME),
       .fd = 0,
   };
   int fd = open("/dev/fstore_device", O_RDWR);
@@ -70,14 +70,14 @@ int main() {
   get_set_args gsa = {
       .key = 0,
       .value = 0,
-      .map_name = unsafeHashConvert("hello"),
+      .map_name = unsafeHashConvert(NAME),
   };
 
   err = ioctl(gsfd, GET_ONE, (unsigned long)&gsa);
   assert(err == 0);
   assert(gsa.value == SAMPLE_VALUE);
 
-  err = ioctl(fd, UNREGISTER_MAP, unsafeHashConvert("hello"));
+  err = ioctl(fd, UNREGISTER_MAP, unsafeHashConvert(NAME));
   assert(err == 1);
 
   return 0;
