@@ -49,6 +49,8 @@ RUN apt update -y \
     flex \
     libelf-dev \
     bison \
+    netcat-openbsd \
+    nmap \
     && apt clean
 
 # Install MongoDB
@@ -61,7 +63,11 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-
+# Install memcached
+RUN apt-get update && \
+    apt-get install -y \
+        memcached && \
+    apt-get clean
 
 # Base development image
 FROM ${BUILD_IMAGE} AS dev

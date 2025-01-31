@@ -24,10 +24,10 @@ benchmark_config:
       - /dev/nvme0n1
       - /dev/nvme1n1
       - /dev/nvme2n1
-    traces:
-      - azure
-      - bing_i
-      - cosmos
+  memcached:
+    operation_count: 1000000
+    read_proportion: 0.99
+    update_proportion: 0.01
 collector_config:
   generic:
     poll_rate: 0.5

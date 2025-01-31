@@ -13,7 +13,7 @@ That submodule is only necessary if you plan to use in-kernel inference.
 Quick Setup:
 
 ```shell
-pip install -r requirements.txt
+pip install --break-system-packages -r requirements.txt
 
 make hooks
 
@@ -44,6 +44,10 @@ make collect
 make docker
 make load-mongodb # Run this command only the first time you set up the MongoDB benchmark
 make benchmark-mongodb
+# Run memcached benchmark inside docker
+make docker
+make load-memcached # Run this command only the first time you set up the Memcached benchmark
+make benchmark-memcached
 
 ```
 
