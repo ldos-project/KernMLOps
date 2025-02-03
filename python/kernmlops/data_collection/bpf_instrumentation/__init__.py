@@ -4,6 +4,9 @@ from typing import Final, Mapping
 
 from data_collection.bpf_instrumentation.blk_io_hook import BlockIOBPFHook
 from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
+from data_collection.bpf_instrumentation.cbmm import (
+    CBMMBPFHook,
+)
 from data_collection.bpf_instrumentation.collapse_huge_page import (
     CollapseHugePageBPFHook,
 )
@@ -26,6 +29,7 @@ all_hooks: Final[Mapping[str, type[BPFProgram]]] = {
     BlockIOBPFHook.name(): BlockIOBPFHook,
     PerfBPFHook.name(): PerfBPFHook,
     CollapseHugePageBPFHook.name(): CollapseHugePageBPFHook,
+    CBMMBPFHook.name(): CBMMBPFHook,
 }
 
 def hook_names() -> list[str]:
