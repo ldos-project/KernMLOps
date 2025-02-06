@@ -58,6 +58,7 @@ INTERACTIVE ?= i
 COLLECTION_BENCHMARK ?= faux
 BENCHMARK_DIR ?= /home/${UNAME}/kernmlops-benchmark
 YCSB_BENCHMARK_DIR ?= ${BENCHMARK_DIR}/ycsb
+REDIS_BENCHMARK_DIR ?= ${BENCHMARK_DIR}/redis
 MEMCACHED_PORT ?= 11211
 
 # Provisioning variables
@@ -126,6 +127,32 @@ load-mongodb:
 		-P "$(YCSB_BENCHMARK_DIR)/ycsb-0.17.0/workloads/workloada" \
 		-p recordcount=1000000 \
 		-p mongodb.url=mongodb://localhost:27017/ycsb
+
+
+setup-redis:
+	@echo "Setting up storage for redis benchmark..."
+	@pwd
+	@source scripts/setup-benchmarks/setup-redis.sh
+
+
+start-redis:
+	@redis-server "/etc/redis/redis.conf" --daemonize yes || { echo "Error is expected if server is already running"; true; }
+
+load-redis:
+	@echo "Loading Redis benchmark"
+	@${MAKE} start-redis
+	@python $(YCSB_BENCHMARK_DIR)/ycsb-0.17.0/bin/ycsb load redis -s \
+		-P "$(YCSB_BENCHMARK_DIR)/ycsb-0.17.0/workloads/workloada" \
+		-p "redis.host=127.0.0.1" \
+		-p "redis.port=6379" \
+		-p recordcount=1000000
+
+benchmark-redis:
+	@${MAKE} start-redis
+	@python python/kernmlops collect -v \
+		-c ${KERNMLOPS_CONFIG_FILE} \
+		--benchmark redis
+
 
 start-memcached:
 	@echo "Starting memcached server..."
@@ -234,11 +261,11 @@ docker:
 
 install-ycsb:
 	@echo "Installing ycsb..."
-	@source scripts/setup-benchmarks/install_ycsb.sh
+	@source scripts/setup-benchmarks/install-ycsb.sh
 
 setup-mongodb:
 	@echo "Setting up storage for mongodb benchmark..."
-	@source scripts/setup-benchmarks/setup_mongodb_dir.sh
+	@source scripts/setup-benchmarks/setup-mongodb.sh
 
 # Miscellaneous commands
 clean-docker-images:
