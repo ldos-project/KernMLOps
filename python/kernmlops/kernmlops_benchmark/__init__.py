@@ -18,6 +18,7 @@ from kernmlops_benchmark.linux_build import LinuxBuildBenchmark
 from kernmlops_benchmark.stress_ng import StressNgBenchmark
 from kernmlops_benchmark.stress_ng_benchmark_group import StressNgBenchmarkGroup
 from kernmlops_benchmark.stress_ng_set import StressNgSetBenchmark
+from kernmlops_benchmark.benchbase import BenchbaseBenchmark
 from kernmlops_config import ConfigBase
 
 benchmarks: Mapping[str, type[Benchmark]] = {
@@ -28,6 +29,7 @@ benchmarks: Mapping[str, type[Benchmark]] = {
     StressNgSetBenchmark.name(): StressNgSetBenchmark,
     BenchmarkGroup.name(): BenchmarkGroup,
     StressNgBenchmarkGroup.name(): StressNgBenchmarkGroup,
+    BenchbaseBenchmark.name(): BenchbaseBenchmark,
 }
 
 BenchmarkConfig = make_dataclass(
@@ -56,6 +58,7 @@ __all__ = [
     "BenchmarkNotRunningError",
     "FauxBenchmark",
     "LinuxBuildBenchmark",
+    "BenchbaseBenchmark",
     "GapBenchmark",
     "benchmarks",
 ]

@@ -36,6 +36,20 @@ benchmark_config:
           stress_ng_benchmark: stress-ng-set
           args:
             - "2"
+  benchbase:
+    benchbase_benchmark: benchbase/target/benchbase-postgres
+    args:
+      - java
+      - -jar
+      - benchbase.jar
+      - -b
+      - tpcc
+      - -c
+      - config/postgres/sample_tpcc_config.xml
+      - --create=true
+      - --load=true
+      - --execute=true
+
 collector_config:
   generic:
     poll_rate: 0.005
