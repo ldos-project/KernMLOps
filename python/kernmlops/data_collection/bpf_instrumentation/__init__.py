@@ -12,6 +12,7 @@ from data_collection.bpf_instrumentation.collapse_huge_page import (
 )
 from data_collection.bpf_instrumentation.file_data_hook import FileDataBPFHook
 from data_collection.bpf_instrumentation.memory_usage_hook import MemoryUsageHook
+from data_collection.bpf_instrumentation.mm_rss_stat import TraceRSSStatBPFHook
 from data_collection.bpf_instrumentation.perf import (
     CustomHWConfigManager,
     PerfBPFHook,
@@ -30,11 +31,11 @@ all_hooks: Final[Mapping[str, type[BPFProgram]]] = {
     PerfBPFHook.name(): PerfBPFHook,
     CollapseHugePageBPFHook.name(): CollapseHugePageBPFHook,
     CBMMBPFHook.name(): CBMMBPFHook,
+    TraceRSSStatBPFHook.name(): TraceRSSStatBPFHook,
 }
 
 def hook_names() -> list[str]:
     return list(all_hooks.keys())
-
 
 __all__ = [
     "all_hooks",
