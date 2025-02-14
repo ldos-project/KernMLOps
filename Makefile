@@ -123,8 +123,9 @@ benchmark-mongodb:
 load-mongodb:
 	@echo "Loading MongoDB benchmark"
 	@${MAKE} start-mongodb
-	@python $(YCSB_BENCHMARK_DIR)/ycsb-0.17.0/bin/ycsb load mongodb -s \
-		-P "$(YCSB_BENCHMARK_DIR)/ycsb-0.17.0/workloads/workloada" \
+	@cd $(YCSB_BENCHMARK_DIR)/YCSB
+	@python $(YCSB_BENCHMARK_DIR)/YCSB/bin/ycsb load mongodb -s \
+		-P "$(YCSB_BENCHMARK_DIR)/YCSB/workloads/workloada" \
 		-p recordcount=1000000 \
 		-p mongodb.url=mongodb://localhost:27017/ycsb
 
@@ -141,8 +142,8 @@ start-redis:
 load-redis:
 	@echo "Loading Redis benchmark"
 	@${MAKE} start-redis
-	@python $(YCSB_BENCHMARK_DIR)/ycsb-0.17.0/bin/ycsb load redis -s \
-		-P "$(YCSB_BENCHMARK_DIR)/ycsb-0.17.0/workloads/workloada" \
+	@python $(YCSB_BENCHMARK_DIR)/YCSB/bin/ycsb load redis -s \
+		-P "$(YCSB_BENCHMARK_DIR)/YCSB/workloads/workloada" \
 		-p "redis.host=127.0.0.1" \
 		-p "redis.port=6379" \
 		-p recordcount=1000000
@@ -176,8 +177,8 @@ benchmark-memcached:
 load-memcached:
 	@echo "Loading memcached benchmark"
 	@${MAKE} start-memcached
-	@python $(YCSB_BENCHMARK_DIR)/ycsb-0.17.0/bin/ycsb load memcached -s \
-		-P "$(YCSB_BENCHMARK_DIR)/ycsb-0.17.0/workloads/workloada" \
+	@python $(YCSB_BENCHMARK_DIR)/YCSB/bin/ycsb load memcached -s \
+		-P "$(YCSB_BENCHMARK_DIR)/YCSB/workloads/workloada" \
 		-p recordcount=1000000 \
         -p memcached.hosts=localhost:$(MEMCACHED_PORT)
 

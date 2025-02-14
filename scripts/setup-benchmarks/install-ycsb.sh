@@ -11,17 +11,29 @@ if [ -d $YCSB_BENCHMARK_DIR ]; then
 fi
 
 # Setup
-mkdir -p "$YCSB_BENCHMARK_DIR"
+mkdir $YCSB_BENCHMARK_DIR
 
-# Download YCSB
-curl -o "$YCSB_BENCHMARK_DIR/ycsb-0.17.0.tar.gz" --location https://github.com/brianfrankcooper/YCSB/releases/download/0.17.0/ycsb-0.17.0.tar.gz
+# Clone
+pushd $YCSB_BENCHMARK_DIR
+git clone https://github.com/brianfrankcooper/YCSB.git
+pushd YCSB
+git remote add delete-fork https://github.com/minhokang242/AzureCosmos.git
+git fetch delete-fork
+git checkout delete-fork/users/minhokang/azurecosmos_coreworkload_delete
+git rebase master
 
-tar xfvz "$YCSB_BENCHMARK_DIR/ycsb-0.17.0.tar.gz" -C "$YCSB_BENCHMARK_DIR"
+# Build
+mvn -pl site.ycsb:mongodb-binding -am clean package
+mvn -pl site.ycsb:redis-binding -am clean package
+mvn -pl site.ycsb:memcached-binding -am clean package
+
+popd
+popd
 
 pwd
 
 # Copy contents of ycsb_runner.py to bin/ycsb
-cp scripts/setup-benchmarks/ycsb_runner.py $YCSB_BENCHMARK_DIR/ycsb-0.17.0/bin/ycsb
+cp scripts/setup-benchmarks/ycsb_runner.py $YCSB_BENCHMARK_DIR/YCSB/bin/ycsb
 
 # Make the ycsb script executable
-chmod +x $YCSB_BENCHMARK_DIR/ycsb-0.17.0/bin/ycsb
+chmod +x $YCSB_BENCHMARK_DIR/YCSB/bin/ycsb

@@ -17,6 +17,10 @@ class MemcachedConfig(ConfigBase):
   operation_count: int = 1000000
   read_proportion: float = 0.99
   update_proportion: float = 0.01
+  insert_proportion: float = 0.00
+  rmw_proportion: float = 0.00
+  scan_proportion: float = 0.00
+  delete_proportion: float = 0.00
 
 
 class MemcachedBenchmark(Benchmark):
@@ -70,11 +74,15 @@ class MemcachedBenchmark(Benchmark):
                 "-p",
                 f"updateproportion={self.config.update_proportion}",
                 "-p",
-                "insertproportion=0",
+                f"insertproportion={self.config.insert_proportion}",
                 "-p",
-                "scanproportion=0",
+                f"readmodifywriteproportion={self.config.rmw_proportion}",
                 "-p",
-                "readmodifywriteproportion=0",
+                f"scanproportion={self.config.scan_proportion}",
+                "-p",
+                f"deleteproportion={self.config.delete_proportion}",
+                "-p",
+                "recordcount=1000000",
                 "-p",
                 "requestdistribution=zipfian"
 

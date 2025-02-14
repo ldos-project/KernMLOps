@@ -51,6 +51,7 @@ RUN apt update -y \
     bison \
     netcat-openbsd \
     nmap \
+    maven \
     && apt clean
 
 # Install MongoDB
@@ -74,6 +75,8 @@ RUN apt-get update && \
     apt-get install -y \
         memcached && \
     apt-get clean
+
+COPY scripts/settings.xml /etc/maven/settings.xml
 
 # Base development image
 FROM ${BUILD_IMAGE} AS dev

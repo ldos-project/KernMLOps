@@ -212,6 +212,9 @@ def get_classpath_from_maven(module):
     try:
         debug("Running 'mvn -pl site.ycsb:" + module + " -am package -DskipTests "
             "dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'")
+        os.chdir(get_ycsb_home())
+        cwd_output = subprocess.check_output(["pwd"])
+        debug(cwd_output)
         mvn_output = subprocess.check_output(["mvn", "-pl", "site.ycsb:" + module,
                                 "-am", "package", "-DskipTests",
                                 "dependency:build-classpath",

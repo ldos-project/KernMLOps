@@ -17,6 +17,10 @@ class MongoDbConfig(ConfigBase):
   operation_count: int = 1000000
   read_proportion: float = 0.25
   update_proportion: float = 0.75
+  insert_proportion: float = 0.00
+  rmw_proportion: float = 0.00
+  scan_proportion: float = 0.00
+  delete_proportion: float = 0.00
 
 
 class MongoDbBenchmark(Benchmark):
@@ -55,12 +59,12 @@ class MongoDbBenchmark(Benchmark):
 
         self.process = subprocess.Popen(
             [
-                f"{self.benchmark_dir}/ycsb-0.17.0/bin/ycsb",
+                f"{self.benchmark_dir}/YCSB/bin/ycsb",
                 "run",
                 "mongodb",
                 "-s",
                 "-P",
-                f"{self.benchmark_dir}/ycsb-0.17.0/workloads/workloada",
+                f"{self.benchmark_dir}/YCSB/workloads/workloada",
                 "-p",
                 f"operationcount={self.config.operation_count}",
                 "-p",
@@ -69,6 +73,16 @@ class MongoDbBenchmark(Benchmark):
                 f"readproportion={self.config.read_proportion}",
                 "-p",
                 f"updateproportion={self.config.update_proportion}",
+                "-p",
+                f"insertproportion={self.config.insert_proportion}",
+                "-p",
+                f"readmodifywriteproportion={self.config.rmw_proportion}",
+                "-p",
+                f"scanproportion={self.config.scan_proportion}",
+                "-p",
+                f"deleteproportion={self.config.delete_proportion}",
+                "-p",
+                "recordcount=1000000",
                 "-p",
                 "mongodb.writeConcern=acknowledged"
             ],

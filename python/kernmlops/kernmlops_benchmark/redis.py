@@ -21,6 +21,9 @@ class RedisConfig(ConfigBase):
     update_proportion: float = 0.5
     scan_proportion: float = 0.0
     insert_proportion: float = 0.0
+    rmw_proportion: float = 0.00
+    scan_proportion: float = 0.00
+    delete_proportion: float = 0.00
 
     # Distribution and performance parameters
     request_distribution: str = "uniform"
@@ -64,12 +67,12 @@ class RedisBenchmark(Benchmark):
 
         self.process = subprocess.Popen(
             [
-                f"{self.benchmark_dir}/ycsb-0.17.0/bin/ycsb",
+                f"{self.benchmark_dir}/YCSB/bin/ycsb",
                 "run",
                 "redis",
                 "-s",
                 "-P",
-                f"{self.benchmark_dir}/ycsb-0.17.0/workloads/workloada-redis",
+                f"{self.benchmark_dir}/YCSB/workloads/workloada-redis",
                 "-p",
                 f"operationcount={self.config.operation_count}",
                 "-p",
@@ -84,6 +87,12 @@ class RedisBenchmark(Benchmark):
                 f"scanproportion={self.config.scan_proportion}",
                 "-p",
                 f"insertproportion={self.config.insert_proportion}",
+                "-p",
+                f"readmodifywriteproportion={self.config.rmw_proportion}",
+                "-p",
+                f"scanproportion={self.config.scan_proportion}",
+                "-p",
+                f"deleteproportion={self.config.delete_proportion}",
                 "-p",
                 "redis.host=127.0.0.1",
                 "-p",
