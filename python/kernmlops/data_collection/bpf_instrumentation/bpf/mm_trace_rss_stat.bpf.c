@@ -1,4 +1,3 @@
-#include <linux/minmax.h>
 #include <linux/mm_types.h>
 
 typedef struct rss_stat_output {
