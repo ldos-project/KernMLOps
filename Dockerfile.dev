@@ -89,6 +89,7 @@ RUN apt update -y \
   pkg-config \
   bpftrace \
   zsh \
+  psmisc \
   && apt clean
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y \

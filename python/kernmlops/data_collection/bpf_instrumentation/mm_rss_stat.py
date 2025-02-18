@@ -33,7 +33,7 @@ class TraceRSSStatBPFHook(BPFProgram):
     self.collection_id = collection_id
     self.bpf = BPF(text = self.bpf_text)
     #self.bpf.attach_raw_tracepoint(tp=b"mm_trace_rss_stat", fn_name=b"mm_trace_rss_stat")
-    self.bpf["rss_stat_output"].open_perf_buffer(self._mm_trace_rss_stat_eh, page_cnt=64)
+    self.bpf["rss_stat_output"].open_perf_buffer(self._mm_trace_rss_stat_eh, page_cnt=256)
 
   def poll(self):
     self.bpf.perf_buffer_poll(timeout=POLL_TIMEOUT_MS)

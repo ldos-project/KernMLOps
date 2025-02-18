@@ -135,25 +135,10 @@ setup-redis:
 	@pwd
 	@source scripts/setup-benchmarks/setup-redis.sh
 
-
-start-redis:
-	@redis-server "/etc/redis/redis.conf" --daemonize yes || { echo "Error is expected if server is already running"; true; }
-
-load-redis:
-	@echo "Loading Redis benchmark"
-	@${MAKE} start-redis
-	@python $(YCSB_BENCHMARK_DIR)/YCSB/bin/ycsb load redis -s \
-		-P "$(YCSB_BENCHMARK_DIR)/YCSB/workloads/workloada" \
-		-p "redis.host=127.0.0.1" \
-		-p "redis.port=6379" \
-		-p recordcount=1000000
-
 benchmark-redis:
-	@${MAKE} start-redis
 	@python python/kernmlops collect -v \
 		-c ${KERNMLOPS_CONFIG_FILE} \
 		--benchmark redis
-
 
 start-memcached:
 	@echo "Starting memcached server..."
