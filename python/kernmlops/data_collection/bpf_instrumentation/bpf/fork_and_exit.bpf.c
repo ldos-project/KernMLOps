@@ -30,7 +30,8 @@ int kretprobe_copy_process(struct pt_regs* ctx) {
   return 0;
 }
 
-int kprobe_release_task(struct pt_regs* ctx, struct task_struct* task) {
+int kprobe_do_exit(struct pt_regs* ctx, long code) {
+  struct task_struct* task = (struct task_struct*)bpf_get_current_task();
   stop_data_t data;
   data.ts = bpf_ktime_get_ns();
   data.pid = task->pid;

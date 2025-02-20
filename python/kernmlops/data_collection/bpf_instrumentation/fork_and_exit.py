@@ -30,7 +30,7 @@ class TraceProcessHook(BPFProgram):
     self.collection_id = collection_id
     self.bpf = BPF(text = self.bpf_text)
     self.bpf.attach_kretprobe(event=b"copy_process", fn_name=b"kretprobe_copy_process")
-    self.bpf.attach_kprobe(event=b"release_task", fn_name=b"kprobe_release_task")
+    self.bpf.attach_kprobe(event=b"do_exit", fn_name=b"kprobe_do_exit")
     self.bpf.attach_kretprobe(event=b"__set_task_comm", fn_name=b"kretprobe_exec")
     self.bpf["copy_task_events"].open_perf_buffer(self._create_task_eh, page_cnt=128)
     self.bpf["release_task_events"].open_perf_buffer(self._release_task_eh, page_cnt=128)
