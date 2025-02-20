@@ -84,7 +84,7 @@ class RedisBenchmark(Benchmark):
         # start the redis server
         start_redis = [
             "redis-server",
-            "./scripts/redis.conf",
+            "./config/redis.conf",
         ]
         self.server = subprocess.Popen(start_redis,
                                        stdin=subprocess.PIPE,
