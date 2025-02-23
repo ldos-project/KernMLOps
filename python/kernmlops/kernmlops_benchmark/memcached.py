@@ -59,12 +59,12 @@ class MemcachedBenchmark(Benchmark):
 
         self.process = subprocess.Popen(
             [
-                f"{self.benchmark_dir}/ycsb-0.17.0/bin/ycsb",
+                f"{self.benchmark_dir}/YCSB/bin/ycsb",
                 "run",
                 "memcached",
                 "-s",
                 "-P",
-                f"{self.benchmark_dir}/ycsb-0.17.0/workloads/workloada",
+                f"{self.benchmark_dir}/YCSB/workloads/workloada",
                 "-p",
                 f"operationcount={self.config.operation_count}",
                 "-p",

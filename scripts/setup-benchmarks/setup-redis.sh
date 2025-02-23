@@ -40,7 +40,7 @@ maxmemory-policy allkeys-lru
 EOF
 
 # Copy YCSB workload configuration for Redis
-YCSB_WORKLOAD_DIR="${YCSB_BENCHMARK_DIR}/ycsb-0.17.0/workloads"
+YCSB_WORKLOAD_DIR="${YCSB_BENCHMARK_DIR}/YCSB/workloads"
 mkdir -p "${YCSB_WORKLOAD_DIR}"
 cp "scripts/setup-benchmarks/redis-workload.properties" "${YCSB_WORKLOAD_DIR}/workloada-redis"
 
