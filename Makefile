@@ -123,6 +123,9 @@ benchmark-mongodb:
 load-mongodb:
 	@echo "Loading MongoDB benchmark"
 	@${MAKE} start-mongodb
+	@echo "Cleaning previous data..."
+	@source scripts/setup-benchmarks/cleanup-mongodb.sh
+	@echo "Cleanup completed"
 	@cd $(YCSB_BENCHMARK_DIR)/YCSB
 	@python $(YCSB_BENCHMARK_DIR)/YCSB/bin/ycsb load mongodb -s \
 		-P "$(YCSB_BENCHMARK_DIR)/YCSB/workloads/workloada" \
