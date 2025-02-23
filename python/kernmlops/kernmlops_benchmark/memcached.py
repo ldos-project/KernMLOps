@@ -68,63 +68,17 @@ class MemcachedBenchmark(Benchmark):
     def run(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
-        if self.server is not None:
-            raise BenchmarkRunningError()
 
-        start_memcached = [
-            "memcached",
-        ]
-
-        # Start memcached
-        self.server = subprocess.Popen(start_memcached, preexec_fn=demote())
-
-
-        # Ping Memcached
-        set_foo_memcached = [
-            "echo",
-            "-e",
-            "set foo 0 300 3\r\nbar\r",
-            "|",
-            "nc",
-            "-q",
-            "0",
-            "localhost",
-            "11211",
-        ]
-        ping_memcached = subprocess.run(set_foo_memcached, shell=True)
-        i = 0
-        while i < 10 and ping_memcached.returncode != 0:
-            time.sleep(1)
-            ping_memcached = subprocess.run(set_foo_memcached, shell=True)
-            i+=1
-
-        if ping_memcached.returncode != 0:
-            raise BenchmarkError("Memcached Failed To Start")
-
-        delete_foo_memcached = [
-            "echo",
-            "-e",
-            "delete foo",
-            "|",
-            "nc",
-            "-q",
-            "0",
-            "localhost",
-            "11211",
-        ]
-        delete_foo = subprocess.run(delete_foo_memcached, shell=True)
-        if delete_foo.returncode != 0:
-            raise BenchmarkError("Delete Single Memcached Record Failing")
-
-        # Run loads
-        load_memcached = [
-                "python",
+        self.process = subprocess.Popen(
+            [
                 f"{self.benchmark_dir}/YCSB/bin/ycsb",
-                "load",
+                "run",
                 "memcached",
                 "-s",
                 "-P",
                 f"{self.benchmark_dir}/YCSB/workloads/workloada",
+                "-p",
+                f"operationcount={self.config.operation_count}",
                 "-p",
                 "memcached.hosts=localhost:11211",
                 "-p",
