@@ -29,6 +29,10 @@ def poll_instrumentation(
         except KeyboardInterrupt:
             benchmark.kill()
             return_code = 0 if benchmark.name() == "faux" else 1
+
+    # Poll again to clean out all buffers
+    for bpf_program in bpf_programs:
+        bpf_program.poll()
     return return_code
 
 

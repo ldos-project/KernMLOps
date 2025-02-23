@@ -56,6 +56,7 @@ INTERACTIVE ?= i
 
 # Benchmarking variables
 COLLECTION_BENCHMARK ?= faux
+EXTERNAL_BENCHMARK_DIR ?= ${HOME}/kernmlops-benchmark
 BENCHMARK_DIR ?= /home/${UNAME}/kernmlops-benchmark
 YCSB_BENCHMARK_DIR ?= ${BENCHMARK_DIR}/ycsb
 REDIS_BENCHMARK_DIR ?= ${BENCHMARK_DIR}/redis
@@ -138,25 +139,10 @@ setup-redis:
 	@pwd
 	@source scripts/setup-benchmarks/setup-redis.sh
 
-
-start-redis:
-	@redis-server "/etc/redis/redis.conf" --daemonize yes || { echo "Error is expected if server is already running"; true; }
-
-load-redis:
-	@echo "Loading Redis benchmark"
-	@${MAKE} start-redis
-	@python $(YCSB_BENCHMARK_DIR)/YCSB/bin/ycsb load redis -s \
-		-P "$(YCSB_BENCHMARK_DIR)/YCSB/workloads/workloada" \
-		-p "redis.host=127.0.0.1" \
-		-p "redis.port=6379" \
-		-p recordcount=1000000
-
 benchmark-redis:
-	@${MAKE} start-redis
 	@python python/kernmlops collect -v \
 		-c ${KERNMLOPS_CONFIG_FILE} \
 		--benchmark redis
-
 
 start-memcached:
 	@echo "Starting memcached server..."
@@ -243,14 +229,14 @@ docker:
 		echo "Kernel dev headers not installed: ${KERNEL_DEV_MODULES_DIR}" && exit 1; \
 	fi
 
-	@mkdir -p ${BENCHMARK_DIR}
+	@mkdir -p ${EXTERNAL_BENCHMARK_DIR}
 	@docker --context ${CONTAINER_CONTEXT} run --rm \
 	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR} \
 	-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR}:ro \
 	-v ${KERNEL_DEV_MODULES_DIR}/:${KERNEL_DEV_MODULES_DIR}:ro \
 	-v /usr/include:/usr/include \
-	-v ${BENCHMARK_DIR}/:/home/${UNAME}/kernmlops-benchmark \
-	-v ${BENCHMARK_DIR}/:${BENCHMARK_DIR} \
+	-v ${EXTERNAL_BENCHMARK_DIR}/:/home/${UNAME}/kernmlops-benchmark \
+	-v ${EXTERNAL_BENCHMARK_DIR}/:/root/kernmlops-benchmark/ \
 	-v /sys/kernel/:/sys/kernel \
 	${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT} \
 	${KERNMLOPS_CONTAINER_MOUNTS} \
@@ -265,7 +251,7 @@ docker:
 
 install-ycsb:
 	@echo "Installing ycsb..."
-	@source scripts/setup-benchmarks/install-ycsb.sh
+	@su ${UNAME} -c "bash scripts/setup-benchmarks/install-ycsb.sh"
 
 setup-mongodb:
 	@echo "Setting up storage for mongodb benchmark..."

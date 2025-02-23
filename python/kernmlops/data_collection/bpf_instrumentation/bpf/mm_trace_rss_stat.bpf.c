@@ -1,5 +1,5 @@
-#include <linux/minmax.h>
 #include <linux/mm_types.h>
+#include <linux/sched.h>
 
 typedef struct rss_stat_output {
   u32 pid;

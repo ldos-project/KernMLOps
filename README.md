@@ -10,55 +10,26 @@ WARNING: Do not clone submodules, this will clone the linux kernel.
 Cloning the kernel is prohibitively expensive.
 That submodule is only necessary if you plan to use in-kernel inference.
 
-Quick Setup:
+## Quick Setup
+
+You will need docker.
+You can install from [docker's website](https://docs.docker.com/engine/install/).
+The tools should work with other container engines but have not been tested yet.
 
 ```shell
-pip install --break-system-packages -r requirements.txt
 
-make hooks
-
+# Create and run your management container -- Expected Time: ~5 mins
 make docker-image
 
-# Installs gap benchmark (default)
-bash scripts/setup-benchmarks/setup-gap.sh
-
-# Installs mongodb benchmark
-make setup-mongodb
-
-# Installs redis/dc-mix benchmark
-make setup-redis
-
-
-# Installs YCSB (Yahoo! Cloud Serving Benchmark), used by MongoDB benchmark
+# Install YCSB benchmark (Run inside Container) -- Expected Time: ~3 mins
+make docker
 make install-ycsb
 
+# Copy a simple starting redis script (Run Outside Container) -- Expected Time: ~1 mins
+cp config/start_overrides.yaml overrides.yaml
 
-# Ensure you have installed your kernel's development headers
-# On ubuntu: apt install linux-headers-$(uname -r)
-# On redhat: dnf install kernel-devel kernel-headers
-
-# Run default data collection inside docker until manually terminated via Ctrl+C
-make docker
-make collect-raw
-# Run gap benchmark inside docker
-make docker
-make benchmark-gap
-# Run yaml configured data collection inside docker
+# Capture the simple overrides (Run Outside the Container) -- Expected Time: ~1 mins
 make collect
-
-# Run mongodb benchmark
-make docker
-make load-mongodb # Run this command only the first time you set up the MongoDB benchmark
-make benchmark-mongodb
-# Run memcached benchmark inside docker
-make docker
-make load-memcached # Run this command only the first time you set up the Memcached benchmark
-make benchmark-memcached
-# Run redis/dc-mix benchmark
-make docker
-make load-redis
-make benchmark-redis
-
 
 ```
 

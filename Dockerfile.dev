@@ -89,7 +89,13 @@ RUN apt update -y \
   pkg-config \
   bpftrace \
   zsh \
+  psmisc \
   && apt clean
+
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y \
+  && echo . "$HOME/.cargo/env" > $HOME/.bashrc \
+  && . $HOME/.cargo/env \
+  && cargo install watchexec-cli
 
 COPY --chown=root requirements.txt /root/requirements.txt
 RUN pip install \
