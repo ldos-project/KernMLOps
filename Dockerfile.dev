@@ -108,6 +108,11 @@ ARG UNAME
 ARG UID
 ARG GID
 
+RUN echo "export LIB_PFM4_DIR=/dependencies/libpfm4" >> /root/.profile
+RUN apt-get update && \
+    apt-get install -y openjdk-11-jdk && \
+    echo 'export PATH=$PATH:/usr/lib/jvm/java-11-openjdk-amd64/bin' >> /root/.profile
+
 # May be required for Ubuntu:24.04 images that come with uid 1000
 RUN deluser --remove-home ubuntu
 RUN if [ "${UNAME}" != "root" ] ; then groupadd -g ${GID} ${UNAME} \
@@ -120,10 +125,6 @@ ARG SRC_DIR=/KernMLOps
 RUN echo "export SRC_DIR=${SRC_DIR}" >> /root/.profile
 RUN echo "export UNAME=${UNAME}" >> /root/.profile
 RUN echo "export GID=${GID}" >> /root/.profile
-RUN echo "export LIB_PFM4_DIR=/dependencies/libpfm4" >> /root/.profile
-RUN apt-get update && \
-    apt-get install -y openjdk-11-jdk && \
-    echo 'export PATH=$PATH:/usr/lib/jvm/java-11-openjdk-amd64/bin' >> /root/.profile
 
 WORKDIR /home/${UNAME}
 
