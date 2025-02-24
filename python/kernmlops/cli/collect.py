@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 from pathlib import Path
+from queue import Queue
+from threading import Thread
 from time import sleep
 from typing import cast
 
@@ -8,16 +10,21 @@ import data_collection
 import data_schema
 import polars as pl
 from data_schema import demote
-from kernmlops_benchmark import Benchmark, BenchmarkNotConfiguredError
+from kernmlops_benchmark import (
+    Benchmark,
+    BenchmarkNotConfiguredError,
+    BenchmarkNotRunningError,
+)
 from kernmlops_config import ConfigBase
 
 
 def poll_instrumentation(
   benchmark: Benchmark,
   bpf_programs: list[data_collection.bpf.BPFProgram],
+  queue: Queue,
   poll_rate: float = .5,
 ) -> int:
-    return_code = benchmark.poll()
+    return_code = None
     while return_code is None:
         try:
             for bpf_program in bpf_programs:
@@ -29,10 +36,13 @@ def poll_instrumentation(
         except KeyboardInterrupt:
             benchmark.kill()
             return_code = 0 if benchmark.name() == "faux" else 1
+        except BenchmarkNotRunningError:
+            continue
 
     # Poll again to clean out all buffers
     for bpf_program in bpf_programs:
         bpf_program.poll()
+    queue.put(return_code)
     return return_code
 
 
@@ -52,6 +62,7 @@ def run_collect(
     system_info = system_info.unnest(system_info.columns)
     collection_id = system_info["collection_id"][0]
     output_dir = generic_config.get_output_dir() / "curated" if bpf_programs else generic_config.get_output_dir() / "baseline"
+    queue = Queue(maxsize=1)
 
     for bpf_program in bpf_programs:
         bpf_program.load(collection_id)
@@ -59,13 +70,16 @@ def run_collect(
             print(f"{bpf_program.name()} BPF program loaded")
     if verbose:
         print("Finished loading BPF programs")
+    poll_thread = Thread(target = poll_instrumentation, args = (benchmark, bpf_programs, queue, generic_config.poll_rate))
+    poll_thread.start()
+    tick = datetime.now()
     benchmark.run()
     if verbose:
         print(f"Started benchmark {benchmark.name()}")
 
-    tick = datetime.now()
-    return_code = poll_instrumentation(benchmark, bpf_programs, poll_rate=generic_config.poll_rate)
+    return_code = queue.get()
     collection_time_sec = (datetime.now() - tick).total_seconds()
+    poll_thread.join()
     for bpf_program in bpf_programs:
         bpf_program.close()
     demote()()
