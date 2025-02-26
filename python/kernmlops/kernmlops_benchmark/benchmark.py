@@ -11,13 +11,20 @@ from kernmlops_config import ConfigBase
 from typing_extensions import Protocol
 
 
+def overcommit_convert(inp: Literal["no_change", "heuristic", "never_check", "always_check"]) -> int | None:
+  if inp == "no_change":
+      return None
+  arr = ["heuristic", "never_check", "always_check"]
+  return arr.index(inp)
+
 @dataclass(frozen=True)
 class GenericBenchmarkConfig(ConfigBase):
   benchmark: str = "faux"
   benchmark_dir: str = ""
   cpus: int = 0
   skip_clear_page_cache: bool = False
-  transparent_hugepages: Literal["always", "madvise", "never"] = "always"
+  transparent_hugepages: Literal["no_change", "always", "madvise", "never"] = "always"
+  overcommit_memory: Literal["no_change", "heuristic", "never_check", "always_check"] = "heuristic"
 
   def get_benchmark_dir(self) -> Path:
     if self.benchmark_dir:
@@ -33,14 +40,28 @@ class GenericBenchmarkConfig(ConfigBase):
           ["bash", "-c", "sync && echo 3 > /proc/sys/vm/drop_caches"],
           stdout=subprocess.DEVNULL,
       )
-    subprocess.check_call(
-        [
-          "bash",
-          "-c",
-          f"echo {self.transparent_hugepages} > /sys/kernel/mm/transparent_hugepage/enabled",
-        ],
-        stdout=subprocess.DEVNULL,
-    )
+    if self.transparent_hugepages != "no_change":
+        subprocess.check_call(
+            [
+              "bash",
+              "-c",
+              f"echo {self.transparent_hugepages} > /sys/kernel/mm/transparent_hugepage/enabled",
+            ],
+            stdout=subprocess.DEVNULL,
+        )
+
+    overcommit_setting = overcommit_convert(self.overcommit_memory)
+    if overcommit_setting is not None:
+        subprocess.check_call(
+            [
+              "bash",
+              "-c",
+              f"sysctl -w vm.overcommit_memory={overcommit_setting}",
+            ],
+            stdout=subprocess.DEVNULL,
+        )
+
+
 
 
 @dataclass(frozen=True)
