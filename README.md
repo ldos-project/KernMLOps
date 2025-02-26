@@ -33,6 +33,30 @@ make collect
 
 ```
 
+## Jupyter Setup
+
+You will need docker and pipenv
+
+You can install docker from [docker's website](https://docs.docker.com/engine/install/).
+The tools should work with other container engines but have not been tested yet.
+
+You can install this by using either `pip` or `apt` on Ubuntu.
+A helpful link for this should be [here](https://pipenv.pypa.io/en/latest/installation.html).
+Or on later versions of ubuntu `sudo apt install pipenv`.
+From then on launch jupyter notebook like so:
+
+```shell
+
+# Create and run your management container -- Expected Time: ~5 mins
+make docker-image
+
+# Create your virtual environment and invoke jupyter -- Expected Time: ~5 mins
+pipenv shell jupyter notebook
+
+```
+
+From here open up the Jupyter not
+
 ## Capturing Data -> Processing in Python
 
 For this example you need to open two terminals.

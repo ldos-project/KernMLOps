@@ -1,0 +1,19 @@
+---
+benchmark_config:
+  generic:
+    benchmark: faux
+    cpus: 0
+    transparent_hugepages: never
+collector_config:
+  generic:
+    poll_rate: 0.1
+    output_dir: data
+    output_graphs: false
+    hooks:
+      - process_trace
+      - process_metadata
+      - file_data
+      - memory_usage
+      - quanta_runtime
+      - block_io
+      - perf

@@ -116,10 +116,10 @@ RUN apt-get update && \
 # May be required for Ubuntu:24.04 images that come with uid 1000
 RUN deluser --remove-home ubuntu
 RUN if [ "${UNAME}" != "root" ] ; then groupadd -g ${GID} ${UNAME} \
-      &&  useradd -ms /bin/bash  -u "${UID}" -g "${GID}" ${UNAME}; fi
+      ;  useradd -ms /bin/bash  -u "${UID}" -g "${GID}" ${UNAME}; fi
 
 RUN mkdir -p /home/${UNAME} \
-      && chown ${UNAME}:${UNAME} /home/${UNAME}
+      && chown ${UNAME}:${GID} /home/${UNAME}
 
 ARG SRC_DIR=/KernMLOps
 RUN echo "export SRC_DIR=${SRC_DIR}" >> /root/.profile

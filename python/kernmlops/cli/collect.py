@@ -1,8 +1,10 @@
 import os
+import signal
+import sys
 from datetime import datetime
 from pathlib import Path
 from queue import Queue
-from threading import Thread
+from threading import Event, Thread
 from time import sleep
 from typing import cast
 
@@ -18,14 +20,21 @@ from kernmlops_benchmark import (
 from kernmlops_config import ConfigBase
 
 
+def wait_for_END(run_event: Event, read):
+    while run_event.is_set() and "END" not in read.readline():
+        continue
+    run_event.clear()
+
 def poll_instrumentation(
   benchmark: Benchmark,
   bpf_programs: list[data_collection.bpf.BPFProgram],
   queue: Queue,
+  run_event: Event,
   poll_rate: float = .5,
 ) -> int:
+
     return_code = None
-    while return_code is None:
+    while return_code is None and run_event.is_set():
         try:
             for bpf_program in bpf_programs:
                 bpf_program.poll()
@@ -33,18 +42,22 @@ def poll_instrumentation(
                 sleep(poll_rate)
             return_code = benchmark.poll()
             # clean data when missed samples - or detect?
-        except KeyboardInterrupt:
-            benchmark.kill()
-            return_code = 0 if benchmark.name() == "faux" else 1
         except BenchmarkNotRunningError:
             continue
+
+    if not run_event.is_set():
+        benchmark.kill()
+        return_code = 0 if benchmark.name() == "faux" else 1
 
     # Poll again to clean out all buffers
     for bpf_program in bpf_programs:
         bpf_program.poll()
+    return_code = return_code if return_code is not None else 1
     queue.put(return_code)
     return return_code
 
+def signal_handler_factory(event: Event):
+    return lambda x,y: event.clear()
 
 def run_collect(
     *,
@@ -63,6 +76,8 @@ def run_collect(
     collection_id = system_info["collection_id"][0]
     output_dir = generic_config.get_output_dir() / "curated" if bpf_programs else generic_config.get_output_dir() / "baseline"
     queue = Queue(maxsize=1)
+    run_event = Event()
+    run_event.set()
 
     for bpf_program in bpf_programs:
         bpf_program.load(collection_id)
@@ -70,18 +85,34 @@ def run_collect(
             print(f"{bpf_program.name()} BPF program loaded")
     if verbose:
         print("Finished loading BPF programs")
-    poll_thread = Thread(target = poll_instrumentation, args = (benchmark, bpf_programs, queue, generic_config.poll_rate))
+
+    # Configure signal capture
+    signal.signal(signal.SIGINT, signal_handler_factory(run_event))
+    signal.signal(signal.SIGALRM, signal_handler_factory(run_event))
+    signal.signal(signal.SIGUSR1, signal_handler_factory(run_event))
+
+    # Create stdin killer daemon
+    read_thread = Thread(target = wait_for_END, args = (run_event, sys.stdin))
+    read_thread.daemon = True
+    read_thread.start()
+
+    # Create polling thread
+    poll_thread = Thread(target = poll_instrumentation, args = (benchmark, bpf_programs, queue, run_event, generic_config.poll_rate))
     poll_thread.start()
+
     tick = datetime.now()
+
     benchmark.run()
+
     if verbose:
         print(f"Started benchmark {benchmark.name()}")
-
     return_code = queue.get()
+
     collection_time_sec = (datetime.now() - tick).total_seconds()
     poll_thread.join()
     for bpf_program in bpf_programs:
         bpf_program.close()
+
     demote()()
     if verbose:
         print(f"Benchmark ran for {collection_time_sec}s")
