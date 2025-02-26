@@ -15,14 +15,10 @@ mkdir $YCSB_BENCHMARK_DIR
 
 # Clone
 pushd $YCSB_BENCHMARK_DIR
-git clone https://github.com/brianfrankcooper/YCSB.git
-pushd YCSB
-git remote add delete-fork https://github.com/minhokang242/AzureCosmos.git
-git fetch delete-fork
-git checkout delete-fork/users/minhokang/azurecosmos_coreworkload_delete
-git rebase master
+git clone https://github.com/tewaro/YCSB.git -b tewaro/quickfix-coreworkload-deletes-master --depth=1
 
 # Build
+pushd YCSB
 mvn -pl site.ycsb:mongodb-binding -am clean package
 mvn -pl site.ycsb:redis-binding -am clean package
 mvn -pl site.ycsb:memcached-binding -am clean package

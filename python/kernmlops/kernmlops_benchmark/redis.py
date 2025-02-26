@@ -30,13 +30,18 @@ class RedisConfig(ConfigBase):
 
     # Distribution and performance parameters
     request_distribution: str = "uniform"
-    thread_count: int = 16
+    thread_count: int = 1
     target: int = 10000
 
 kill_redis = [
     "killall",
     "-9",
     "redis-server",
+]
+
+size_redis = [
+    "redis-cli",
+    "DBSIZE",
 ]
 
 class RedisBenchmark(Benchmark):
@@ -86,10 +91,7 @@ class RedisBenchmark(Benchmark):
             "redis-server",
             "./config/redis.conf",
         ]
-        self.server = subprocess.Popen(start_redis,
-                                       stdin=subprocess.PIPE,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
+        self.server = subprocess.Popen(start_redis)
 
         # Wait for redis
         ping_redis = subprocess.run(["redis-cli", "ping"])
@@ -100,8 +102,6 @@ class RedisBenchmark(Benchmark):
 
         if ping_redis.returncode != 0:
             raise BenchmarkError("Redis Failed To Start")
-
-        self.server = subprocess.Popen(start_redis)
 
         # Load Server
         load_redis = [
@@ -126,6 +126,8 @@ class RedisBenchmark(Benchmark):
         if load_redis.returncode != 0:
             raise BenchmarkError("Loading Redis Failing")
 
+        subprocess.run(size_redis)
+
         # Run Benchmark
         run_redis = [
                 f"{self.benchmark_dir}/YCSB/bin/ycsb",
@@ -133,7 +135,7 @@ class RedisBenchmark(Benchmark):
                 "redis",
                 "-s",
                 "-P",
-                f"{self.benchmark_dir}/YCSB/workloads/workloada-redis",
+                f"{self.benchmark_dir}/YCSB/workloads/workloada",
                 "-p",
                 f"operationcount={self.config.operation_count}",
                 "-p",
@@ -165,7 +167,7 @@ class RedisBenchmark(Benchmark):
                 "-p",
                 f"target={self.config.target}"
         ]
-        self.process = subprocess.Popen(run_redis, preexec_fn=demote(), stdout=subprocess.DEVNULL)
+        self.process = subprocess.Popen(run_redis, preexec_fn=demote())
 
     def poll(self) -> int | None:
         if self.process is None:
@@ -191,6 +193,7 @@ class RedisBenchmark(Benchmark):
     def end_server(self) -> None:
         if self.server is None:
             return
+        subprocess.run(size_redis)
         self.server.send_signal(signal.SIGINT)
         if self.server.wait(10) is None:
             self.server.terminate()
