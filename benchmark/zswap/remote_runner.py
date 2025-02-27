@@ -336,7 +336,7 @@ class RemoteExperimentRunner:
 def run_experiment_a(runner: RemoteExperimentRunner):
     print("Running Experiment A: Default configuration experiments")
 
-    for i in range(6, 11):
+    for i in range(1, 11):
         # Set default cgroup memory limits
         runner.configure_cgroup_memory("4G", "6G")
         print(f"Running default configuration iteration {i}")
@@ -357,32 +357,17 @@ def run_experiment_b(runner: RemoteExperimentRunner):
 
     for mem in ["2G", "3G", "5G", "6G"]:
         print(f"Setting cgroup memory pressure to {mem}")
+        for j in range(1, 6):
+            # For experiment B, we set both memory.max and memory.swap.max to the same value
+            # to directly observe the impact of memory pressure
+            runner.configure_cgroup_memory(mem, mem)
+            print(f"Running cgroup memory pressure {mem} iteration {j}")
+            if not runner.run_experiment(f"experiment_b_memory_{mem}", j):
+                print("Experiment failed, exiting...")
+                sys.exit(1)
 
-        # If mem is 2G, start from run 4
-        if mem == "2G":
-            for j in range(4, 6):
-                # For experiment B, we set both memory.max and memory.swap.max to the same value
-                # to directly observe the impact of memory pressure
-                runner.configure_cgroup_memory(mem, mem)
-                print(f"Running cgroup memory pressure {mem} iteration {j}")
-                if not runner.run_experiment(f"experiment_b_memory_{mem}", j):
-                    print("Experiment failed, exiting...")
-                    sys.exit(1)
-
-                runner.sync_results(f"experiment_b_memory_{mem}", j)
-                runner.reboot_and_wait()
-        else:
-            for j in range(1, 6):
-                # For experiment B, we set both memory.max and memory.swap.max to the same value
-                # to directly observe the impact of memory pressure
-                runner.configure_cgroup_memory(mem, mem)
-                print(f"Running cgroup memory pressure {mem} iteration {j}")
-                if not runner.run_experiment(f"experiment_b_memory_{mem}", j):
-                    print("Experiment failed, exiting...")
-                    sys.exit(1)
-
-                runner.sync_results(f"experiment_b_memory_{mem}", j)
-                runner.reboot_and_wait()
+            runner.sync_results(f"experiment_b_memory_{mem}", j)
+            runner.reboot_and_wait()
 
 
 def run_experiment_c(runner: RemoteExperimentRunner):
@@ -395,31 +380,17 @@ def run_experiment_c(runner: RemoteExperimentRunner):
         runner.configure_grub(f"zswap.enabled=1 zswap.accept_threshold_percent={threshold}")
         time.sleep(10)
 
-        # For threshold 60, start from run 5
-        if threshold == 60:
-            for j in range(5, 6):
-                print(f"Running accept_threshold {threshold} iteration {j}")
-                runner.reboot_and_wait()
+        for j in range(1, 6):
+            print(f"Running accept_threshold {threshold} iteration {j}")
+            runner.reboot_and_wait()
 
-                # Set default cgroup memory limits
-                runner.configure_cgroup_memory("4G", "6G")
-                if not runner.run_experiment(f"experiment_c_accept_threshold_{threshold}", j):
-                    print("Experiment failed, exiting...")
-                    sys.exit(1)
+            # Set default cgroup memory limits
+            runner.configure_cgroup_memory("4G", "6G")
+            if not runner.run_experiment(f"experiment_c_accept_threshold_{threshold}", j):
+                print("Experiment failed, exiting...")
+                sys.exit(1)
 
-                runner.sync_results(f"experiment_c_accept_threshold_{threshold}", j)
-        else:
-            for j in range(1, 6):
-                print(f"Running accept_threshold {threshold} iteration {j}")
-                runner.reboot_and_wait()
-
-                # Set default cgroup memory limits
-                runner.configure_cgroup_memory("4G", "6G")
-                if not runner.run_experiment(f"experiment_c_accept_threshold_{threshold}", j):
-                    print("Experiment failed, exiting...")
-                    sys.exit(1)
-
-                runner.sync_results(f"experiment_c_accept_threshold_{threshold}", j)
+            runner.sync_results(f"experiment_c_accept_threshold_{threshold}", j)
 
 
 def run_experiment_d(runner: RemoteExperimentRunner):
@@ -431,31 +402,17 @@ def run_experiment_d(runner: RemoteExperimentRunner):
         runner.configure_grub(f"zswap.enabled=1 zswap.max_pool_percent={pool}")
         time.sleep(10)
 
-        # For pool 5, start from run 5
-        if pool == 5:
-            for j in range(5, 6):
-                print(f"Running max_pool_percent {pool} iteration {j}")
-                runner.reboot_and_wait()
+        for j in range(1, 6):
+            print(f"Running max_pool_percent {pool} iteration {j}")
+            runner.reboot_and_wait()
 
-                # Set default cgroup memory limits
-                runner.configure_cgroup_memory("4G", "6G")
-                if not runner.run_experiment(f"experiment_d_max_pool_percent_{pool}", j):
-                    print("Experiment failed, exiting...")
-                    sys.exit(1)
+            # Set default cgroup memory limits
+            runner.configure_cgroup_memory("4G", "6G")
+            if not runner.run_experiment(f"experiment_d_max_pool_percent_{pool}", j):
+                print("Experiment failed, exiting...")
+                sys.exit(1)
 
-                runner.sync_results(f"experiment_d_max_pool_percent_{pool}", j)
-        else:
-            for j in range(1, 6):
-                print(f"Running max_pool_percent {pool} iteration {j}")
-                runner.reboot_and_wait()
-
-                # Set default cgroup memory limits
-                runner.configure_cgroup_memory("4G", "6G")
-                if not runner.run_experiment(f"experiment_d_max_pool_percent_{pool}", j):
-                    print("Experiment failed, exiting...")
-                    sys.exit(1)
-
-                runner.sync_results(f"experiment_d_max_pool_percent_{pool}", j)
+            runner.sync_results(f"experiment_d_max_pool_percent_{pool}", j)
 
 
 def run_experiment_e(runner: RemoteExperimentRunner):
@@ -474,31 +431,17 @@ def run_experiment_e(runner: RemoteExperimentRunner):
         runner.configure_grub(f"zswap.enabled=1 zswap.compressor={comp}")
         time.sleep(10)
 
-        # For compressor deflate, start from run 5
-        if comp == "deflate":
-            for j in range(5, 6):
-                print(f"Running compressor {comp} iteration {j}")
-                runner.reboot_and_wait()
+        for j in range(1, 6):
+            print(f"Running compressor {comp} iteration {j}")
+            runner.reboot_and_wait()
 
-                # Set default cgroup memory limits
-                runner.configure_cgroup_memory("4G", "6G")
-                if not runner.run_experiment(f"experiment_e_compressor_{comp}", j):
-                    print("Experiment failed, exiting...")
-                    sys.exit(1)
+            # Set default cgroup memory limits
+            runner.configure_cgroup_memory("4G", "6G")
+            if not runner.run_experiment(f"experiment_e_compressor_{comp}", j):
+                print("Experiment failed, exiting...")
+                sys.exit(1)
 
-                runner.sync_results(f"experiment_e_compressor_{comp}", j)
-        else:
-            for j in range(1, 6):
-                print(f"Running compressor {comp} iteration {j}")
-                runner.reboot_and_wait()
-
-                # Set default cgroup memory limits
-                runner.configure_cgroup_memory("4G", "6G")
-                if not runner.run_experiment(f"experiment_e_compressor_{comp}", j):
-                    print("Experiment failed, exiting...")
-                    sys.exit(1)
-
-                runner.sync_results(f"experiment_e_compressor_{comp}", j)
+            runner.sync_results(f"experiment_e_compressor_{comp}", j)
 
 
 def run_experiment_f(runner: RemoteExperimentRunner):
@@ -515,31 +458,17 @@ def run_experiment_f(runner: RemoteExperimentRunner):
         runner.configure_grub(f"zswap.enabled=1 zswap.zpool={pool}")
         time.sleep(10)
 
-        # For zpool z3fold, start from run 5
-        if pool == "z3fold":
-            for j in range(5, 6):
-                print(f"Running zpool {pool} iteration {j}")
-                runner.reboot_and_wait()
+        for j in range(1, 6):
+            print(f"Running zpool {pool} iteration {j}")
+            runner.reboot_and_wait()
 
-                # Set default cgroup memory limits
-                runner.configure_cgroup_memory("4G", "6G")
-                if not runner.run_experiment(f"experiment_f_zpool_{pool}", j):
-                    print("Experiment failed, exiting...")
-                    sys.exit(1)
+            # Set default cgroup memory limits
+            runner.configure_cgroup_memory("4G", "6G")
+            if not runner.run_experiment(f"experiment_f_zpool_{pool}", j):
+                print("Experiment failed, exiting...")
+                sys.exit(1)
 
-                runner.sync_results(f"experiment_f_zpool_{pool}", j)
-        else:
-            for j in range(1, 6):
-                print(f"Running zpool {pool} iteration {j}")
-                runner.reboot_and_wait()
-
-                # Set default cgroup memory limits
-                runner.configure_cgroup_memory("4G", "6G")
-                if not runner.run_experiment(f"experiment_f_zpool_{pool}", j):
-                    print("Experiment failed, exiting...")
-                    sys.exit(1)
-
-                runner.sync_results(f"experiment_f_zpool_{pool}", j)
+            runner.sync_results(f"experiment_f_zpool_{pool}", j)
 
 
 def run_experiment_g(runner: RemoteExperimentRunner):
@@ -549,7 +478,7 @@ def run_experiment_g(runner: RemoteExperimentRunner):
     runner.configure_grub("zswap.enabled=1 zswap.exclusive_loads=Y")
     time.sleep(10)
 
-    for i in range(5, 6):
+    for i in range(1, 6):
         print(f"Running exclusive_loads ON iteration {i}")
         runner.reboot_and_wait()
 
@@ -569,7 +498,7 @@ def run_experiment_h(runner: RemoteExperimentRunner):
     runner.configure_grub("zswap.enabled=1 zswap.non_same_filled_pages_enabled=N")
     time.sleep(10)
 
-    for i in range(5, 6):
+    for i in range(1, 6):
         print(f"Running non_same_filled_pages OFF iteration {i}")
         runner.reboot_and_wait()
 
@@ -589,7 +518,7 @@ def run_experiment_i(runner: RemoteExperimentRunner):
     runner.configure_grub("zswap.enabled=1 zswap.same_filled_pages_enabled=N")
     time.sleep(10)
 
-    for i in range(4, 6):
+    for i in range(1, 6):
         print(f"Running same_filled_pages OFF iteration {i}")
         runner.reboot_and_wait()
 
@@ -609,7 +538,7 @@ def run_experiment_j(runner: RemoteExperimentRunner):
     runner.configure_grub("zswap.enabled=1 zswap.shrinker_enabled=N")
     time.sleep(10)
 
-    for i in range(4, 6):
+    for i in range(1, 6):
         print(f"Running shrinker OFF iteration {i}")
         runner.reboot_and_wait()
 
@@ -621,12 +550,11 @@ def run_experiment_j(runner: RemoteExperimentRunner):
 
         runner.sync_results("experiment_j_shrinker_off", i)
 
-# TODO: this is a different type of command
 def run_experiment_k(runner: RemoteExperimentRunner):
     """Run Experiment K: cgroup writeback OFF"""
     print("Running Experiment K: cgroup writeback OFF")
 
-    for i in range(4, 6):
+    for i in range(1, 6):
         print(f"Running cgroup writeback OFF iteration {i}")
 
         # Set default cgroup memory limits
