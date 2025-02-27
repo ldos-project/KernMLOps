@@ -14,5 +14,6 @@ for ds in 8 16 32 64 128 256 512; do
         for i in $(seq 1 30); do ./build/test/kdev/bpf_map_bench -n 100000 -s ${ms} -d ${ds} 3>>user-mmap-${ds}-${ms}.stats; done
         #for i in `seq 1 30`; do ./build/test/e2e/bench_kernel_get/bench_kernel_get -f -n 100000 -s ${ms} -d ${ds} 3>> kmod-map-${ds}-${ms}.stats; done
         #for i in `seq 1 30`; do ./build/test/e2e/bench_kernel_get/bench_kernel_get -a -n 100000 -s ${ms} -d ${ds} 3>> kmod-array-${ds}-${ms}.stats; done
+        #for i in `seq 1 30`; do ./test/user-ksched/user_ksched -a -n 100000 -s ${ms} -d ${ds} 3>> user-ksched-${ds}-${ms}.stats 4>> returner; done
     done
 done
