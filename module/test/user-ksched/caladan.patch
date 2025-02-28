@@ -1,0 +1,80 @@
+diff --git a/ksched/Makefile b/ksched/Makefile
+index 7c81c22..a917871 100644
+--- a/ksched/Makefile
++++ b/ksched/Makefile
+@@ -3,7 +3,7 @@ BUILD_DIR ?= $(PWD)/build
+ BUILD_DIR_MAKEFILE ?= $(PWD)/build/Makefile
+
+ default: $(BUILD_DIR_MAKEFILE)
+-   make -C $(KDIR) M=$(BUILD_DIR) src=$(PWD) modules
++   make -C $(KDIR) M=$(PWD) modules
+
+ $(BUILD_DIR):
+     mkdir -p "$@"
+@@ -12,4 +12,4 @@ $(BUILD_DIR_MAKEFILE): $(BUILD_DIR)
+     touch "$@"
+
+ clean:
+-   make -C $(KDIR) M=$(BUILD_DIR) src=$(PWD) clean
++   make -C $(KDIR) M=$(PWD) clean
+diff --git a/ksched/ksched.c b/ksched/ksched.c
+index 291d5f7..885a558 100644
+--- a/ksched/ksched.c
++++ b/ksched/ksched.c
+@@ -33,6 +33,7 @@
+ #include <linux/uaccess.h>
+ #include <linux/signal.h>
+ #include <linux/version.h>
++#include <linux/vmalloc.h>
+
+ #include "ksched.h"
+ #include "../iokernel/pmc.h"
+@@ -51,7 +52,10 @@ static struct cdev ksched_cdev;
+
+ /* shared memory between the IOKernel and the Linux Kernel */
+ static __read_mostly struct ksched_shm_cpu *shm;
+-#define SHM_SIZE (NR_CPUS * sizeof(struct ksched_shm_cpu))
++/*#define SHM_SIZE (NR_CPUS * sizeof(struct ksched_shm_cpu))*/
++static unsigned long shm_size = NR_CPUS * sizeof(struct ksched_shm_cpu);
++module_param(shm_size, ulong, 0644);
++MODULE_PARM_DESC(shm_size, "Size of shared memory region in bytes");
+
+ struct ksched_percpu {
+     unsigned int       last_gen;
+@@ -60,6 +64,9 @@ struct ksched_percpu {
+     struct task_struct *running_task;
+ };
+
++void mark_task_parked(struct task_struct *tsk);
++bool try_mark_task_unparked(struct task_struct *tsk);
++
+ /* per-cpu data to coordinate context switching and signal delivery */
+ static DEFINE_PER_CPU(struct ksched_percpu, kp);
+
+@@ -524,12 +531,12 @@ static int __init ksched_init(void)
+     if (ret)
+         goto fail_ksched_cdev_add;
+
+-   shm = vmalloc_user(SHM_SIZE);
++   shm = vmalloc_user(shm_size);
+     if (!shm) {
+         ret = -ENOMEM;
+         goto fail_shm;
+     }
+-   memset(shm, 0, SHM_SIZE);
++   memset(shm, 0, shm_size);
+
+     ret = ksched_cpuidle_hijack();
+     if (ret)
+diff --git a/scripts/setup_machine.sh b/scripts/setup_machine.sh
+index 79cb93c..6a2579a 100755
+--- a/scripts/setup_machine.sh
++++ b/scripts/setup_machine.sh
+@@ -16,7 +16,7 @@ fi
+ # set up the ksched module
+ rmmod ksched
+ rm /dev/ksched
+-insmod $(dirname $0)/../ksched/build/ksched.ko
++insmod $(dirname $0)/../ksched/build/ksched.ko shm_size=1048576
+ mknod /dev/ksched c 280 0
+ chmod uga+rwx /dev/ksched
