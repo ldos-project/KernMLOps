@@ -9,7 +9,7 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-output_dir="$1"
+output_dir=$PWD/$1
 
 # Create output directory if it doesn't exist
 mkdir -p "$output_dir"
@@ -41,8 +41,8 @@ sudo dd if=/dev/urandom of=/mnt/cold_data/cold_file3 bs=1M count=500
 echo 3 >/proc/sys/vm/drop_caches
 
 # Build Linux kernel inside cgroup
-[ ! -d "$HOME/benchmark_test" ] && mkdir -p "$HOME/benchmark_test"
-cd $HOME/benchmark_test
+[ ! -d "$USER_HOME/benchmark_test" ] && mkdir -p "$USER_HOME/benchmark_test"
+cd $USER_HOME/benchmark_test
 [ ! -f "linux-6.13.3.tar.xz" ] && wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.13.3.tar.xz
 [ -d "linux-6.13.3" ] && rm -rf linux-6.13.3
 tar xf linux-6.13.3.tar.xz
@@ -67,9 +67,9 @@ make olddefconfig
 
 sudo perf stat \
     -e 'cycles:k,instructions:k,cpu-clock,task-clock' \
-    -o $HOME/$output_dir/perf_results.txt \
+    -o $output_dir/perf_results.txt \
     sudo cgexec \
     -g memory:benchmark_group \
     make -j$(nproc) \
-    &>$HOME/$output_dir/build_log.txt &&
-    sudo grep -r . /sys/kernel/debug/zswap >$HOME/$output_dir/final_zswap_stats.txt
+    &>$output_dir/build_log.txt &&
+    sudo grep -r . /sys/kernel/debug/zswap >$output_dir/final_zswap_stats.txt
