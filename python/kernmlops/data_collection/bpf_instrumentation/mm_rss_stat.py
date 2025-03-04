@@ -13,10 +13,10 @@ class TraceRSSStat:
   pid: int
   tgid: int
   ts_ns: int
-  file: int
-  anon: int
-  swap: int
-  shmem: int
+  member: str
+  count: int
+
+MEMBER_ASSIGN_ARR = ["MM_FILEPAGES", "MM_ANONPAGES", "MM_SWAPENTS", "MM_SHMEMPAGES"]
 
 class TraceRSSStatBPFHook(BPFProgram):
 
@@ -64,9 +64,7 @@ class TraceRSSStatBPFHook(BPFProgram):
           pid=event.pid,
           tgid=event.tgid,
           ts_ns=event.ts,
-          file=event.file,
-          anon=event.anon,
-          swap=event.swap,
-          shmem=event.shmem,
+          member=MEMBER_ASSIGN_ARR[event.member],
+          count=event.counter_value,
         )
       )
