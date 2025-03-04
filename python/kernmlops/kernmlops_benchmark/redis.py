@@ -85,7 +85,6 @@ class RedisBenchmark(Benchmark):
         if self.server is not None:
             raise BenchmarkRunningError()
 
-
         # start the redis server
         start_redis = [
             "redis-server",
@@ -99,6 +98,7 @@ class RedisBenchmark(Benchmark):
         while i < 10 and ping_redis.returncode != 0:
             time.sleep(1)
             ping_redis = subprocess.run(["redis-cli", "ping"])
+            i+=1
 
         if ping_redis.returncode != 0:
             raise BenchmarkError("Redis Failed To Start")
