@@ -51,7 +51,10 @@ def poll_instrumentation(
 
     # Poll again to clean out all buffers
     for bpf_program in bpf_programs:
-        bpf_program.poll()
+        try:
+            bpf_program.poll()
+        except Exception:
+            pass
     return_code = return_code if return_code is not None else 1
     queue.put(return_code)
     return return_code
