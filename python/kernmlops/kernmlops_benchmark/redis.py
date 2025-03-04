@@ -195,8 +195,11 @@ class RedisBenchmark(Benchmark):
             return
         subprocess.run(size_redis)
         self.server.send_signal(signal.SIGINT)
-        if self.server.wait(10) is None:
+        try:
+            self.server.wait(10)
+        except subprocess.TimeoutExpired:
             self.server.terminate()
+
         self.server = None
         kill_proc = subprocess.Popen(kill_redis)
         kill_proc.wait()
