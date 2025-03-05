@@ -1,90 +1,77 @@
+import shutil
 import subprocess
-from dataclasses import dataclass
-from pathlib import Path
+from dataclasses import dataclass, field
 from typing import Literal, cast
 import time
+import psutil
 
 from data_schema import GraphEngine, demote
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
 from kernmlops_benchmark.errors import (
-  BenchmarkNotInCollectionData,
-  BenchmarkNotRunningError,
-  BenchmarkRunningError,
+    BenchmarkNotInCollectionData,
+    BenchmarkNotRunningError,
+    BenchmarkRunningError,
 )
 from kernmlops_config import ConfigBase
 
-
 @dataclass(frozen=True)
-class GapBenchmarkConfig(ConfigBase):
-  gap_benchmark: Literal["pr"] = "pr"
-  gap_benchmark_size: int = 25
-  trials: int = 2
+class StressNgBenchmarkConfig(ConfigBase):
+    stress_ng_benchmark: Literal["stress-ng"] = "stress-ng"
+    args: list[str] = field(default_factory=list)
 
 
-class GapBenchmark(Benchmark):
+class StressNgBenchmark(Benchmark):
 
     @classmethod
     def name(cls) -> str:
-        return "gap"
+        return "stress_ng"
 
     @classmethod
     def default_config(cls) -> ConfigBase:
-        return GapBenchmarkConfig()
+        return StressNgBenchmarkConfig()
 
     @classmethod
     def from_config(cls, config: ConfigBase) -> "Benchmark":
         generic_config = cast(GenericBenchmarkConfig, getattr(config, "generic"))
-        gap_config = cast(GapBenchmarkConfig, getattr(config, cls.name()))
-        return GapBenchmark(generic_config=generic_config, config=gap_config)
+        stress_ng_config = cast(StressNgBenchmarkConfig, getattr(config, cls.name()))
+        return StressNgBenchmark(generic_config=generic_config, config=stress_ng_config)
 
-    def __init__(self, *, generic_config: GenericBenchmarkConfig, config: GapBenchmarkConfig):
+    def __init__(self, *, generic_config: GenericBenchmarkConfig, config: StressNgBenchmarkConfig):
+        super().__init__()
         self.generic_config = generic_config
         self.config = config
-        self.benchmark_dir = self.generic_config.get_benchmark_dir() / self.name()
+        self.benchmark_path = shutil.which(self.config.stress_ng_benchmark)
         self.process: subprocess.Popen | None = None
-        super().__init__()
-
-    def get_input_file_path(self) -> Path:
-        return Path(self.benchmark_dir / "graphs" / f"kron{self.config.gap_benchmark_size}.sg")
 
     def is_configured(self) -> bool:
-        return self.benchmark_dir.is_dir()
+        return self.benchmark_path is not None
 
     def setup(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
-        if not self.get_input_file_path().is_file():
-          create_graph_process = subprocess.Popen([
-            str(self.benchmark_dir / "converter"),
-            "-m",
-            "-g",
-            f"{self.config.gap_benchmark_size}",
-            "-b",
-            str(self.get_input_file_path()),
-          ])
-          create_graph_process.wait()
         self.generic_config.generic_setup()
 
     def run(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
+
         self.process = subprocess.Popen(
-            [
-                str(self.benchmark_dir / self.config.gap_benchmark),
-                "-f",
-                str(self.get_input_file_path()),
-                "-n",
-                str(self.config.trials),
-            ],
+            [self.benchmark_path] + self.config.args,
             preexec_fn=demote(),
             stdout=subprocess.DEVNULL,
         )
-        self.start_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
 
     def poll(self) -> int | None:
         if self.process is None:
             raise BenchmarkNotRunningError()
+        if self.process is None:
+            raise BenchmarkNotRunningError()
+        if not self.start_timestamp:
+            p = psutil.Process(self.process.pid)
+            if p.status() != "disk-sleep":
+                self.start_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
         self.finish_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
+
         return self.process.poll()
 
     def wait(self) -> None:
@@ -107,6 +94,8 @@ class GapBenchmark(Benchmark):
     def to_run_info_dict(self) -> dict[str, list]:
         return {
             "benchmark": [self.name()],
+            "args": [" ".join(self.config.args)],
             "start_ts_us": [self.start_timestamp],
             "finish_ts_us": [self.finish_timestamp],
+            "return_code": [self.process.returncode],
         }

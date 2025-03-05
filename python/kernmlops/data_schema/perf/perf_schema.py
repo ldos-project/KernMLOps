@@ -48,6 +48,23 @@ class PerfHWCacheConfig:
   def config(cls, cache: Cache, op: Op, result: Result) -> int:
     return (cache.value) | (op.value << 8) | (result.value << 16)
 
+class PerfHardwareConfig:
+    # From perf_hw_id in uapi/linux/perf_event.h
+    class Event(Enum):
+        PERF_COUNT_HW_CPU_CYCLES = 0
+        PERF_COUNT_HW_INSTRUCTIONS = 1
+        PERF_COUNT_HW_CACHE_REFERENCES = 2
+        PERF_COUNT_HW_CACHE_MISSES = 3
+        PERF_COUNT_HW_BRANCH_INSTRUCTIONS = 4
+        PERF_COUNT_HW_BRANCH_MISSES = 5
+        PERF_COUNT_HW_BUS_CYCLES = 6
+        PERF_COUNT_HW_STALLED_CYCLES_FRONTEND = 7
+        PERF_COUNT_HW_STALLED_CYCLES_BACKEND = 8
+        PERF_COUNT_HW_REF_CPU_CYCLES = 9
+
+    @classmethod
+    def config(cls, event: Event) -> int:
+        return event.value
 
 class PerfCollectionTable(CollectionTable, Protocol):
 

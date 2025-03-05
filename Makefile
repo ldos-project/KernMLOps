@@ -1,5 +1,6 @@
 SHELL := /bin/bash
 
+USER_PATH=/users
 UNAME ?= $(shell whoami)
 UID ?= $(shell id -u)
 GID ?= $(shell id -g)
@@ -57,7 +58,7 @@ INTERACTIVE ?= i
 # Benchmarking variables
 COLLECTION_BENCHMARK ?= faux
 EXTERNAL_BENCHMARK_DIR ?= ${HOME}/kernmlops-benchmark
-BENCHMARK_DIR ?= /home/${UNAME}/kernmlops-benchmark
+BENCHMARK_DIR ?= ${USER_PATH}/${UNAME}/kernmlops-benchmark
 YCSB_BENCHMARK_DIR ?= ${BENCHMARK_DIR}/ycsb
 REDIS_BENCHMARK_DIR ?= ${BENCHMARK_DIR}/redis
 MEMCACHED_PORT ?= 11211
@@ -158,6 +159,21 @@ load-memcached:
 		-p recordcount=1000000 \
         -p memcached.hosts=localhost:$(MEMCACHED_PORT)
 
+benchmark-stress-ng:
+	@python python/kernmlops collect -v \
+	-c ${KERNMLOPS_CONFIG_FILE} \
+	--benchmark stress_ng
+
+benchmark-group:
+	@python python/kernmlops collect -v \
+	-c ${KERNMLOPS_CONFIG_FILE} \
+	--benchmark benchmark_group
+
+stress-ng-benchmarks:
+	@python python/kernmlops collect -v \
+	-c ${KERNMLOPS_CONFIG_FILE} \
+	--benchmark stress_ng_benchmarks
+
 benchmark-linux-build:
 	@python python/kernmlops collect -v \
 	-c ${KERNMLOPS_CONFIG_FILE} \
@@ -221,9 +237,8 @@ docker:
 	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR} \
 	-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR}:ro \
 	-v ${KERNEL_DEV_MODULES_DIR}/:${KERNEL_DEV_MODULES_DIR}:ro \
-	-v /usr/include:/usr/include \
-	-v ${EXTERNAL_BENCHMARK_DIR}/:/home/${UNAME}/kernmlops-benchmark \
-	-v ${EXTERNAL_BENCHMARK_DIR}/:/root/kernmlops-benchmark/ \
+	-v ${BENCHMARK_DIR}/:${USER_PATH}/${UNAME}/kernmlops-benchmark \
+	-v ${BENCHMARK_DIR}/:${BENCHMARK_DIR} \
 	-v /sys/kernel/:/sys/kernel \
 	${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT} \
 	${KERNMLOPS_CONTAINER_MOUNTS} \
@@ -231,6 +246,7 @@ docker:
 	${CONTAINER_CPUSET} \
 	--pid=host \
 	--privileged \
+	--cgroupns=host \
 	--hostname=${CONTAINER_HOSTNAME} \
 	--workdir=${CONTAINER_WORKDIR} ${CONTAINER_OPTS} -${INTERACTIVE}t \
 	${IMAGE_NAME}:${VERSION} \

@@ -1,4 +1,5 @@
 import subprocess
+import time
 from dataclasses import dataclass
 from typing import cast
 
@@ -73,10 +74,12 @@ class LinuxBuildBenchmark(Benchmark):
             preexec_fn=demote(),
             stdout=subprocess.DEVNULL,
         )
+        self.start_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
 
     def poll(self) -> int | None:
         if self.process is None:
             raise BenchmarkNotRunningError()
+        self.finish_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
         return self.process.poll()
 
     def wait(self) -> None:
@@ -102,3 +105,10 @@ class LinuxBuildBenchmark(Benchmark):
         graph_engine.plot_event_as_sec(ts_us=file_data.get_last_occurrence_us("vmlinux.bin"))
         graph_engine.plot_event_as_sec(ts_us=file_data.get_last_occurrence_us("vmlinux.o"))
         graph_engine.plot_event_as_sec(ts_us=file_data.get_last_occurrence_us("vmlinux"))
+
+    def to_run_info_dict(self) -> dict[str, list]:
+        return {
+            "benchmark": [self.name()],
+            "start_ts_us": [self.start_timestamp],
+            "finish_ts_us": [self.finish_timestamp],
+        }

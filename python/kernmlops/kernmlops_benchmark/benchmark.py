@@ -1,4 +1,5 @@
 """Abstract definition of a benchmark."""
+from __future__ import annotations
 
 import os
 import subprocess
@@ -35,6 +36,7 @@ class GenericBenchmarkConfig(ConfigBase):
 
   def generic_setup(self):
     """This will set pertinent generic settings, should be called after specific benchmark setup."""
+    os.system("pkill -9 stress-ng")
     if not self.skip_clear_page_cache:
       subprocess.check_call(
           ["bash", "-c", "sync && echo 3 > /proc/sys/vm/drop_caches"],
@@ -61,8 +63,10 @@ class GenericBenchmarkConfig(ConfigBase):
             stdout=subprocess.DEVNULL,
         )
 
-
-
+    subprocess.check_call(
+        ["bash", "-c", "/KernMLOps/scripts/flush_cache"],
+        stdout=subprocess.DEVNULL,
+    )
 
 @dataclass(frozen=True)
 class FauxBenchmarkConfig(ConfigBase):
@@ -72,6 +76,10 @@ class FauxBenchmarkConfig(ConfigBase):
 class Benchmark(Protocol):
   """Runnable benchmark that terminates naturally in finite time."""
 
+  def __init__(self):
+    self.start_timestamp: int = 0
+    self.finish_timestamp: int = 0
+
   @classmethod
   def name(cls) -> str: ...
 
@@ -79,7 +87,7 @@ class Benchmark(Protocol):
   def default_config(cls) -> ConfigBase: ...
 
   @classmethod
-  def from_config(cls, config: ConfigBase) -> "Benchmark": ...
+  def from_config(cls, config: ConfigBase) -> Benchmark: ...
 
   def is_configured(self) -> bool:
     """Returns True if the environment has been setup to run the benchmark."""
@@ -102,6 +110,7 @@ class Benchmark(Protocol):
     """Given a collection of data, plot important events for this benchmark."""
     ...
 
+  def to_run_info_dict(self) -> dict[str, list]: ...
 
 class FauxBenchmark(Benchmark):
   """Benchmark that does nothing and allows users to collect the running system's data."""
@@ -115,7 +124,7 @@ class FauxBenchmark(Benchmark):
     return FauxBenchmarkConfig()
 
   @classmethod
-  def from_config(cls, config: ConfigBase) -> "Benchmark":
+  def from_config(cls, config: ConfigBase) -> Benchmark:
     generic_config = cast(GenericBenchmarkConfig, getattr(config, "generic"))
     faux_config = cast(FauxBenchmarkConfig, getattr(config, cls.name()))
     return FauxBenchmark(generic_config=generic_config, config=faux_config)

@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from queue import Queue
 from threading import Event, Thread
-from time import sleep
+from time import sleep, time
 from typing import cast
 
 import data_collection
@@ -34,12 +34,16 @@ def poll_instrumentation(
 ) -> int:
 
     return_code = None
+    loop_start = None
     while return_code is None and run_event.is_set():
         try:
             for bpf_program in bpf_programs:
                 bpf_program.poll()
             if poll_rate > 0:
-                sleep(poll_rate)
+                sleep_time = poll_rate - (time() - loop_start) if loop_start else poll_rate
+                if sleep_time > 0:
+                    sleep(sleep_time)
+                loop_start = time()
             return_code = benchmark.poll()
             # clean data when missed samples - or detect?
         except BenchmarkNotRunningError:
@@ -123,6 +127,7 @@ def run_collect(
         print(f"Benchmark {benchmark.name()} failed with return code {return_code}")
         output_dir = generic_config.get_output_dir() / "failed"
 
+    print("BENCHMARK RUNINFO:", benchmark.start_timestamp, benchmark.finish_timestamp)
 
     collection_tables: list[data_schema.CollectionTable] = [
         data_schema.SystemInfoTable.from_df(
@@ -132,6 +137,9 @@ def run_collect(
                 pl.lit(benchmark.name()).alias("benchmark_name"),
                 pl.lit([hook.name() for hook in bpf_programs]).cast(pl.List(pl.String())).alias("hooks"),
             ])
+        ),
+        data_schema.BenchmarkRunInfoTable.from_df(
+            pl.DataFrame(benchmark.to_run_info_dict())
         )
     ]
     for bpf_program in bpf_programs:
