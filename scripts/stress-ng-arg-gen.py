@@ -20,8 +20,14 @@ def generate_stress_ng_args(remaining_time_slots: int) -> tuple[int, float]:
 
     return num_stressors, timeout
 
-def stress_ng_args_to_cmd(stressor_name: str, num_stressors: int, timeout: float) -> str:
-    return f"timeout {timeout} stress-ng --{stressor_name} {num_stressors}"
+def stressor_to_cmd_args(stressor_name: str, num_stressors: int) -> str:
+    return f"--{stressor_name} {num_stressors}"
+
+def stress_ng_args_to_cmd(timeout: float, stressor_config: dict[str, int]) -> str:
+    cmd_args = [f"timeout {timeout} stress-ng"]
+    for stressor_name, num_stressors in stressor_config.items():
+        cmd_args.append(stressor_to_cmd_args(stressor_name, num_stressors))
+    return " ".join(cmd_args)
 
 def write_random_strings_to_file(filename, arg_list: list[str]):
     with open(filename, 'w') as file:
