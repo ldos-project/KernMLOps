@@ -12,10 +12,9 @@ from data_schema.zswap_runtime import ZswapRuntimeDataTable
 class ZswapRuntimeStat:
   pid: int
   tgid: int
-  duration_ns: int
-  ts_ns: int
+  start_ts: int
+  end_ts: int
   name: str
-  cap_type: str
 
 class ZswapRuntimeBPFHook(BPFProgram):
 
@@ -68,10 +67,9 @@ class ZswapRuntimeBPFHook(BPFProgram):
         ZswapRuntimeStat(
           pid=event.pid,
           tgid=event.tgid,
-          duration_ns=event.duration,
-          ts_ns=event.ts,
-          name=event.buff.decode("ascii"),
-          cap_type="store"
+          start_ts=event.start_ts,
+          end_ts=event.end_ts,
+          name="zswap_store"
         )
       )
 
@@ -81,10 +79,9 @@ class ZswapRuntimeBPFHook(BPFProgram):
         ZswapRuntimeStat(
           pid=event.pid,
           tgid=event.tgid,
-          duration_ns=event.duration,
-          ts_ns=event.ts,
-          name=event.buff.decode("ascii"),
-          cap_type="load"
+          start_ts=event.start_ts,
+          end_ts=event.end_ts,
+          name="zswap_load"
         )
       )
 
@@ -94,9 +91,8 @@ class ZswapRuntimeBPFHook(BPFProgram):
         ZswapRuntimeStat(
           pid=event.pid,
           tgid=event.tgid,
-          duration_ns=event.duration,
-          ts_ns=event.ts,
-          name=event.buff.decode("ascii"),
-          cap_type="invalidate"
+          start_ts=event.start_ts,
+          end_ts=event.end_ts,
+          name="zswap_invalidate"
         )
       )
