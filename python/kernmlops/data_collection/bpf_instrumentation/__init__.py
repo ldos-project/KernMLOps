@@ -22,6 +22,7 @@ from data_collection.bpf_instrumentation.process_metadata_hook import (
     ProcessMetadataHook,
 )
 from data_collection.bpf_instrumentation.quanta_runtime_hook import QuantaRuntimeBPFHook
+from data_collection.bpf_instrumentation.zswap_runtime_hook import ZswapRuntimeBPFHook
 
 all_hooks: Final[Mapping[str, type[BPFProgram]]] = {
     FileDataBPFHook.name(): FileDataBPFHook,
@@ -34,6 +35,7 @@ all_hooks: Final[Mapping[str, type[BPFProgram]]] = {
     CBMMBPFHook.name(): CBMMBPFHook,
     TraceRSSStatBPFHook.name(): TraceRSSStatBPFHook,
     TraceProcessHook.name(): TraceProcessHook,
+    ZswapRuntimeBPFHook.name(): ZswapRuntimeBPFHook,
 }
 
 def hook_names() -> list[str]:

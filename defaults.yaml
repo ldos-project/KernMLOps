@@ -43,3 +43,4 @@ collector_config:
       - collapse_huge_pages
       - mm_rss_stat
       - process_trace
+      - zswap_runtime
