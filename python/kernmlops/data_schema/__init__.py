@@ -7,9 +7,9 @@ from typing import Callable
 from data_schema import perf
 from data_schema.block_io import BlockIOLatencyTable, BlockIOQueueTable, BlockIOTable
 from data_schema.file_data import FileDataTable
+from data_schema.generic_table import ProcessMetadataTable
 from data_schema.huge_pages import CollapseHugePageDataTable
 from data_schema.memory_usage import MemoryUsageTable
-from data_schema.process_metadata import ProcessMetadataTable
 from data_schema.quanta_runtime import QuantaQueuedTable, QuantaRuntimeTable
 from data_schema.schema import (
     UPTIME_TIMESTAMP,

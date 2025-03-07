@@ -6,11 +6,13 @@ import polars as pl
 from bcc import BPF
 from data_collection.bpf_instrumentation.bpf_hook import POLL_TIMEOUT_MS, BPFProgram
 from data_schema import CollectionTable
-from data_schema.huge_pages import (
-  CollapseHugePageDataTable,
+from data_schema.generic_table import (
   CollapseHugePageDataTableRaw,
   TraceMMCollapseHugePageDataTable,
   TraceMMKhugepagedScanPMDDataTable,
+)
+from data_schema.huge_pages import (
+  CollapseHugePageDataTable,
 )
 
 

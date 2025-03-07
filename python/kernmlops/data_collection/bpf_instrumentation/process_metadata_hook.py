@@ -10,7 +10,7 @@ import osquery.extensions
 import polars as pl
 from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
 from data_schema import CollectionTable
-from data_schema.process_metadata import ProcessMetadataTable
+from data_schema.generic_table import ProcessMetadataTable
 from osquery.extensions.ttypes import ExtensionStatus
 
 

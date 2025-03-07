@@ -2,7 +2,7 @@ import json
 from typing import Mapping
 
 import polars as pl
-from data_schema.process_metadata import ProcessMetadataTable
+from data_schema.generic_table import ProcessMetadataTable
 from data_schema.schema import (
     UPTIME_TIMESTAMP,
     CollectionGraph,
