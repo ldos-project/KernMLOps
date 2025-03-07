@@ -22,6 +22,8 @@ pymongo = ">=3.5.1"
 jupyter = "*"
 docker = "*"
 pexpect = "*"
+plotnine = "*"
+pyarrow = "*"
 
 [dev-packages]
 
