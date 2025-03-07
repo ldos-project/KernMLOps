@@ -12,6 +12,7 @@ from data_collection.bpf_instrumentation.collapse_huge_page import (
 )
 from data_collection.bpf_instrumentation.file_data_hook import FileDataBPFHook
 from data_collection.bpf_instrumentation.fork_and_exit import TraceProcessHook
+from data_collection.bpf_instrumentation.madvise import MadviseBPFHook
 from data_collection.bpf_instrumentation.memory_usage_hook import MemoryUsageHook
 from data_collection.bpf_instrumentation.mm_rss_stat import TraceRSSStatBPFHook
 from data_collection.bpf_instrumentation.perf import (
@@ -33,6 +34,7 @@ all_hooks: Final[Mapping[str, type[BPFProgram]]] = {
     PerfBPFHook.name(): PerfBPFHook,
     CollapseHugePageBPFHook.name(): CollapseHugePageBPFHook,
     CBMMBPFHook.name(): CBMMBPFHook,
+    MadviseBPFHook.name(): MadviseBPFHook,
     TraceRSSStatBPFHook.name(): TraceRSSStatBPFHook,
     TraceProcessHook.name(): TraceProcessHook,
     ZswapRuntimeBPFHook.name(): ZswapRuntimeBPFHook,

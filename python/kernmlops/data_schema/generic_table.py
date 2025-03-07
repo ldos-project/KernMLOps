@@ -73,3 +73,6 @@ class CBMMEagerDataTable(CollectionTable, metaclass=GenericTableMeta):
 
 class CBMMPrezeroingDataTable(CollectionTable, metaclass=GenericTableMeta):
     probe_name = "cbmm_prezero"
+
+class MadviseDataTable(CollectionTable, metaclass=GenericTableMeta):
+    probe_name = "madvise"
