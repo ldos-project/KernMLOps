@@ -5,7 +5,7 @@ import polars as pl
 from bcc import BPF
 from data_collection.bpf_instrumentation.bpf_hook import POLL_TIMEOUT_MS, BPFProgram
 from data_schema import CollectionTable
-from data_schema.rss_stat import TraceMMRSSStatDataTable
+from data_schema.generic_table import TraceMMRSSStatDataTable
 
 
 @dataclass(frozen=True)
