@@ -18,6 +18,8 @@ from kernmlops_config import ConfigBase
 @dataclass(frozen=True)
 class RedisConfig(ConfigBase):
     # Core operation parameters
+    field_count: int = 256
+    field_length: int = 16
     operation_count: int = 1000000
     record_count: int = 1000000
     read_proportion: float = 0.5
@@ -118,6 +120,10 @@ class RedisBenchmark(Benchmark):
                 "redis.port=6379",
                 "-p",
                 f"recordcount={self.config.record_count}",
+                "-p",
+                f"fieldcount={self.config.field_count}",
+                "-p",
+                f"fieldlength={self.config.field_length}",
         ]
 
         load_redis = subprocess.Popen(load_redis, preexec_fn=demote())
@@ -165,7 +171,11 @@ class RedisBenchmark(Benchmark):
                 "-p",
                 f"threadcount={self.config.thread_count}",
                 "-p",
-                f"target={self.config.target}"
+                f"target={self.config.target}",
+                "-p",
+                f"fieldcount={self.config.field_count}",
+                "-p",
+                f"fieldlength={self.config.field_length}",
         ]
         self.process = subprocess.Popen(run_redis, preexec_fn=demote())
 

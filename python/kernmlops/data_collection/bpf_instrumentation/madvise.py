@@ -8,6 +8,7 @@ from data_schema import CollectionTable
 from data_schema.generic_table import MadviseDataTable
 
 ADVICE_ASSIGN_DICT = {
+    -1: "MUNMAP",
     0:"MADV_NORMAL",
     1:"MADV_RANDOM",
     2:"MADV_SEQUENTIAL",
@@ -57,8 +58,14 @@ class MadviseBPFHook(BPFProgram):
   def load(self, collection_id: str):
     self.collection_id = collection_id
     self.bpf = BPF(text = self.bpf_text)
-    self.bpf.attach_kprobe(event=b"do_madvise", fn_name=b"kprobe__do_madvise")
-    self.bpf.attach_kretprobe(event=b"do_madvise", fn_name=b"kretprobe__do_madvise")
+    self.bpf.attach_kprobe(event=b"do_madvise",
+                           fn_name=b"kprobe__do_madvise")
+    self.bpf.attach_kretprobe(event=b"do_madvise",
+                              fn_name=b"kretprobe__do_madvise")
+    self.bpf.attach_kprobe(event=b"do_vmi_align_munmap",
+                           fn_name=b"kprobe__do_vmi_align_munmap")
+    self.bpf.attach_kretprobe(event=b"do_vmi_align_munmap",
+                              fn_name=b"kretprobe__do_vmi_align_munmap")
     self.bpf["madvise_output"].open_perf_buffer(self._madvise_eh, page_cnt=64)
 
   def poll(self):

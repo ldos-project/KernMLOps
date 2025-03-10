@@ -104,10 +104,6 @@ RUN pip install \
   -r /root/requirements.txt
 RUN ln -s /usr/bin/python3.12 /usr/bin/python
 
-ARG UNAME
-ARG UID
-ARG GID
-
 RUN echo "export LIB_PFM4_DIR=/dependencies/libpfm4" >> /root/.profile
 RUN apt-get update && \
     apt-get install -y openjdk-11-jdk && \
@@ -115,6 +111,11 @@ RUN apt-get update && \
 
 # May be required for Ubuntu:24.04 images that come with uid 1000
 RUN deluser --remove-home ubuntu
+
+ARG UNAME
+ARG UID
+ARG GID
+
 RUN if [ "${UNAME}" != "root" ] ; then groupadd -g ${GID} ${UNAME} \
       ;  useradd -ms /bin/bash  -u "${UID}" -g "${GID}" ${UNAME}; fi
 
