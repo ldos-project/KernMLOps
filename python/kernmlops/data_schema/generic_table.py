@@ -76,3 +76,6 @@ class CBMMPrezeroingDataTable(CollectionTable, metaclass=GenericTableMeta):
 
 class MadviseDataTable(CollectionTable, metaclass=GenericTableMeta):
     probe_name = "madvise"
+
+class UnmapRangeDataTable(CollectionTable, metaclass=GenericTableMeta):
+    probe_name = "unmap_range"
