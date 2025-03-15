@@ -10,31 +10,52 @@ WARNING: Do not clone submodules, this will clone the linux kernel.
 Cloning the kernel is prohibitively expensive.
 That submodule is only necessary if you plan to use in-kernel inference.
 
-Quick Setup:
+## Quick Setup
+
+You will need docker.
+You can install from [docker's website](https://docs.docker.com/engine/install/).
+The tools should work with other container engines but have not been tested yet.
 
 ```shell
-pip install -r requirements.txt
 
-make hooks
-
+# Create and run your management container -- Expected Time: ~5 mins
 make docker-image
 
-# Installs gap benchmark (default)
-bash scripts/setup-benchmarks/setup-gap.sh
-
-# Ensure you have installed your kernel's development headers
-# On ubuntu: apt install linux-headers-$(uname -r)
-# On redhat: dnf install kernel-devel kernel-headers
-
-# Run default data collection inside docker until manually terminated via Ctrl+C
+# Install YCSB benchmark (Run inside Container) -- Expected Time: ~3 mins
 make docker
-make collect-raw
-# Run gap benchmark inside docker
-make docker
-make benchmark-gap
-# Run yaml configured data collection inside docker
+make install-ycsb
+
+# Copy a simple starting redis script (Run Outside Container) -- Expected Time: ~1 mins
+cp config/start_overrides.yaml overrides.yaml
+
+# Capture the simple overrides (Run Outside the Container) -- Expected Time: ~1 mins
 make collect
+
 ```
+
+## Jupyter Setup
+
+You will need docker and pipenv
+
+You can install docker from [docker's website](https://docs.docker.com/engine/install/).
+The tools should work with other container engines but have not been tested yet.
+
+You can install this by using either `pip` or `apt` on Ubuntu.
+A helpful link for this should be [here](https://pipenv.pypa.io/en/latest/installation.html).
+Or on later versions of ubuntu `sudo apt install pipenv`.
+From then on launch jupyter notebook like so:
+
+```shell
+
+# Create and run your management container -- Expected Time: ~5 mins
+make docker-image
+
+# Create your virtual environment and invoke jupyter -- Expected Time: ~5 mins
+pipenv shell jupyter notebook
+
+```
+
+From here open up the Jupyter not
 
 ## Capturing Data -> Processing in Python
 

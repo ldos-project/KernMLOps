@@ -13,9 +13,9 @@ repos:
     rev: v1.5.5
     hooks:
       - id: forbid-tabs
-        exclude: scripts/|Makefile|.*\.mk$
+        exclude: scripts/|Makefile|.*\.mk$|module/fstore/|module/test/e2e/.*\.c$|module/test/e2e/.*\.h$
       - id: remove-tabs
-        exclude: scripts/|Makefile|.*\.mk$
+        exclude: scripts/|Makefile|.*\.mk$|module/fstore/|module/test/e2e/.*\.c$|module/test/e2e/.*\.h$
         args: [--whitespaces-count, '2']
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.31.1
@@ -31,6 +31,7 @@ repos:
     rev: v2.2.6
     hooks:
       - id: codespell
+        exclude: config/|\.*\.ipynb$
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.26.3
     hooks:
@@ -51,3 +52,4 @@ repos:
     hooks:
       - id: clang-format
         args: [-i]
+        exclude: module/fstore/|module/test/e2e/.*\.c$|module/test/e2e/.*\.h$

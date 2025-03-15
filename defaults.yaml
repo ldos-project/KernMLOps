@@ -10,6 +10,7 @@ benchmark_config:
   linux_build: {}
   gap:
     gap_benchmark: pr
+    gap_benchmark_size: 25
     trials: 2
   mongodb:
     operation_count: 1000000
@@ -52,3 +53,4 @@ collector_config:
       - mm_rss_stat
       - process_trace
       - zswap_runtime
+      - disk_usage

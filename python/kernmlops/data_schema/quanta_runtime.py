@@ -192,15 +192,12 @@ class QuantaRuntimeGraph(CollectionGraph):
 
     def plot(self) -> None:
         quanta_df = self._quanta_table.filtered_table()
-        start_uptime_sec = self.collection_data.start_uptime_sec
 
         # group by and plot by cpu
         quanta_df_by_cpu = quanta_df.group_by("cpu")
         for cpu, quanta_df_group in quanta_df_by_cpu:
             self.graph_engine.scatter(
-                (
-                    (quanta_df_group.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
-                ).to_series().to_list(),
+                self.collection_data.normalize_uptime_sec(quanta_df_group),
                 (quanta_df_group.select("quanta_run_length_us") / 1_000.0).to_series().to_list(),
                 label=f"CPU {cpu[0]}",
             )
@@ -290,15 +287,12 @@ class QuantaQueuedGraph(CollectionGraph):
 
     def plot(self) -> None:
         quanta_df = self._quanta_table.filtered_table()
-        start_uptime_sec = self.collection_data.start_uptime_sec
 
         # group by and plot by cpu
         quanta_df_by_cpu = quanta_df.group_by("cpu")
         for cpu, quanta_df_group in quanta_df_by_cpu:
             self.graph_engine.scatter(
-                (
-                    (quanta_df_group.select(UPTIME_TIMESTAMP) / 1_000_000.0) - start_uptime_sec
-                ).to_series().to_list(),
+                self.collection_data.normalize_uptime_sec(quanta_df_group),
                 (quanta_df_group.select("quanta_queued_time_us") / 1_000.0).to_series().to_list(),
                 label=f"CPU {cpu[0]}",
             )

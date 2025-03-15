@@ -5,8 +5,10 @@ from pwd import getpwnam
 from typing import Callable
 
 from data_schema import perf
+from data_schema.block_io import BlockIOLatencyTable, BlockIOQueueTable, BlockIOTable
 from data_schema.disk_usage import DiskUsageTable
 from data_schema.file_data import FileDataTable
+from data_schema.huge_pages import CollapseHugePageDataTable
 from data_schema.memory_usage import MemoryUsageTable
 from data_schema.process_metadata import ProcessMetadataTable
 from data_schema.quanta_runtime import QuantaQueuedTable, QuantaRuntimeTable
@@ -30,6 +32,10 @@ table_types: list[type[CollectionTable]] = [
     ProcessMetadataTable,
     FileDataTable,
     MemoryUsageTable,
+    BlockIOLatencyTable,
+    BlockIOQueueTable,
+    BlockIOTable,
+    CollapseHugePageDataTable,
     DiskUsageTable,
 ] + list(perf.perf_table_types.values())
 

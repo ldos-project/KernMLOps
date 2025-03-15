@@ -11,6 +11,7 @@ KERNEL_VERSION ?= $(shell uname -r)
 KERNEL_DEV_HEADERS_DIR ?= /usr/src/kernels/${KERNEL_VERSION}
 KERNEL_DEV_SPECIFIC_HEADERS_MOUNT ?=
 KERNEL_DEV_MODULES_DIR ?= /lib/modules/${KERNEL_VERSION}
+LOWER_UNAME = $(shell echo ${UNAME} | tr A-Z a-z)
 
 # Kernel dev header locations are different on red hat and ubuntu
 # First ensure the user has not overridden this field
@@ -42,7 +43,7 @@ endif
 
 BASE_IMAGE_NAME ?= kernmlops
 BCC_IMAGE_NAME ?= ${BASE_IMAGE_NAME}-deps
-IMAGE_NAME ?= ${UNAME}-${BASE_IMAGE_NAME}
+IMAGE_NAME ?= ${LOWER_UNAME}-${BASE_IMAGE_NAME}
 SRC_DIR ?= $(shell pwd)
 VERSION ?= $(shell git log --pretty="%h" -1 Dockerfile.dev requirements.txt)
 
@@ -56,7 +57,11 @@ INTERACTIVE ?= i
 
 # Benchmarking variables
 COLLECTION_BENCHMARK ?= faux
+EXTERNAL_BENCHMARK_DIR ?= ${HOME}/kernmlops-benchmark
 BENCHMARK_DIR ?= ${USER_PATH}/${UNAME}/kernmlops-benchmark
+YCSB_BENCHMARK_DIR ?= ${BENCHMARK_DIR}/ycsb
+REDIS_BENCHMARK_DIR ?= ${BENCHMARK_DIR}/redis
+MEMCACHED_PORT ?= 11211
 
 # Provisioning variables
 PROVISIONING_USER ?= ${UNAME}
@@ -78,13 +83,13 @@ pre-commit:
 	@pre-commit run -a
 
 lint:
-	ruff check
-	ruff check --select I
-	pyright
+	ruff check python
+	ruff check --select I python
+	pyright python
 
 format:
-	ruff check --fix
-	ruff check --select I --fix
+	ruff check --fix python
+	ruff check --select I --fix python
 
 
 # Python commands
@@ -106,6 +111,53 @@ benchmark-gap:
 	@python python/kernmlops collect -v \
 	-c ${KERNMLOPS_CONFIG_FILE} \
 	--benchmark gap
+
+start-mongodb:
+	mkdir -p "$(YCSB_BENCHMARK_DIR)/mongo_db"
+	@mongod --dbpath "$(YCSB_BENCHMARK_DIR)/mongo_db" --fork --logpath /var/log/mongodb.log || { echo "Error is expected, just means that the server was already running"; true; }
+
+benchmark-mongodb:
+	@${MAKE} start-mongodb
+	@python python/kernmlops collect -v \
+		-c ${KERNMLOPS_CONFIG_FILE} \
+		--benchmark mongodb
+
+setup-redis:
+	@echo "Setting up storage for redis benchmark..."
+	@pwd
+	@source scripts/setup-benchmarks/setup-redis.sh
+
+benchmark-redis:
+	@python python/kernmlops collect -v \
+		-c ${KERNMLOPS_CONFIG_FILE} \
+		--benchmark redis
+
+start-memcached:
+	@echo "Starting memcached server..."
+	@memcached -d -l 0.0.0.0 -p $(MEMCACHED_PORT) -u root
+	@sleep 2
+	@echo "Verifying memcached is running..."
+	@if pgrep memcached > /dev/null; then \
+		echo "Memcached process found"; \
+		# netstat -nltp | grep $(MEMCACHED_PORT); \
+	else \
+		echo "Failed to start memcached"; \
+		exit 1; \
+	fi
+
+benchmark-memcached:
+	@${MAKE} start-memcached
+	@python python/kernmlops collect -v \
+		-c ${KERNMLOPS_CONFIG_FILE} \
+		--benchmark memcached
+
+load-memcached:
+	@echo "Loading memcached benchmark"
+	@${MAKE} start-memcached
+	@python $(YCSB_BENCHMARK_DIR)/YCSB/bin/ycsb load memcached -s \
+		-P "$(YCSB_BENCHMARK_DIR)/YCSB/workloads/workloada" \
+		-p recordcount=1000000 \
+        -p memcached.hosts=localhost:$(MEMCACHED_PORT)
 
 benchmark-stress-ng:
 	@python python/kernmlops collect -v \
@@ -179,7 +231,8 @@ docker:
 	@if [ ! -d "${KERNEL_DEV_MODULES_DIR}" ]; then \
 		echo "Kernel dev headers not installed: ${KERNEL_DEV_MODULES_DIR}" && exit 1; \
 	fi
-	@mkdir -p ${BENCHMARK_DIR}
+
+	@mkdir -p ${EXTERNAL_BENCHMARK_DIR}
 	@docker --context ${CONTAINER_CONTEXT} run --rm \
 	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR} \
 	-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR}:ro \
@@ -199,6 +252,13 @@ docker:
 	${IMAGE_NAME}:${VERSION} \
 	${CONTAINER_CMD} || true
 
+install-ycsb:
+	@echo "Installing ycsb..."
+	@su ${UNAME} -c "bash scripts/setup-benchmarks/install-ycsb.sh"
+
+setup-mongodb:
+	@echo "Setting up storage for mongodb benchmark..."
+	@source scripts/setup-benchmarks/setup-mongodb.sh
 
 # Miscellaneous commands
 clean-docker-images:

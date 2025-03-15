@@ -13,7 +13,11 @@ from kernmlops_benchmark.errors import (
     BenchmarkRunningError,
 )
 from kernmlops_benchmark.gap import GapBenchmark
+from kernmlops_benchmark.linnos import LinnosBenchmark
 from kernmlops_benchmark.linux_build import LinuxBuildBenchmark
+from kernmlops_benchmark.memcached import MemcachedBenchmark
+from kernmlops_benchmark.mongodb import MongoDbBenchmark
+from kernmlops_benchmark.redis import RedisBenchmark
 from kernmlops_benchmark.stress_ng import StressNgBenchmark
 from kernmlops_config import ConfigBase
 
@@ -21,6 +25,10 @@ benchmarks: Mapping[str, type[Benchmark]] = {
     FauxBenchmark.name(): FauxBenchmark,
     LinuxBuildBenchmark.name(): LinuxBuildBenchmark,
     GapBenchmark.name(): GapBenchmark,
+    MongoDbBenchmark.name(): MongoDbBenchmark,
+    LinnosBenchmark.name(): LinnosBenchmark,
+    RedisBenchmark.name(): RedisBenchmark,
+    MemcachedBenchmark.name(): MemcachedBenchmark,
     StressNgBenchmark.name(): StressNgBenchmark,
 }
 
@@ -49,8 +57,12 @@ __all__ = [
     "BenchmarkNotConfiguredError",
     "BenchmarkNotRunningError",
     "FauxBenchmark",
+    "LinnosBenchmark",
     "LinuxBuildBenchmark",
     "BenchbaseBenchmark",
     "GapBenchmark",
+    "RedisBenchmark",
+    "MongoDbBenchmark",
+    "MemcachedBenchmark",
     "benchmarks",
 ]

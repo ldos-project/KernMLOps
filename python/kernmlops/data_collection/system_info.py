@@ -43,6 +43,7 @@ class MachineHardwareCacheConfiguration:
 
 @dataclass(frozen=True)
 class DiskPartitions:
+    device_id: int # (major << 20) | minor
     name: str
     mount_point: str
     filesystem: str
