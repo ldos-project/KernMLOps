@@ -36,7 +36,6 @@ class GenericBenchmarkConfig(ConfigBase):
 
   def generic_setup(self):
     """This will set pertinent generic settings, should be called after specific benchmark setup."""
-    os.system("pkill -9 stress-ng")
     if not self.skip_clear_page_cache:
       subprocess.check_call(
           ["bash", "-c", "sync && echo 3 > /proc/sys/vm/drop_caches"],
@@ -63,10 +62,6 @@ class GenericBenchmarkConfig(ConfigBase):
             stdout=subprocess.DEVNULL,
         )
 
-    subprocess.check_call(
-        ["bash", "-c", "/KernMLOps/scripts/flush_cache"],
-        stdout=subprocess.DEVNULL,
-    )
 
 @dataclass(frozen=True)
 class FauxBenchmarkConfig(ConfigBase):
