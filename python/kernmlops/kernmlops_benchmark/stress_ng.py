@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass, field
 from typing import Literal, cast
-import time
-import psutil
 
+import psutil
 from data_schema import GraphEngine, demote
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
 from kernmlops_benchmark.errors import (
@@ -13,6 +15,7 @@ from kernmlops_benchmark.errors import (
     BenchmarkRunningError,
 )
 from kernmlops_config import ConfigBase
+
 
 @dataclass(frozen=True)
 class StressNgBenchmarkConfig(ConfigBase):
@@ -31,7 +34,7 @@ class StressNgBenchmark(Benchmark):
         return StressNgBenchmarkConfig()
 
     @classmethod
-    def from_config(cls, config: ConfigBase) -> "Benchmark":
+    def from_config(cls, config: ConfigBase) -> Benchmark:
         generic_config = cast(GenericBenchmarkConfig, getattr(config, "generic"))
         stress_ng_config = cast(StressNgBenchmarkConfig, getattr(config, cls.name()))
         return StressNgBenchmark(generic_config=generic_config, config=stress_ng_config)
@@ -43,9 +46,6 @@ class StressNgBenchmark(Benchmark):
         self.benchmark_path = shutil.which(self.config.stress_ng_benchmark)
         self.process: subprocess.Popen | None = None
 
-    def is_configured(self) -> bool:
-        return self.benchmark_path is not None
-
     def setup(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
@@ -55,11 +55,12 @@ class StressNgBenchmark(Benchmark):
         if self.process is not None:
             raise BenchmarkRunningError()
 
-        self.process = subprocess.Popen(
-            [self.benchmark_path] + self.config.args,
-            preexec_fn=demote(),
-            stdout=subprocess.DEVNULL,
-        )
+        if self.benchmark_path is not None and self.config.args is not None:
+            self.process = subprocess.Popen(
+                [self.benchmark_path] + self.config.args,
+                preexec_fn=demote(),
+                stdout=subprocess.DEVNULL,
+            )
 
     def poll(self) -> int | None:
         if self.process is None:
@@ -97,5 +98,5 @@ class StressNgBenchmark(Benchmark):
             "args": [" ".join(self.config.args)],
             "start_ts_us": [self.start_timestamp],
             "finish_ts_us": [self.finish_timestamp],
-            "return_code": [self.process.returncode],
+            "return_code": [self.process.returncode if self.process else -1],
         }

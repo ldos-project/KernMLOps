@@ -1,8 +1,8 @@
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, cast
-import time
 
 from data_schema import GraphEngine, demote
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
