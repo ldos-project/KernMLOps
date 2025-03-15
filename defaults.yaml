@@ -11,6 +11,22 @@ benchmark_config:
   gap:
     gap_benchmark: pr
     trials: 2
+  mongodb:
+    operation_count: 1000000
+    read_proportion: 0.25
+    update_proportion: 0.75
+  linnos:
+    use_root: false
+    shuffle_traces: false
+    type: baseline
+    devices:
+      - /dev/nvme0n1
+      - /dev/nvme1n1
+      - /dev/nvme2n1
+  memcached:
+    operation_count: 1000000
+    read_proportion: 0.99
+    update_proportion: 0.01
   stress_ng:
     stress_ng_benchmark: stress-ng
     args:
@@ -20,41 +36,19 @@ benchmark_config:
       - "1000000"
       - --timeout
       - 10s
-  stress_ng_benchmarks:
-    starting_idx: 1
-    num_exps: 1000
-    num_reps: 1
-  benchmark_group:
-    benchmarks:
-      - name: stress_ng_set
-        config:
-          stress_ng_benchmark: stress-ng-set
-          args:
-            - "1"
-      - name: stress_ng_set
-        config:
-          stress_ng_benchmark: stress-ng-set
-          args:
-            - "2"
-  benchbase:
-    benchbase_benchmark: benchbase/target/benchbase-postgres
-    args:
-      - java
-      - -jar
-      - benchbase.jar
-      - -b
-      - tpcc
-      - -c
-      - config/postgres/sample_tpcc_config.xml
-      - --create=true
-      - --load=true
-      - --execute=true
-
 collector_config:
   generic:
-    poll_rate: 0.005
+    poll_rate: 0.5
     output_dir: data
     output_graphs: false
     hooks:
+      - file_data
       - memory_usage
-      - disk_usage
+      - process_metadata
+      - quanta_runtime
+      - block_io
+      - perf
+      - collapse_huge_pages
+      - mm_rss_stat
+      - process_trace
+      - zswap_runtime
