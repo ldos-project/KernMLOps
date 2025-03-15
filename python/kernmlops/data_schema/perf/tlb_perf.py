@@ -308,7 +308,7 @@ class DTLBWalkDurationPerfTable(PerfCollectionTable):
         return "Walk Durations"
 
     @classmethod
-    def from_df(cls, table: pl.DataFrame) -> "DTLBWalkDurationPerfTable":
+    def from_df(cls, table: pl.DataFrame) -> DTLBWalkDurationPerfTable:
         return DTLBWalkDurationPerfTable(table=table.cast(cls.schema(), strict=True))  # pyright: ignore [reportArgumentType]
 
     def __init__(self, table: pl.DataFrame):

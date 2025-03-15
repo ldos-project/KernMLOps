@@ -127,7 +127,6 @@ def run_collect(
         print(f"Benchmark {benchmark.name()} failed with return code {return_code}")
         output_dir = generic_config.get_output_dir() / "failed"
 
-    print("BENCHMARK RUNINFO:", benchmark.start_timestamp, benchmark.finish_timestamp)
 
     collection_tables: list[data_schema.CollectionTable] = [
         data_schema.SystemInfoTable.from_df(
