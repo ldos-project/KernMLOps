@@ -59,7 +59,6 @@ __all__ = [
     "FauxBenchmark",
     "LinnosBenchmark",
     "LinuxBuildBenchmark",
-    "BenchbaseBenchmark",
     "GapBenchmark",
     "RedisBenchmark",
     "MongoDbBenchmark",

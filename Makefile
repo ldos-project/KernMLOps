@@ -163,16 +163,6 @@ benchmark-stress-ng:
 	-c ${KERNMLOPS_CONFIG_FILE} \
 	--benchmark stress_ng
 
-benchmark-group:
-	@python python/kernmlops collect -v \
-	-c ${KERNMLOPS_CONFIG_FILE} \
-	--benchmark benchmark_group
-
-stress-ng-benchmarks:
-	@python python/kernmlops collect -v \
-	-c ${KERNMLOPS_CONFIG_FILE} \
-	--benchmark stress_ng_benchmarks
-
 benchmark-linux-build:
 	@python python/kernmlops collect -v \
 	-c ${KERNMLOPS_CONFIG_FILE} \
