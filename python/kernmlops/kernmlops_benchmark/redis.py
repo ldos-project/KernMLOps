@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import signal
 import subprocess
 import time
@@ -168,6 +170,7 @@ class RedisBenchmark(Benchmark):
                 f"target={self.config.target}"
         ]
         self.process = subprocess.Popen(run_redis, preexec_fn=demote())
+        self.finish_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
 
     def poll(self) -> int | None:
         if self.process is None:
@@ -176,6 +179,7 @@ class RedisBenchmark(Benchmark):
         if ret is None:
             return ret
         self.end_server()
+        self.finish_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
         return ret
 
     def wait(self) -> None:
@@ -189,6 +193,7 @@ class RedisBenchmark(Benchmark):
             raise BenchmarkNotRunningError()
         self.process.terminate()
         self.end_server()
+        self.finish_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
 
     def end_server(self) -> None:
         if self.server is None:

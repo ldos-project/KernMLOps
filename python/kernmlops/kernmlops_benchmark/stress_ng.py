@@ -46,6 +46,9 @@ class StressNgBenchmark(Benchmark):
         self.benchmark_path = shutil.which(self.config.stress_ng_benchmark)
         self.process: subprocess.Popen | None = None
 
+    def is_configured(self) -> bool:
+        return self.config.args is not None
+
     def setup(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
@@ -55,7 +58,7 @@ class StressNgBenchmark(Benchmark):
         if self.process is not None:
             raise BenchmarkRunningError()
 
-        if self.benchmark_path is not None and self.config.args is not None:
+        if self.benchmark_path is not None:
             self.process = subprocess.Popen(
                 [self.benchmark_path] + self.config.args,
                 preexec_fn=demote(),

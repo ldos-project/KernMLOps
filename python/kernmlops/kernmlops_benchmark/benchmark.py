@@ -105,7 +105,13 @@ class Benchmark(Protocol):
     """Given a collection of data, plot important events for this benchmark."""
     ...
 
-  def to_run_info_dict(self) -> dict[str, list]: ...
+  def to_run_info_dict(self) -> dict[str, list]:
+      return {
+          "benchmark": [self.name()],
+          "start_ts_us": [self.start_timestamp],
+          "finish_ts_us": [self.finish_timestamp],
+      }
+
 
 class FauxBenchmark(Benchmark):
   """Benchmark that does nothing and allows users to collect the running system's data."""

@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import subprocess
+import time
 from dataclasses import dataclass, field
 from random import shuffle
 from typing import Literal, cast
@@ -41,7 +44,7 @@ class LinnosBenchmark(Benchmark):
         return LinnosBenchmarkConfig()
 
     @classmethod
-    def from_config(cls, config: ConfigBase) -> "Benchmark":
+    def from_config(cls, config: ConfigBase) -> Benchmark:
         generic_config = cast(GenericBenchmarkConfig, getattr(config, "generic"))
         linnos_config = cast(LinnosBenchmarkConfig, getattr(config, cls.name()))
         return LinnosBenchmark(generic_config=generic_config, config=linnos_config)
@@ -107,10 +110,12 @@ class LinnosBenchmark(Benchmark):
                 preexec_fn=demote(),
                 stdout=subprocess.DEVNULL,
             )
+        self.finish_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
 
     def poll(self) -> int | None:
         if self.process is None:
             raise BenchmarkNotRunningError()
+        self.finish_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
         return self.process.poll()
 
     def wait(self) -> None:
@@ -122,6 +127,7 @@ class LinnosBenchmark(Benchmark):
         if self.process is None:
             raise BenchmarkNotRunningError()
         self.process.terminate()
+        self.finish_timestamp = int(time.clock_gettime_ns(time.CLOCK_BOOTTIME) / 1000)
 
     @classmethod
     def plot_events(cls, graph_engine: GraphEngine) -> None:
