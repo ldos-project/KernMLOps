@@ -13,6 +13,7 @@ from data_schema.memory_usage import MemoryUsageTable
 from data_schema.quanta_runtime import QuantaQueuedTable, QuantaRuntimeTable
 from data_schema.schema import (
     UPTIME_TIMESTAMP,
+    BenchmarkRunInfoTable,
     CollectionData,
     CollectionGraph,
     CollectionTable,
@@ -24,6 +25,7 @@ from data_schema.schema import (
 
 table_types: list[type[CollectionTable]] = [
     SystemInfoTable,
+    BenchmarkRunInfoTable,
     QuantaRuntimeTable,
     QuantaQueuedTable,
     ProcessMetadataTable,

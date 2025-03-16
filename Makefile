@@ -158,6 +158,11 @@ load-memcached:
 		-p recordcount=1000000 \
         -p memcached.hosts=localhost:$(MEMCACHED_PORT)
 
+benchmark-stress-ng:
+	@python python/kernmlops collect -v \
+	-c ${KERNMLOPS_CONFIG_FILE} \
+	--benchmark stress_ng
+
 benchmark-linux-build:
 	@python python/kernmlops collect -v \
 	-c ${KERNMLOPS_CONFIG_FILE} \

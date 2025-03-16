@@ -18,6 +18,7 @@ from kernmlops_benchmark.linux_build import LinuxBuildBenchmark
 from kernmlops_benchmark.memcached import MemcachedBenchmark
 from kernmlops_benchmark.mongodb import MongoDbBenchmark
 from kernmlops_benchmark.redis import RedisBenchmark
+from kernmlops_benchmark.stress_ng import StressNgBenchmark
 from kernmlops_config import ConfigBase
 
 benchmarks: Mapping[str, type[Benchmark]] = {
@@ -27,7 +28,8 @@ benchmarks: Mapping[str, type[Benchmark]] = {
     MongoDbBenchmark.name(): MongoDbBenchmark,
     LinnosBenchmark.name(): LinnosBenchmark,
     RedisBenchmark.name(): RedisBenchmark,
-    MemcachedBenchmark.name(): MemcachedBenchmark
+    MemcachedBenchmark.name(): MemcachedBenchmark,
+    StressNgBenchmark.name(): StressNgBenchmark,
 }
 
 BenchmarkConfig = make_dataclass(

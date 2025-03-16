@@ -28,6 +28,15 @@ benchmark_config:
     operation_count: 1000000
     read_proportion: 0.99
     update_proportion: 0.01
+  stress_ng:
+    stress_ng_benchmark: stress-ng
+    args:
+      - --vm
+      - "1"
+      - --vm-ops
+      - "1000000"
+      - --timeout
+      - 10s
 collector_config:
   generic:
     poll_rate: 0.5
