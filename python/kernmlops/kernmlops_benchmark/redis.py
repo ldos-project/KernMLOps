@@ -17,6 +17,7 @@ from kernmlops_config import ConfigBase
 
 @dataclass(frozen=True)
 class RedisConfig(ConfigBase):
+    repeat: int = 1
     # Core operation parameters
     field_count: int = 256
     field_length: int = 16
@@ -105,79 +106,144 @@ class RedisBenchmark(Benchmark):
         if ping_redis.returncode != 0:
             raise BenchmarkError("Redis Failed To Start")
 
-        # Load Server
-        load_redis = [
-                "python",
-                f"{self.benchmark_dir}/YCSB/bin/ycsb",
-                "load",
-                "redis",
-                "-s",
-                "-P",
-                f"{self.benchmark_dir}/YCSB/workloads/workloada",
-                "-p",
-                "redis.host=127.0.0.1",
-                "-p",
-                "redis.port=6379",
-                "-p",
-                f"recordcount={self.config.record_count}",
-                "-p",
-                f"fieldcount={self.config.field_count}",
-                "-p",
-                f"fieldlength={self.config.field_length}",
-        ]
+        process: subprocess.Popen | None = None
+        for i in range(self.config.repeat):
+            if process is not None:
+                process.wait()
+                if process.returncode != 0:
+                    self.process = process
+                    raise BenchmarkError(f"Redis Run {(2 * i) - 1} Failed")
 
-        load_redis = subprocess.Popen(load_redis, preexec_fn=demote())
+            insert_start = i * self.config.record_count
+            # Load Server
+            load_redis = [
+                    "python",
+                    f"{self.benchmark_dir}/YCSB/bin/ycsb",
+                    "load",
+                    "redis",
+                    "-s",
+                    "-P",
+                    f"{self.benchmark_dir}/YCSB/workloads/workloada",
+                    "-p",
+                    "redis.host=127.0.0.1",
+                    "-p",
+                    "redis.port=6379",
+                    "-p",
+                    f"recordcount={self.config.record_count}",
+                    "-p",
+                    f"fieldcount={self.config.field_count}",
+                    "-p",
+                    f"fieldlength={self.config.field_length}",
+                    "-p",
+                    f"insertstart={insert_start}",
+            ]
 
-        load_redis.wait()
-        if load_redis.returncode != 0:
-            raise BenchmarkError("Loading Redis Failing")
+            load_redis = subprocess.Popen(load_redis, preexec_fn=demote())
 
-        subprocess.run(size_redis)
+            load_redis.wait()
+            if load_redis.returncode != 0:
+                raise BenchmarkError("Loading Redis Failing")
 
-        # Run Benchmark
-        run_redis = [
-                f"{self.benchmark_dir}/YCSB/bin/ycsb",
-                "run",
-                "redis",
-                "-s",
-                "-P",
-                f"{self.benchmark_dir}/YCSB/workloads/workloada",
-                "-p",
-                f"operationcount={self.config.operation_count}",
-                "-p",
-                f"recordcount={self.config.record_count}",
-                "-p",
-                "workload=site.ycsb.workloads.CoreWorkload",
-                "-p",
-                f"readproportion={self.config.read_proportion}",
-                "-p",
-                f"updateproportion={self.config.update_proportion}",
-                "-p",
-                f"scanproportion={self.config.scan_proportion}",
-                "-p",
-                f"insertproportion={self.config.insert_proportion}",
-                "-p",
-                f"readmodifywriteproportion={self.config.rmw_proportion}",
-                "-p",
-                f"scanproportion={self.config.scan_proportion}",
-                "-p",
-                f"deleteproportion={self.config.delete_proportion}",
-                "-p",
-                "redis.host=127.0.0.1",
-                "-p",
-                "redis.port=6379",
-                "-p",
-                f"requestdistribution={self.config.request_distribution}",
-                "-p",
-                f"threadcount={self.config.thread_count}",
-                "-p",
-                f"target={self.config.target}",
-                "-p",
-                f"fieldcount={self.config.field_count}",
-                "-p",
-                f"fieldlength={self.config.field_length}",
-        ]
-        self.process = subprocess.Popen(run_redis, preexec_fn=demote())
+            subprocess.run(size_redis)
+
+            record_count = (i + 1) * self.config.record_count
+
+            # Run Benchmark
+            run_redis = [
+                    f"{self.benchmark_dir}/YCSB/bin/ycsb",
+                    "run",
+                    "redis",
+                    "-s",
+                    "-P",
+                    f"{self.benchmark_dir}/YCSB/workloads/workloada",
+                    "-p",
+                    f"operationcount={self.config.operation_count}",
+                    "-p",
+                    f"recordcount={record_count}",
+                    "-p",
+                    "workload=site.ycsb.workloads.CoreWorkload",
+                    "-p",
+                    f"readproportion={self.config.read_proportion}",
+                    "-p",
+                    f"updateproportion={self.config.update_proportion}",
+                    "-p",
+                    f"scanproportion={self.config.scan_proportion}",
+                    "-p",
+                    f"insertproportion={self.config.insert_proportion}",
+                    "-p",
+                    f"readmodifywriteproportion={self.config.rmw_proportion}",
+                    "-p",
+                    f"scanproportion={self.config.scan_proportion}",
+                    "-p",
+                    f"deleteproportion={self.config.delete_proportion}",
+                    "-p",
+                    "redis.host=127.0.0.1",
+                    "-p",
+                    "redis.port=6379",
+                    "-p",
+                    f"requestdistribution={self.config.request_distribution}",
+                    "-p",
+                    f"threadcount={self.config.thread_count}",
+                    "-p",
+                    f"target={self.config.target}",
+                    "-p",
+                    f"insertstart={insert_start}",
+                    "-p",
+                    f"fieldcount={self.config.field_count}",
+                    "-p",
+                    f"fieldlength={self.config.field_length}",
+            ]
+            process = subprocess.Popen(run_redis, preexec_fn=demote())
+            if process is not None:
+                process.wait()
+                if process.returncode != 0:
+                    self.process = process
+                    raise BenchmarkError(f"Redis Run {2 * i} Failed")
+
+            run_redis = [
+                    f"{self.benchmark_dir}/YCSB/bin/ycsb",
+                    "run",
+                    "redis",
+                    "-s",
+                    "-P",
+                    f"{self.benchmark_dir}/YCSB/workloads/workloada",
+                    "-p",
+                    f"operationcount={self.config.operation_count}",
+                    "-p",
+                    f"recordcount={record_count}",
+                    "-p",
+                    "workload=site.ycsb.workloads.CoreWorkload",
+                    "-p",
+                    f"readproportion={self.config.read_proportion}",
+                    "-p",
+                    f"updateproportion={self.config.update_proportion}",
+                    "-p",
+                    f"scanproportion={self.config.scan_proportion}",
+                    "-p",
+                    f"insertproportion={self.config.insert_proportion}",
+                    "-p",
+                    f"readmodifywriteproportion={self.config.rmw_proportion}",
+                    "-p",
+                    f"scanproportion={self.config.scan_proportion}",
+                    "-p",
+                    f"deleteproportion={self.config.delete_proportion}",
+                    "-p",
+                    "redis.host=127.0.0.1",
+                    "-p",
+                    "redis.port=6379",
+                    "-p",
+                    f"requestdistribution={self.config.request_distribution}",
+                    "-p",
+                    f"threadcount={self.config.thread_count}",
+                    "-p",
+                    f"target={self.config.target}",
+                    "-p",
+                    f"fieldcount={self.config.field_count}",
+                    "-p",
+                    f"fieldlength={self.config.field_length}",
+            ]
+            process = subprocess.Popen(run_redis, preexec_fn=demote())
+        self.process = process
 
     def poll(self) -> int | None:
         if self.process is None:
