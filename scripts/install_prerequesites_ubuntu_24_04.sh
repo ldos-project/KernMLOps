@@ -15,3 +15,9 @@ echo \
 sudo apt-get update -y
 
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin pipenv
+
+sudo usermod -a -G docker ${USER}
+
+newgrp docker
+make docker-image
+CONTAINER_CMD="bash -lc 'make install-ycsb'" make docker
