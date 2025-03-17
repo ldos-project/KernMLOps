@@ -52,6 +52,7 @@ RUN apt update -y \
     netcat-openbsd \
     nmap \
     maven \
+    libgoogle-perftools-dev \
     && apt clean
 
 # Install MongoDB
@@ -65,10 +66,15 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Redis server
-RUN apt-get update -y \
-    && apt-get install -y redis-server \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN git clone https://github.com/redis/redis.git -b 7.4.2 --depth 1 \
+  && cd redis \
+  && make install -j`nproc` \
+  && make distclean \
+  && make MALLOC=tcmalloc -j`nproc` \
+  && mv src/redis-server /usr/bin/redis-server-tcmalloc \
+  && cd ../ \
+  && rm -rf redis
+
 
 # Install memcached
 RUN apt-get update && \
