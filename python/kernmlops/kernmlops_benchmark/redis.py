@@ -18,6 +18,7 @@ from kernmlops_config import ConfigBase
 @dataclass(frozen=True)
 class RedisConfig(ConfigBase):
     repeat: int = 1
+    tcmalloc: bool = False
     # Core operation parameters
     field_count: int = 256
     field_length: int = 16
@@ -35,12 +36,6 @@ class RedisConfig(ConfigBase):
     request_distribution: str = "uniform"
     thread_count: int = 1
     target: int = 10000
-
-kill_redis = [
-    "killall",
-    "-9",
-    "redis-server",
-]
 
 size_redis = [
     "redis-cli",
@@ -63,6 +58,9 @@ class RedisBenchmark(Benchmark):
         redis_config = cast(RedisConfig, getattr(config, cls.name()))
         return RedisBenchmark(generic_config=generic_config, config=redis_config)
 
+    def redis_server_name(self) -> str:
+        return "redis-server-tcmalloc" if self.config.tcmalloc else "redis-server"
+
     def __init__(self, *, generic_config: GenericBenchmarkConfig, config: RedisConfig):
         self.generic_config = generic_config
         self.config = config
@@ -78,10 +76,6 @@ class RedisBenchmark(Benchmark):
             raise BenchmarkRunningError()
         self.generic_config.generic_setup()
 
-        # Kill Redis
-        kill_proc = subprocess.Popen(kill_redis)
-        kill_proc.wait()
-
     def run(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError()
@@ -90,7 +84,7 @@ class RedisBenchmark(Benchmark):
 
         # start the redis server
         start_redis = [
-            "redis-server",
+            self.redis_server_name(),
             "./config/redis.conf",
         ]
         self.server = subprocess.Popen(start_redis)
@@ -277,8 +271,6 @@ class RedisBenchmark(Benchmark):
             self.server.terminate()
 
         self.server = None
-        kill_proc = subprocess.Popen(kill_redis)
-        kill_proc.wait()
 
     @classmethod
     def plot_events(cls, graph_engine: GraphEngine) -> None:
