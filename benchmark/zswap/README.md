@@ -3,12 +3,16 @@
 ## Motivation
 
 Zswap is an optional Linux kernel module for a compressed page cache for swapped
-out pages [1]. It has several tunable parameters that operators typically
-configure using empirically-motivated heuristics [2][3].
+out pages [[1]]. It has several tunable parameters that operators typically
+configure using empirically-motivated heuristics [[2],[3]].
 
 These benchmarks aim to determine which Zswap parameters have the most
 significant impact under realistic workloads in memory-constrained environments.
 This identification will provide initial targets for improvement.
+
+[1]: https://docs.kernel.org/admin-guide/mm/zswap.html
+[2]: https://www.cs.purdue.edu/homes/csjgwang/CloudNativeDB/WSCMemoryASPLOS19.pdf
+[3]: https://www.cs.cmu.edu/~dskarlat/publications/tmo_asplos22.pdf
 
 ## Files
 
@@ -25,12 +29,6 @@ zswap kprobes enabled to measure runtime of key zswap functions
 - Calculates time spent in zswap versus overall experiment time to quantify
 zswap impact
 - Generates figures using plotly
-
-## References
-
-[1]: https://docs.kernel.org/admin-guide/mm/zswap.html "Zswap - Linux kernel documentation"
-[2]: https://www.cs.purdue.edu/homes/csjgwang/CloudNativeDB/WSCMemoryASPLOS19.pdf "Software-Defined Far Memory in Warehouse-Scale Computers"
-[3]: https://www.cs.cmu.edu/~dskarlat/publications/tmo_asplos22.pdf "TMO: Transparent Memory Offloading in Datacenters"
 
 ## Deprecated Files
 
