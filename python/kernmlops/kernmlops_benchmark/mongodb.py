@@ -1,7 +1,5 @@
 import signal
-import signal
 import subprocess
-import time
 import time
 from dataclasses import dataclass
 from typing import cast
@@ -13,14 +11,8 @@ from kernmlops_benchmark.errors import (
     BenchmarkNotInCollectionData,
     BenchmarkNotRunningError,
     BenchmarkRunningError,
-    BenchmarkError,
-    BenchmarkNotInCollectionData,
-    BenchmarkNotRunningError,
-    BenchmarkRunningError,
 )
 from kernmlops_config import ConfigBase
-from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 
@@ -81,7 +73,6 @@ class MongoDbBenchmark(Benchmark):
         self.benchmark_dir = self.generic_config.get_benchmark_dir() / "ycsb"
         self.process: subprocess.Popen | None = None
         self.server: subprocess.Popen | None = None
-        self.server: subprocess.Popen | None = None
 
     def is_configured(self) -> bool:
         return self.benchmark_dir.is_dir()
@@ -100,14 +91,6 @@ class MongoDbBenchmark(Benchmark):
         except ConnectionFailure:
             return None
         subprocess.run(kill_mongod)
-
-    def ping_mongodb(self, url) -> None | MongoClient:
-        try:
-            client = MongoClient(self.config.url)
-            client.admin.command("ping")
-            return client
-        except ConnectionFailure:
-            return None
 
     def run(self) -> None:
         if self.process is not None:
@@ -281,16 +264,11 @@ class MongoDbBenchmark(Benchmark):
         if ret is not None:
             self.end_server()
         return ret
-        ret = self.process.poll()
-        if ret is not None:
-            self.end_server()
-        return ret
 
     def wait(self) -> None:
         if self.process is None:
             raise BenchmarkNotRunningError()
         self.process.wait()
-        self.end_server()
         self.end_server()
 
     def kill(self) -> None:
@@ -314,21 +292,6 @@ class MongoDbBenchmark(Benchmark):
         self.server = None
         subprocess.run(kill_mongod)
         self.end_server()
-
-    def end_server(self) -> None:
-        if self.server is None:
-            return
-        client = MongoClient(self.config.url)
-        for db in client.list_databases():
-            for name in db.keys():
-                print(name)
-                client.drop_database(name)
-
-        self.server.send_signal(signal.SIGINT)
-        if self.server.wait(10) is None:
-            self.server.terminate()
-        self.server = None
-        subprocess.run(kill_mongod)
 
     @classmethod
     def plot_events(cls, graph_engine: GraphEngine) -> None:
