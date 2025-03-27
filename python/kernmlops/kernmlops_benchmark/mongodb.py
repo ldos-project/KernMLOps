@@ -1,4 +1,3 @@
-import signal
 import subprocess
 import time
 from dataclasses import dataclass
@@ -270,15 +269,14 @@ class MongoDbBenchmark(Benchmark):
     def end_server(self) -> None:
         if self.server is None:
             return
+
+        # Drop databases
         client = MongoClient(self.config.url)
         for db in client.list_databases():
-            for name in db.keys():
-                print(name)
-                client.drop_database(name)
+            client.drop_database(db['name'])
 
-        self.server.send_signal(signal.SIGINT)
-        if self.server.wait(10) is None:
-            self.server.terminate()
+        # Terminate server
+        self.server.terminate()
         self.server = None
         subprocess.run(kill_mongod)
 
