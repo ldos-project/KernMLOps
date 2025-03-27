@@ -121,19 +121,6 @@ benchmark-mongodb:
 		-c ${KERNMLOPS_CONFIG_FILE} \
 		--benchmark mongodb
 
-load-mongodb:
-	@echo "Loading MongoDB benchmark"
-	@${MAKE} start-mongodb
-	@echo "Cleaning previous data..."
-	@source scripts/setup-benchmarks/cleanup-mongodb.sh
-	@echo "Cleanup completed"
-	@cd $(YCSB_BENCHMARK_DIR)/YCSB
-	@python $(YCSB_BENCHMARK_DIR)/YCSB/bin/ycsb load mongodb -s \
-		-P "$(YCSB_BENCHMARK_DIR)/YCSB/workloads/workloada" \
-		-p recordcount=1000000 \
-		-p mongodb.url=mongodb://localhost:27017/ycsb
-
-
 setup-redis:
 	@echo "Setting up storage for redis benchmark..."
 	@pwd

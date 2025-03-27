@@ -13,6 +13,7 @@ fi
 # Setup
 mkdir $YCSB_BENCHMARK_DIR
 
+# Clone
 pushd $YCSB_BENCHMARK_DIR
 git clone https://github.com/tewaro/YCSB.git -b tewaro/quickfix-coreworkload-deletes-master --depth=1
 

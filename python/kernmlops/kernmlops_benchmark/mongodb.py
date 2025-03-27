@@ -45,12 +45,6 @@ kill_mongod = [
     "mongod",
 ]
 
-size_mongodb = [
-    "mongo",
-    "--eval",
-    "db.usertable.count()",
-]
-
 class MongoDbBenchmark(Benchmark):
 
     @classmethod
@@ -152,9 +146,6 @@ class MongoDbBenchmark(Benchmark):
             load_mongod.wait()
             if load_mongod.returncode != 0:
                 raise BenchmarkError("Loading MongoDB Failed")
-
-            # Check database size
-            subprocess.run(size_mongodb)
 
             record_count = (i + 1) * self.config.record_count
 
