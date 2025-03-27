@@ -19,10 +19,9 @@ from pymongo.errors import ConnectionFailure
 
 @dataclass(frozen=True)
 class MongoDbConfig(ConfigBase):
-    repeat: int = 1  # Added repeat parameter with default value 1
-    # Core operation parameters
-    field_count: int = 256  # Added field_count parameter
-    field_length: int = 16  # Added field_length parameter
+    repeat: int = 1
+    field_count: int = 256
+    field_length: int = 16
     operation_count: int = 1000000
     record_count: int = 1000000
     read_proportion: float = 0.5
@@ -282,7 +281,6 @@ class MongoDbBenchmark(Benchmark):
             self.server.terminate()
         self.server = None
         subprocess.run(kill_mongod)
-        self.end_server()
 
     @classmethod
     def plot_events(cls, graph_engine: GraphEngine) -> None:
