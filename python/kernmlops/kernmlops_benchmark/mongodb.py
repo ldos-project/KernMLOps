@@ -278,7 +278,6 @@ class MongoDbBenchmark(Benchmark):
         # Terminate server
         self.server.terminate()
         self.server = None
-        subprocess.run(kill_mongod)
 
     @classmethod
     def plot_events(cls, graph_engine: GraphEngine) -> None:
