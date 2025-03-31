@@ -238,7 +238,7 @@ docker:
 
 install-ycsb:
 	@echo "Installing ycsb..."
-	@bash scripts/setup-benchmarks/install-ycsb.sh
+	@su ${UNAME} -c "bash scripts/setup-benchmarks/install-ycsb.sh"
 
 setup-mongodb:
 	@echo "Setting up storage for mongodb benchmark..."
