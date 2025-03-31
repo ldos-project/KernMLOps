@@ -1,3 +1,4 @@
+import signal
 import subprocess
 import time
 from dataclasses import dataclass
@@ -263,7 +264,9 @@ class MongoDbBenchmark(Benchmark):
     def kill(self) -> None:
         if self.process is None:
             raise BenchmarkNotRunningError()
-        self.process.terminate()
+        self.server.send_signal(signal.SIGINT)
+        if self.server.wait(10) is None:
+            self.server.terminate()
         self.end_server()
 
     def end_server(self) -> None:
