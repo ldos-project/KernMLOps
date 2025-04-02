@@ -84,6 +84,15 @@ RUN apt-get update && \
 
 COPY scripts/settings.xml /etc/maven/settings.xml
 
+# Install PIN tool
+RUN mkdir -p /opt/pin && \
+    cd /opt/pin && \
+    curl -fsSL https://software.intel.com/sites/landingpage/pintool/downloads/pin-external-3.31-98869-gfa6f126a8-gcc-linux.tar.gz | tar xz && \
+    mv pin-external-3.31-98869-gfa6f126a8-gcc-linux/* . && \
+    cd source/tools/ManualExamples && \
+    make all TARGET=intel64 -j $(nproc) && \
+    ln -s /opt/pin/pin /usr/local/bin/pin
+
 # Base development image
 FROM ${BUILD_IMAGE} AS dev
 

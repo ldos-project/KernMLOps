@@ -84,6 +84,10 @@ class RedisBenchmark(Benchmark):
 
         # start the redis server
         start_redis = [
+            "pin",
+            "-t",
+            "/opt/pin/source/tools/ManualExamples/obj-intel64/pinatrace.so",
+            "--",
             self.redis_server_name(),
             "./config/redis.conf",
         ]
@@ -92,7 +96,7 @@ class RedisBenchmark(Benchmark):
         # Wait for redis
         ping_redis = subprocess.run(["redis-cli", "ping"])
         i = 0
-        while i < 10 and ping_redis.returncode != 0:
+        while i < 30 and ping_redis.returncode != 0:
             time.sleep(1)
             ping_redis = subprocess.run(["redis-cli", "ping"])
             i+=1
@@ -122,6 +126,8 @@ class RedisBenchmark(Benchmark):
                     "redis.host=127.0.0.1",
                     "-p",
                     "redis.port=6379",
+                    "-p",
+                    "redis.timeout=60000",
                     "-p",
                     f"recordcount={self.config.record_count}",
                     "-p",
@@ -175,6 +181,8 @@ class RedisBenchmark(Benchmark):
                     "-p",
                     "redis.port=6379",
                     "-p",
+                    "redis.timeout=60000",
+                    "-p",
                     f"requestdistribution={self.config.request_distribution}",
                     "-p",
                     f"threadcount={self.config.thread_count}",
@@ -225,6 +233,8 @@ class RedisBenchmark(Benchmark):
                     "redis.host=127.0.0.1",
                     "-p",
                     "redis.port=6379",
+                    "-p",
+                    "redis.timeout=60000",
                     "-p",
                     f"requestdistribution={self.config.request_distribution}",
                     "-p",
