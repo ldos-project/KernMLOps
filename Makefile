@@ -52,7 +52,7 @@ CONTAINER_HOSTNAME ?= $(shell hostname)-docker
 CONTAINER_CONTEXT ?= default
 CONTAINER_CPUSET ?=
 CONTAINER_CMD ?= bash -l
-INTERACTIVE ?= i
+INTERACTIVE ?= it
 
 # Benchmarking variables
 COLLECTION_BENCHMARK ?= faux
@@ -232,7 +232,7 @@ docker:
 	--pid=host \
 	--privileged \
 	--hostname=${CONTAINER_HOSTNAME} \
-	--workdir=${CONTAINER_WORKDIR} ${CONTAINER_OPTS} -${INTERACTIVE}t \
+	--workdir=${CONTAINER_WORKDIR} ${CONTAINER_OPTS} -${INTERACTIVE} \
 	${IMAGE_NAME}:${VERSION} \
 	${CONTAINER_CMD} || true
 

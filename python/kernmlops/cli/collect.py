@@ -145,3 +145,4 @@ def run_collect(
     collection_data = data_schema.CollectionData.from_tables(collection_tables)
     if generic_config.output_graphs:
         collection_data.graph(out_dir=generic_config.get_output_dir() / "graphs")
+    print(f"{collection_id}")
