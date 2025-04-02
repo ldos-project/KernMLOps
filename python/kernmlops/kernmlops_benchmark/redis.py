@@ -13,6 +13,7 @@ from kernmlops_benchmark.errors import (
     BenchmarkRunningError,
 )
 from kernmlops_config import ConfigBase
+from pytimeparse.timeparse import timeparse
 
 
 @dataclass(frozen=True)
@@ -36,6 +37,7 @@ class RedisConfig(ConfigBase):
     request_distribution: str = "uniform"
     thread_count: int = 1
     target: int = 10000
+    sleep: str | None = None
 
 size_redis = [
     "redis-cli",
@@ -100,10 +102,13 @@ class RedisBenchmark(Benchmark):
         if ping_redis.returncode != 0:
             raise BenchmarkError("Redis Failed To Start")
 
+        space : int | float | None = timeparse(self.config.sleep)
         process: subprocess.Popen | None = None
         for i in range(self.config.repeat):
             if process is not None:
                 process.wait()
+                if space is not None :
+                    time.sleep(space)
                 if process.returncode != 0:
                     self.process = process
                     raise BenchmarkError(f"Redis Run {(2 * i) - 1} Failed")
@@ -190,9 +195,12 @@ class RedisBenchmark(Benchmark):
             process = subprocess.Popen(run_redis, preexec_fn=demote())
             if process is not None:
                 process.wait()
+                if space is not None :
+                    time.sleep(space)
                 if process.returncode != 0:
                     self.process = process
                     raise BenchmarkError(f"Redis Run {2 * i} Failed")
+
 
             run_redis = [
                     f"{self.benchmark_dir}/YCSB/bin/ycsb",
