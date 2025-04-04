@@ -261,16 +261,16 @@ class MongoDbBenchmark(Benchmark):
         self.process.wait()
         self.end_server()
 
-def kill(self) -> None:
-    if self.process is None:
-        raise BenchmarkNotRunningError()
+    def kill(self) -> None:
+        if self.process is None:
+            raise BenchmarkNotRunningError()
 
-    if self.server is not None:
-        self.server.send_signal(signal.SIGINT)
-        if self.server.wait(10) is None:
-            self.server.terminate()
+        if self.server is not None:
+            self.server.send_signal(signal.SIGINT)
+            if self.server.wait(10) is None:
+                self.server.terminate()
 
-    self.end_server()
+        self.end_server()
 
     def end_server(self) -> None:
         if self.server is None:
