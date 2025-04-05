@@ -1,314 +1,370 @@
 import os
+import re
 
-import plotly.express as px
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import polars as pl
+import seaborn as sns
 import ultraimport
 
-# Import data import module
 di = ultraimport('__dir__/../../python/kernmlops/data_import/__init__.py')
 
-# Base directory containing all experiments
 BASE_DIR = 'data/curated/'
+IMAGES_DIR = "images"
+os.makedirs(IMAGES_DIR, exist_ok=True)
+sns.set_theme(style="whitegrid")
+plt.rcParams['font.family'] = 'Arial'
+plt.rcParams['font.size'] = 12
 
-# Define experiment renaming scheme
+COLORS = {
+    "main": "#42A5F5",
+    "light": "#90CAF9",
+    "dark": "#1976D2",
+    "accent": "#64B5F6"
+}
+
 experiment_names = {
-    "exp_a": "default",
-    "exp_c": "accept_thresh",
-    "exp_d": "max_pool_pct",
-    "exp_e": "compressor",
-    "exp_f": "zpool",
-    "exp_g": "exclusive_loads ON",
-    "exp_h": "non_same_filled_pages OFF",
-    "exp_i": "same_filled_pages OFF",
-    "exp_j": "shrinker OFF"
+    "zswap_off": "Zswap OFF",
+    "zswap_off_mem": "Zswap OFF + swapping",
+    "zswap_on": "Zswap ON (default)",
+    "zswap_accept_thresh": "% Accept Threshold",
+    "zswap_max_pool_pct": "Max Pool Size",
+    "zswap_compressor": "Compressor Type",
+    "zswap_zpool": "Zpool Type",
+    "zswap_exclusive_loads_on": "Invalidate Loads OFF",
+    "zswap_non_same_filled_pages_off": "Save Same-value Pages ONLY",
+    "zswap_same_filled_pages_off": "Save Same-value Pages OFF",
+    "zswap_shrinker_off": "Shrinker OFF",
+    "zswap_mem_tuning": "Tune Memory Size"
 }
 
-# Parameter setting display names for better readability
 param_display_names = {
-    # accept_thresh (exp_c)
-    "thresh_40": "40% Threshold",
-    "thresh_60": "60% Threshold",
-    "thresh_70": "70% Threshold",
-
-    # max_pool_pct (exp_d)
-    "pool_10": "10% Pool",
-    "pool_30": "30% Pool",
-    "pool_40": "40% Pool",
-    "pool_50": "50% Pool",
-    "pool_75": "75% Pool",
-
-    # compressor (exp_e)
-    "842": "842 Compressor",
-    "deflate": "Deflate Compressor",
-    "lz4": "LZ4 Compressor",
-    "lz4hc": "LZ4HC Compressor",
+    # accept_thresh
+    "thresh_40": "40% Threshold", "thresh_60": "60% Threshold",
+    "thresh_70": "70% Threshold", "thresh_80": "80% Threshold",
+    # max_pool_pct
+    "pool_10": "10% Pool", "pool_30": "30% Pool", "pool_40": "40% Pool",
+    "pool_50": "50% Pool", "pool_75": "75% Pool",
+    # compressor
+    "842": "842 Compressor", "deflate": "Deflate Compressor",
+    "lz4": "LZ4 Compressor", "lz4hc": "LZ4HC Compressor",
     "zstd": "ZSTD Compressor",
-
-    # zpool (exp_f)
-    "z3fold": "Z3fold Pool",
-    "zsmalloc": "ZSmalloc Pool"
+    # zpool
+    "z3fold": "Z3fold Pool", "zsmalloc": "ZSmalloc Pool",
+    # memory tuning configs
+    "mem_4GB_swap_8GB": "4GB RAM, 8GB Swap",
+    "mem_6GB_swap_8GB": "6GB RAM, 8GB Swap",
+    "mem_8GB_swap_8GB": "8GB RAM, 8GB Swap"
 }
 
-# Function to extract parameter settings from run directory names
+# Parameter extraction patterns
+param_patterns = {
+    "zswap_accept_thresh": [
+        ("thresh_40", r"thresh_40"), ("thresh_60", r"thresh_60"),
+        ("thresh_70", r"thresh_70"), ("thresh_80", r"thresh_80")
+    ],
+    "zswap_max_pool_pct": [
+        ("pool_10", r"pool_10"), ("pool_30", r"pool_30"),
+        ("pool_40", r"pool_40"), ("pool_50", r"pool_50"),
+        ("pool_75", r"pool_75")
+    ],
+    "zswap_compressor": [
+        ("842", r"842"), ("deflate", r"deflate"),
+        ("lz4hc", r"lz4hc"), ("lz4", r"lz4(?!hc)"),
+        ("zstd", r"zstd")
+    ],
+    "zswap_zpool": [
+        ("z3fold", r"z3fold"), ("zsmalloc", r"zsmalloc")
+    ],
+    "zswap_mem_tuning": None
+}
+
 def extract_parameter_setting(exp_id, run_dir):
-    if exp_id == "exp_c":  # accept_thresh
-        if "thresh_40" in run_dir:
-            return "thresh_40"
-        elif "thresh_60" in run_dir:
-            return "thresh_60"
-        elif "thresh_70" in run_dir:
-            return "thresh_70"
-        else:
-            return "unknown_thresh"
-    elif exp_id == "exp_d":  # max_pool_pct
-        if "pool_10" in run_dir:
-            return "pool_10"
-        elif "pool_30" in run_dir:
-            return "pool_30"
-        elif "pool_40" in run_dir:
-            return "pool_40"
-        elif "pool_50" in run_dir:
-            return "pool_50"
-        elif "pool_75" in run_dir:
-            return "pool_75"
-        else:
-            return "unknown_pool"
-    elif exp_id == "exp_e":  # compressor
-        if "842" in run_dir:
-            return "842"
-        elif "deflate" in run_dir:
-            return "deflate"
-        elif "lz4hc" in run_dir:
-            return "lz4hc"
-        elif "lz4" in run_dir and "hc" not in run_dir:
-            return "lz4"
-        elif "zstd" in run_dir:
-            return "zstd"
-        else:
-            return "unknown_compressor"
-    elif exp_id == "exp_f":  # zpool
-        if "z3fold" in run_dir:
-            return "z3fold"
-        elif "zsmalloc" in run_dir:
-            return "zsmalloc"
-        else:
-            return "unknown_zpool"
+    if exp_id == "zswap_mem_tuning":
+        # Special case for memory tuning
+        match = re.search(r'zswap_conf_\d+_mem_(\d+)_swap_(\d+)', run_dir)
+        if match:
+            mem_gb, swap_gb = match.group(1), match.group(2)
+            param_key = f"mem_{mem_gb}GB_swap_{swap_gb}GB"
+            if param_key not in param_display_names:
+                param_display_names[param_key] = f"{mem_gb}GB RAM, {swap_gb}GB Swap"
+            return param_key
+        return "unknown_mem_config"
+
+    # For other parameter types, use the patterns
+    if exp_id in param_patterns and param_patterns[exp_id]:
+        for param_id, pattern in param_patterns[exp_id]:
+            if re.search(pattern, run_dir):
+                return param_id
+        return f"unknown_{exp_id.replace('zswap_', '')}"
+    return None
+
+def configure_plot_quality(fig, ax):
+    fig.set_facecolor('white')
+    ax.set_facecolor('white')
+    ax.grid(True, linestyle='--', alpha=0.7)
+    for spine in ['top', 'right', 'bottom', 'left']:
+        ax.spines[spine].set_visible(True)
+        ax.spines[spine].set_color('black')
+    ax.tick_params(direction='out', length=4, width=1, colors='black')
+    plt.tight_layout()
+    return fig, ax
+
+def add_bar_labels(ax):
+    for p in ax.patches:
+        ax.annotate(
+            f"{p.get_height():.2f}",
+            (p.get_x() + p.get_width() / 2., p.get_height()),
+            ha='center', va='bottom', fontsize=10
+        )
+
+def create_bar_chart(df, x_col, y_col, title, filename, color=COLORS["main"]):
+    """Create and save a bar chart with consistent styling."""
+    plt.figure(figsize=(12, 8))
+    # Use the experiment_order column for ordering if it exists
+    if 'experiment_order' in df.columns and x_col == 'experiment':
+        order = df.sort_values('experiment_order')[x_col].tolist()
+        ax = sns.barplot(data=df, x=x_col, y=y_col, color=color, order=order)
     else:
-        return None  # Not a parameterized experiment
+        ax = sns.barplot(data=df, x=x_col, y=y_col, color=color)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+    plt.title(title, fontsize=16)
+    plt.xlabel(x_col.replace('_', ' ').title(), fontsize=14)
+    plt.ylabel(y_col.replace('_', ' ').title(), fontsize=14)
+    add_bar_labels(ax)
+    fig = plt.gcf()
+    configure_plot_quality(fig, ax)
+    plt.savefig(f"{IMAGES_DIR}/{filename}.png", dpi=300, bbox_inches='tight')
+    plt.close()
 
-# Initialize dictionaries to store parameter-specific data
-param_specific_data = {
-    "exp_c": {},  # accept_thresh
-    "exp_d": {},  # max_pool_pct
-    "exp_e": {},  # compressor
-    "exp_f": {}   # zpool
-}
+def create_grouped_bar_chart(df, x_col, y_cols, names, title, filename):
+    """Create and save a grouped bar chart comparing two metrics."""
+    # Determine the order of x values based on experiment_order if applicable
+    if 'experiment_order' in df.columns and x_col == 'experiment':
+        df_sorted = df.sort_values('experiment_order')
+        x_values = df_sorted[x_col].tolist()
+        # Also need to sort the y values in the same order
+        y_values1 = df_sorted[y_cols[0]].tolist()
+        y_values2 = df_sorted[y_cols[1]].tolist()
+    else:
+        x_values = df[x_col].tolist()
+        y_values1 = df[y_cols[0]].tolist()
+        y_values2 = df[y_cols[1]].tolist()
 
-# Initialize a list to store experiment summaries
-experiment_summaries = []
+    x = np.arange(len(x_values))
+    width = 0.35
 
-# For each of the plotting functions, improve the visual quality
-def configure_plot_quality(fig):
-    """Configure plot to have higher quality and better readability"""
-    fig.update_layout(
-        font=dict(
-            family="Arial, sans-serif",
-            size=14,
-        ),
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        margin=dict(l=80, r=80, t=100, b=80),
-        legend=dict(
-            font=dict(size=12),
-            borderwidth=1
-        ),
-    )
-    fig.update_xaxes(
-        showgrid=True,
-        gridwidth=1,
-        gridcolor='lightgray',
-        showline=True,
-        linewidth=1,
-        linecolor='black',
-        mirror=True
-    )
-    fig.update_yaxes(
-        showgrid=True,
-        gridwidth=1,
-        gridcolor='lightgray',
-        showline=True,
-        linewidth=1,
-        linecolor='black',
-        mirror=True
-    )
-    return fig
-for exp_dir in sorted([d for d in os.listdir(BASE_DIR) if os.path.isdir(os.path.join(BASE_DIR, d))]):
-    exp_path = os.path.join(BASE_DIR, exp_dir)
+    fig, ax = plt.subplots(figsize=(14, 9))
 
-    # Get readable name for the experiment
-    exp_readable_name = experiment_names.get(exp_dir, exp_dir)
-    print(f"\nProcessing experiment: {exp_dir} ({exp_readable_name})")
+    # Create the bars
+    rects1 = ax.bar(x - width/2, y_values1, width, label=names[0], color='lightblue')
+    rects2 = ax.bar(x + width/2, y_values2, width, label=names[1], color='darkblue')
 
-    # Lists to store run metrics for averaging
-    collection_times = []
-    zswap_durations = []
-    runs_processed = 0
+    # Add labels and title
+    ax.set_xlabel(x_col.replace('_', ' ').title(), fontsize=14)
+    ax.set_ylabel("Duration (seconds)", fontsize=14)
+    ax.set_title(title, fontsize=16)
+    ax.set_xticks(x)
+    ax.set_xticklabels(x_values, rotation=45, ha='right')
+    ax.legend()
 
-    # For parameterized experiments, track per-parameter data
-    is_parameterized = exp_dir in ["exp_c", "exp_d", "exp_e", "exp_f"]
+    # Add value labels on bars
+    def add_labels(rects):
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate(f'{height:.2f}',
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom')
 
-    # Loop through all run directories (run_1, run_2, etc.)
-    for run_dir in sorted([d for d in os.listdir(exp_path) if os.path.isdir(os.path.join(exp_path, d))]):
-        run_path = os.path.join(exp_path, run_dir)
-        print(f"  Processing run: {run_dir}")
+    add_labels(rects1)
+    add_labels(rects2)
 
-        # Extract parameter setting if this is a parameterized experiment
-        param_setting = None
-        if is_parameterized:
-            param_setting = extract_parameter_setting(exp_dir, run_dir)
-            if param_setting not in param_specific_data[exp_dir]:
-                param_specific_data[exp_dir][param_setting] = {
-                    "collection_times": [],
-                    "zswap_durations": [],
-                    "runs_processed": 0
-                }
+    # Apply styling and save
+    configure_plot_quality(fig, ax)
+    plt.savefig(f"{IMAGES_DIR}/{filename}.png", dpi=300, bbox_inches='tight')
+    plt.close()
 
-        try:
-            # Read parquet files for this specific run
-            run_data = di.read_parquet_dir(run_path)
+def process_run_data(run_path, exp_id=None, param_setting=None):
+    """Process a single run's data and return metrics."""
+    try:
+        run_data = di.read_parquet_dir(run_path)
+        results = {"collection_time": None, "zswap_duration": 0.0}
 
-            # Get experiment runtime from system_info
-            if 'system_info' in run_data:
-                system_info = run_data['system_info']
-                collection_time_sec = system_info.select(pl.col("collection_time_sec")).item()
-                collection_times.append(collection_time_sec)
-                print(f"    Collection time (s): {collection_time_sec}")
+        # Get collection time from system_info
+        if 'system_info' in run_data:
+            results["collection_time"] = run_data['system_info'].select(
+                pl.col("collection_time_sec")).item()
+        else:
+            return None
 
-                # Also add to parameter-specific data if applicable
-                if is_parameterized and param_setting:
-                    param_specific_data[exp_dir][param_setting]["collection_times"].append(collection_time_sec)
-            else:
-                print(f"    Warning: No system_info found in {run_path}")
-                continue
-
-            # Get zswap runtime data
-            if 'zswap_runtime' in run_data:
-                zswap_data = run_data['zswap_runtime']
-
-                # Calculate durations
+        # Get zswap duration if available
+        if 'zswap_runtime' in run_data:
+            zswap_data = run_data['zswap_runtime']
+            if "start_ts" in zswap_data.columns and "end_ts" in zswap_data.columns:
                 zswap_with_duration = zswap_data.with_columns(
                     (pl.col("end_ts") - pl.col("start_ts")).alias("duration_ns")
                 )
                 total_duration_ns = zswap_with_duration.select(pl.sum("duration_ns")).item()
-                total_duration_s = total_duration_ns / 1e9
-                zswap_durations.append(total_duration_s)
+                results["zswap_duration"] = total_duration_ns / 1e9
 
-                # Also add to parameter-specific data if applicable
-                if is_parameterized and param_setting:
-                    param_specific_data[exp_dir][param_setting]["zswap_durations"].append(total_duration_s)
-                    param_specific_data[exp_dir][param_setting]["runs_processed"] += 1
+        return results
+    except Exception as e:
+        print(f"Error processing {run_path}: {e}")
+        return None
 
-                print(f"    Total function calls: {zswap_data.height}")
-                print(f"    Total zswap duration (s): {total_duration_s}")
+def analyze_experiments():
+    """Main function to analyze all experiments and generate plots."""
+    # Initialize data structures
+    experiment_summaries = []
+    param_specific_data = {exp_id: {} for exp_id in [
+        "zswap_accept_thresh", "zswap_max_pool_pct",
+        "zswap_compressor", "zswap_zpool", "zswap_mem_tuning"
+    ]}
 
-                runs_processed += 1
-            else:
-                print(f"    Warning: No zswap_runtime found in {run_path}")
-                continue
-
-        except Exception as e:
-            print(f"    Error processing {run_path}: {e}")
+    # Process all experiments
+    for exp_dir in sorted([d for d in os.listdir(BASE_DIR) if os.path.isdir(os.path.join(BASE_DIR, d))]):
+        # Skip directories that don't match with experiment_names
+        if exp_dir not in experiment_names:
+            print(f"\nSkipping experiment: {exp_dir} - Not in experiment_names dictionary")
             continue
 
-    # Calculate averages for this experiment
-    if runs_processed > 0:
-        avg_collection_time = sum(collection_times) / len(collection_times)
-        avg_zswap_duration = sum(zswap_durations) / len(zswap_durations)
-        avg_zswap_percentage = (avg_zswap_duration / avg_collection_time) * 100 if avg_collection_time > 0 else 0
+        exp_path = os.path.join(BASE_DIR, exp_dir)
+        exp_readable_name = experiment_names.get(exp_dir, exp_dir)
+        print(f"\nProcessing experiment: {exp_dir} ({exp_readable_name})")
 
-        # Add summary for this experiment
-        experiment_summaries.append({
-            "experiment_id": exp_dir,
-            "experiment": exp_readable_name,
-            "runs_processed": runs_processed,
-            "avg_runtime_s": avg_collection_time,
-            "avg_zswap_duration_s": avg_zswap_duration,
-            "avg_zswap_percentage": avg_zswap_percentage
-        })
+        # Data collection
+        collection_times = []
+        zswap_durations = []
+        runs_processed = 0
+        is_parameterized = exp_dir in param_specific_data
 
-        print(f"  Summary for {exp_dir} ({exp_readable_name}): Avg Runtime: {avg_collection_time:.2f}s, Avg Zswap: {avg_zswap_duration:.2f}s ({avg_zswap_percentage:.2f}%)")
-    else:
-        print(f"  No valid runs processed for {exp_dir}")
+        # Process each run in this experiment
+        for run_dir in sorted([d for d in os.listdir(exp_path) if os.path.isdir(os.path.join(exp_path, d))]):
+            run_path = os.path.join(exp_path, run_dir)
+            print(f"  Processing run: {run_dir}")
 
-# Create a summary dataframe with one row per experiment
-if experiment_summaries:
-    summary_df = pl.DataFrame(experiment_summaries)
+            # Extract parameter setting if applicable
+            param_setting = None
+            if is_parameterized:
+                param_setting = extract_parameter_setting(exp_dir, run_dir)
+                print(f"    Parameter setting: {param_setting}")
+                if param_setting and param_setting not in param_specific_data[exp_dir]:
+                    param_specific_data[exp_dir][param_setting] = {
+                        "collection_times": [], "zswap_durations": [], "runs_processed": 0
+                    }
+
+            # Process this run's data
+            run_results = process_run_data(run_path, exp_dir, param_setting)
+            if not run_results:
+                continue
+
+            # Store results for experiment summary
+            collection_times.append(run_results["collection_time"])
+            zswap_durations.append(run_results["zswap_duration"])
+            runs_processed += 1
+
+            # Store results for parameter-specific analysis
+            if is_parameterized and param_setting:
+                data = param_specific_data[exp_dir][param_setting]
+                data["collection_times"].append(run_results["collection_time"])
+                data["zswap_durations"].append(run_results["zswap_duration"])
+                data["runs_processed"] += 1
+
+        # Calculate experiment averages
+        if runs_processed > 0:
+            avg_collection_time = sum(collection_times) / len(collection_times)
+            avg_zswap_duration = sum(zswap_durations) / len(zswap_durations) if zswap_durations else 0.0
+            avg_zswap_percentage = (avg_zswap_duration / avg_collection_time) * 100 if avg_collection_time > 0 else 0
+
+            # Add summary for this experiment
+            experiment_summaries.append({
+                "experiment_id": exp_dir,
+                "experiment": exp_readable_name,
+                "runs_processed": runs_processed,
+                "avg_runtime_s": avg_collection_time,
+                "avg_zswap_duration_s": avg_zswap_duration,
+                "avg_zswap_percentage": avg_zswap_percentage
+            })
+
+            print(f"  Summary: Avg Runtime: {avg_collection_time:.2f}s, "
+                  f"Avg Zswap: {avg_zswap_duration:.2f}s ({avg_zswap_percentage:.2f}%)")
+        else:
+            print(f"  No valid runs processed for {exp_dir}")
+
+    return experiment_summaries, param_specific_data
+
+def generate_plots(experiment_summaries, param_specific_data):
+    """Generate all plots based on the experiment and parameter summaries."""
+    if not experiment_summaries:
+        print("No experiment data was processed successfully")
+        return
+
+    # Create summary dataframe
+    summary_df = pd.DataFrame(experiment_summaries)
     print("\nExperiment Summary DataFrame:")
     print(summary_df)
 
-    # Filter out exp_b and exp_h from plotting
-    plot_df = summary_df.filter(pl.col("experiment_id") != "exp_b").filter(pl.col("experiment_id") != "exp_h")
-
-    # Create bar chart comparing experiments
-    fig1 = px.bar(
-        plot_df.to_pandas(),
-        x="experiment",
-        y="avg_runtime_s",
-        title="Average Kernel Benchmark Runtime by Zswap Configuration",
-        labels={
-            "avg_runtime_s": "Average Runtime (seconds)",
-            "experiment": "Zswap Configuration"
-        },
-        text_auto='.2f',
-        height=600,
-        width=900
+    # Create a category type based on the order in experiment_names
+    # This will ensure the plots are ordered according to the order in experiment_names
+    experiment_order = list(experiment_names.keys())
+    summary_df['experiment_order'] = pd.Categorical(
+        summary_df['experiment_id'],
+        categories=experiment_order,
+        ordered=True
     )
-    fig1.update_layout(xaxis_tickangle=-45)
 
-    # Create bar chart for zswap duration
-    fig2 = px.bar(
-        plot_df.to_pandas(),
-        x="experiment",
-        y="avg_zswap_duration_s",
-        title="Average Time Spent in Zswap Functions by Configuration",
-        labels={
-            "avg_zswap_duration_s": "Average Zswap Function Duration (seconds)",
-            "experiment": "Zswap Configuration"
-        },
-        text_auto='.2f',
-        height=600,
-        width=900
+    # Sort by this order
+    summary_df = summary_df.sort_values('experiment_order')
+
+    # Filter out specific experiments
+    plot_df = summary_df[~summary_df["experiment_id"].isin(["exp_b", "exp_h"])]
+
+    # Create overall experiment charts
+    create_bar_chart(
+        plot_df, "experiment", "avg_runtime_s",
+        "Average Kernel Benchmark Runtime by Zswap Configuration",
+        "zswap_config_runtime_comparison", COLORS["main"]
     )
-    fig2.update_layout(xaxis_tickangle=-45)
 
-    # Create a percentage chart
-    fig3 = px.bar(
-        plot_df.to_pandas(),
-        x="experiment",
-        y="avg_zswap_percentage",
-        title="Percentage of Runtime Spent in Zswap Functions by Configuration",
-        labels={
-            "avg_zswap_percentage": "Zswap Function Time (%)",
-            "experiment": "Zswap Configuration"
-        },
-        text_auto='.2f',
-        height=600,
-        width=900
+    create_bar_chart(
+        plot_df, "experiment", "avg_runtime_s",
+        "Kernel Benchmark Runtime by Zswap Configuration (No Zswap Info)",
+        "zswap_config_standalone_runtime", COLORS["main"]
     )
-    fig3.update_layout(xaxis_tickangle=-45)
 
-    # For each of the parameterized experiment types, create dedicated plots
-    for exp_id in ["exp_c", "exp_d", "exp_e", "exp_f"]:
-        if not param_specific_data[exp_id]:
+    create_bar_chart(
+        plot_df, "experiment", "avg_zswap_duration_s",
+        "Average Time Spent in Zswap Functions by Configuration",
+        "zswap_config_function_duration", COLORS["dark"]
+    )
+
+    create_bar_chart(
+        plot_df, "experiment", "avg_zswap_percentage",
+        "Percentage of Runtime Spent in Zswap Functions by Configuration",
+        "zswap_config_percentage_comparison", COLORS["accent"]
+    )
+
+    create_grouped_bar_chart(
+        plot_df, "experiment", ["avg_runtime_s", "avg_zswap_duration_s"],
+        ["Total Runtime", "Zswap Duration"],
+        "Kernel Benchmark Runtime vs Zswap Function Duration by Configuration",
+        "zswap_config_runtime_vs_function_duration"
+    )
+
+    # Create parameter-specific charts
+    for exp_id, param_data in param_specific_data.items():
+        if not param_data:
             continue
 
-        # Calculate averages for each parameter setting
+        # Calculate averages for each parameter
         param_summaries = []
-        for param, data in param_specific_data[exp_id].items():
+        for param, data in param_data.items():
             if data["runs_processed"] > 0:
                 avg_runtime = sum(data["collection_times"]) / len(data["collection_times"])
-                avg_zswap = sum(data["zswap_durations"]) / len(data["zswap_durations"])
+                avg_zswap = sum(data["zswap_durations"]) / len(data["zswap_durations"]) if data["zswap_durations"] else 0.0
                 avg_percentage = (avg_zswap / avg_runtime * 100) if avg_runtime > 0 else 0
 
                 param_summaries.append({
@@ -320,164 +376,54 @@ if experiment_summaries:
                     "runs_processed": data["runs_processed"]
                 })
 
-        if param_summaries:
-            # Create a param-specific DataFrame
-            param_df = pl.DataFrame(param_summaries)
+        if not param_summaries:
+            continue
 
-            # Sort by parameter ID for consistent ordering
-            param_df = param_df.sort("param_id")
+        # Create parameter-specific dataframe
+        param_df = pd.DataFrame(param_summaries)
 
-            # Get experiment readable name
-            exp_name = experiment_names.get(exp_id, exp_id)
+        # Sort appropriately
+        if exp_id == "zswap_mem_tuning":
+            param_df['mem_size'] = param_df['param_id'].str.extract(r'mem_(\d+)GB', expand=False).astype(int)
+            param_df = param_df.sort_values('mem_size')
+        else:
+            param_df = param_df.sort_values('param_id')
 
-            # Create parameter-specific runtime plot
-            param_fig1 = px.bar(
-                param_df.to_pandas(),
-                x="param_name",
-                y="avg_runtime_s",
-                title=f"Average Runtime by {exp_name} Setting",
-                labels={
-                    "avg_runtime_s": "Average Runtime (seconds)",
-                    "param_name": f"{exp_name} Setting"
-                },
-                text_auto='.2f',
-                height=600,
-                width=900
-            )
-            param_fig1.update_layout(xaxis_tickangle=-45)
+        exp_name = experiment_names.get(exp_id, exp_id)
 
-            # Create parameter-specific zswap duration plot
-            param_fig2 = px.bar(
-                param_df.to_pandas(),
-                x="param_name",
-                y="avg_zswap_duration_s",
-                title=f"Average Zswap Time by {exp_name} Setting",
-                labels={
-                    "avg_zswap_duration_s": "Average Zswap Duration (seconds)",
-                    "param_name": f"{exp_name} Setting"
-                },
-                text_auto='.2f',
-                height=600,
-                width=900
-            )
-            param_fig2.update_layout(xaxis_tickangle=-45)
+        # Create parameter-specific charts
+        create_bar_chart(
+            param_df, "param_name", "avg_runtime_s",
+            f"Average Runtime by {exp_name} Setting",
+            f"zswap_{exp_name}_runtime_comparison", COLORS["light"]
+        )
 
-            # Create parameter-specific percentage plot
-            param_fig3 = px.bar(
-                param_df.to_pandas(),
-                x="param_name",
-                y="avg_zswap_percentage",
-                title=f"Percentage of Runtime in Zswap by {exp_name} Setting",
-                labels={
-                    "avg_zswap_percentage": "Zswap Time (%)",
-                    "param_name": f"{exp_name} Setting"
-                },
-                text_auto='.2f',
-                height=600,
-                width=900
-            )
-            param_fig3.update_layout(xaxis_tickangle=-45)
+        create_bar_chart(
+            param_df, "param_name", "avg_runtime_s",
+            f"Kernel Benchmark Runtime by {exp_name} Setting (No Zswap Info)",
+            f"zswap_{exp_name}_standalone_runtime", COLORS["main"]
+        )
 
-            # Create a combined plot for this parameter
-            param_fig4 = go.Figure()
+        create_bar_chart(
+            param_df, "param_name", "avg_zswap_duration_s",
+            f"Average Zswap Time by {exp_name} Setting",
+            f"zswap_{exp_name}_function_duration", COLORS["dark"]
+        )
 
-            # Add traces for runtime and zswap duration
-            param_fig4.add_trace(go.Bar(
-                x=param_df.to_pandas()["param_name"],
-                y=param_df.to_pandas()["avg_runtime_s"],
-                name="Total Runtime",
-                marker_color='lightblue'
-            ))
+        create_bar_chart(
+            param_df, "param_name", "avg_zswap_percentage",
+            f"Percentage of Runtime in Zswap by {exp_name} Setting",
+            f"zswap_{exp_name}_percentage_comparison", COLORS["accent"]
+        )
 
-            param_fig4.add_trace(go.Bar(
-                x=param_df.to_pandas()["param_name"],
-                y=param_df.to_pandas()["avg_zswap_duration_s"],
-                name="Zswap Duration",
-                marker_color='darkblue'
-            ))
+        create_grouped_bar_chart(
+            param_df, "param_name", ["avg_runtime_s", "avg_zswap_duration_s"],
+            ["Total Runtime", "Zswap Duration"],
+            f"Runtime vs Zswap Duration by {exp_name} Setting",
+            f"zswap_{exp_name}_runtime_vs_duration"
+        )
 
-            param_fig4.update_layout(
-                title=f"Runtime vs Zswap Duration by {exp_name} Setting",
-                xaxis_title=f"{exp_name} Setting",
-                yaxis_title="Duration (seconds)",
-                xaxis_tickangle=-45,
-                barmode='group',
-                height=700,
-                width=1000,
-                legend=dict(x=0.01, y=0.99)
-            )
-
-            # Apply quality enhancements
-            configure_plot_quality(param_fig1)
-            configure_plot_quality(param_fig2)
-            configure_plot_quality(param_fig3)
-            configure_plot_quality(param_fig4)
-
-            # Save parameter-specific plots
-            param_fig1.write_image(f"images/zswap_{exp_name}_runtime_comparison.png")
-            param_fig2.write_image(f"images/zswap_{exp_name}_function_duration.png")
-            param_fig3.write_image(f"images/zswap_{exp_name}_percentage_comparison.png")
-            param_fig4.write_image(f"images/zswap_{exp_name}_runtime_vs_duration.png")
-
-            # Export parameter summary to CSV
-            param_df.write_csv(f"zswap_{exp_name}_performance_summary.csv")
-
-    # Create the combined figure
-    fig4 = go.Figure()
-
-    fig4.add_trace(go.Bar(
-        x=plot_df.to_pandas()["experiment"],
-        y=plot_df.to_pandas()["avg_runtime_s"],
-        name="Total Runtime",
-        marker_color='lightblue'
-    ))
-
-    fig4.add_trace(go.Bar(
-        x=plot_df.to_pandas()["experiment"],
-        y=plot_df.to_pandas()["avg_zswap_duration_s"],
-        name="Zswap Duration",
-        marker_color='darkblue'
-    ))
-
-    fig4.update_layout(
-        title="Kernel Benchmark Runtime vs Zswap Function Duration by Configuration",
-        xaxis_title="Zswap Configuration",
-        yaxis_title="Duration (seconds)",
-        xaxis_tickangle=-45,
-        barmode='group',
-        height=700,
-        width=1000,
-        legend=dict(x=0.01, y=0.99)
-    )
-
-    # Apply quality enhancements to all figures
-    configure_plot_quality(fig1)
-    configure_plot_quality(fig2)
-    configure_plot_quality(fig3)
-    configure_plot_quality(fig4)
-
-    # Make sure images directory exists
-    os.makedirs("images", exist_ok=True)
-
-    # Uncomment to show the combined plot
-    # fig4.show()
-
-    # Create a directory for PDFs if it doesn't exist
-    os.makedirs("pdfs", exist_ok=True)
-
-    # Save the plots with descriptive filenames as high-quality PDFs
-    fig1.write_image("pdfs/zswap_config_runtime_comparison.pdf", scale=2)
-    fig2.write_image("pdfs/zswap_config_function_duration.pdf", scale=2)
-    fig3.write_image("pdfs/zswap_config_percentage_comparison.pdf", scale=2)
-    fig4.write_image("pdfs/zswap_config_runtime_vs_function_duration.pdf", scale=2)
-
-    # Also save as PNGs for quick viewing if needed
-    fig1.write_image("images/zswap_config_runtime_comparison.png", scale=2)
-    fig2.write_image("images/zswap_config_function_duration.png", scale=2)
-    fig3.write_image("images/zswap_config_percentage_comparison.png", scale=2)
-    fig4.write_image("images/zswap_config_runtime_vs_function_duration.png", scale=2)
-
-    # Export summary to CSV with descriptive filename
-    summary_df.write_csv("zswap_configuration_performance_summary.csv")
-else:
-    print("No experiment data was processed successfully")
+if __name__ == "__main__":
+    # Run the analysis pipeline
+    experiment_summaries, param_specific_data = analyze_experiments()
+    generate_plots(experiment_summaries, param_specific_data)
