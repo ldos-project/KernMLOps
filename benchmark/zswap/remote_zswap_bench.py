@@ -8,6 +8,7 @@ import time
 
 import paramiko
 
+logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 
 class RemoteZswapRunner:
     def __init__(
@@ -15,7 +16,7 @@ class RemoteZswapRunner:
         remote_host: str,
         ssh_key: str,
         port: int,
-        ssh_timeout: int = 300,
+        ssh_timeout: int = 600,
         exp_timeout: int = 5400
     ):
         self.remote_host = remote_host
@@ -34,7 +35,7 @@ class RemoteZswapRunner:
         try:
             if self.ssh and self.ssh.get_transport() and self.ssh.get_transport().is_active():
                 return True
-            logging.debug(f"Connecting to {self.remote_host}...")
+            logging.info(f"Connecting to {self.remote_host}...")
             self.ssh = paramiko.SSHClient()
             self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             self.ssh.connect(
@@ -44,6 +45,7 @@ class RemoteZswapRunner:
                 key_filename=self.ssh_key,
                 timeout=5
             )
+            logging.info("Connected!")
             return True
         except Exception as e:
             logging.debug(f"SSH connection failed: {e}")
@@ -161,6 +163,7 @@ class RemoteZswapRunner:
                 "rsync", "-az",
                 "-e", f"ssh -i {self.ssh_key} -p {self.port}",
                 "--exclude=.venv",
+                "--exclude=data/",
                 local_kmlops_path,
                 # FIXME: should be user's home directory on remote
                 f"{self.remote_host}:/users/dwg/"
@@ -176,7 +179,7 @@ class RemoteZswapRunner:
         else:
             logging.error(f"Could not find KernMLOps at {local_kmlops_path}")
             sys.exit(1)
-        logging.info("Finish copying KernMLOps! Running setup...")
+        logging.info("Finished copying KernMLOps! Running setup...")
         setup_commands = [
             "sudo apt-get update && sudo apt-get install -y python3-pip",
             "cd ~/KernMLOps && pip3 install --break-system-packages -r requirements.txt",
@@ -185,7 +188,7 @@ class RemoteZswapRunner:
             "sudo apt-get install docker.io -y",
             "sudo usermod -aG docker $USER",
             "cd ~/KernMLOps && make docker-image > /dev/null 2>&1",
-            "cp -v ~/KernMLOps/config/zswap.yaml ~/KernMLOps/overrides.yaml"
+            # "cp -v ~/KernMLOps/config/zswap.yaml ~/KernMLOps/overrides.yaml"
         ]
         for cmd in setup_commands:
             self.execute_command(cmd)
@@ -194,7 +197,7 @@ class RemoteZswapRunner:
                 self.check_ssh()
 
 
-    def run_experiment(self, mem_size: str="2g", swap_size: str="4g") -> bool:
+    def run_experiment(self, mem_size: int=0, swap_size: int=0, config: str="zswap_redis") -> bool:
         cmd = (
             "cd ~/KernMLOps && "
             "source ~/.bashrc && "
@@ -207,16 +210,26 @@ class RemoteZswapRunner:
             ignore_errors=True,
             get_pty=True
         )
+
         self.execute_command("rm -rf ~/KernMLOps/data/curated/*")
-        cmd = (
+        self.execute_command(f"cp -v ~/KernMLOps/config/{config}.yaml ~/KernMLOps/overrides.yaml")
+        if config == "zswap_gap":
+            self.execute_command("cd ~/KernMLOps && bash scripts/setup-benchmarks/setup-gap.sh")
+
+        logging.info(f"Running experiment with config: {config}")
+        base_cmd = (
             "cd ~/KernMLOps && "
             "bash -c \'source ~/.bashrc && "
             "make INTERACTIVE=\"\" "
-            f"CONTAINER_OPTS=\"--memory={mem_size} --memory-swap={swap_size}\" "
-            "collect\'"
         )
+        if mem_size < 0 or swap_size < 0:
+            logging.error("Error: Memory and swap sizes must be positive integers")
+            return False
+        elif mem_size > 0 and swap_size > 0:
+            base_cmd += f"CONTAINER_OPTS=\"--memory={mem_size}g --memory-swap={mem_size+swap_size}g\" "
+        base_cmd += "collect\'"
         exit_code, stdout, stderr = self.execute_command(
-            cmd,
+            base_cmd,
             ignore_errors=True,
             get_pty=True
         )
@@ -241,7 +254,7 @@ class RemoteZswapRunner:
 
 
     def collect(self, exp_name: str, run_number: str):
-        local_results_path = os.path.join(os.path.dirname(f"data/curated/{exp_name}/run_{run_number}/"))
+        local_results_path = os.path.join(os.path.dirname(f"data/curated/{exp_name}/{run_number}/"))
         if not os.path.exists(local_results_path):
             logging.debug(f"Could not find results directory at {local_results_path}, creating one...")
             os.makedirs(local_results_path)
@@ -262,142 +275,169 @@ class RemoteZswapRunner:
             sys.exit(1)
 
 
-# Default zswap experiment
-def run_experiment_a(runner: RemoteZswapRunner):
-    logging.info("Starting experiment A...")
+# Zswap off experiment
+def zswap_off_exp(runner: RemoteZswapRunner):
+    logging.info("Starting zswap off experiment...")
+    runner.configure_grub("zswap.enabled=0")
+    time.sleep(10)
+    for i in range (1, 11):
+        runner.reboot_and_wait()
+        logging.info(f"Running experiment {i}...")
+        if not runner.run_experiment():
+            print("Experiment failed, exiting...")
+            sys.exit(1)
+        runner.collect("zswap_off", f"run_{i}_no_mem")
+
+
+# Zswap off with memory constraints (to induce swapping) experiment
+def zswap_off_mem_exp(runner: RemoteZswapRunner):
+    logging.info("Starting zswap off with memory constraints experiment...")
+    runner.configure_grub("zswap.enabled=0")
+    time.sleep(10)
+    for i in range(1, 11):
+        logging.info(f"Running experiment {i}...")
+        runner.reboot_and_wait()
+        if not runner.run_experiment(mem_size=8, swap_size=8):
+            print("Experiment failed, exiting...")
+            sys.exit(1)
+        runner.collect("TEST_zswap_off_mem", f"run_{i}_mem_8_swap_8")
+
+
+# Zswap on experiment
+def zswap_on_exp(runner: RemoteZswapRunner):
+    logging.info("Starting zswap on experiment...")
     runner.configure_grub("zswap.enabled=1")
     time.sleep(10)
     for i in range (1, 11):
         runner.reboot_and_wait()
-        if not runner.run_experiment():
+        if not runner.run_experiment(mem_size=8, swap_size=8):
             print("Experiment failed, exiting...")
             sys.exit(1)
-        runner.collect("exp_a", str(i))
+        runner.collect("zswap_on_quanta", f"run_{i}")
 
 
-# Vary cgroup memory constraints
-def run_experiment_b(runner: RemoteZswapRunner):
-    logging.info("Starting experiment B...")
-    runner.configure_grub("zswap.enabled=1")
-    time.sleep(10)
-    for mem_size in [2, 4, 8, 16]:
-        runner.reboot_and_wait()
-        mem_str = f"{mem_size//2}g"
-        swap_str = f"{mem_size}g"
-        if not runner.run_experiment(mem_size=mem_str, swap_size=swap_str):
-            print("Experiment failed, exiting...")
-            sys.exit(1)
-        runner.collect("exp_b", mem_str)
+def zswap_mem_tuning_exp(runner: RemoteZswapRunner):
+    logging.info("Starting zswap mem tuning experiment...")
+    for zswap_conf in ["0", "1"]:
+        runner.configure_grub(f"zswap.enabled={zswap_conf}")
+        time.sleep(10)
+        for mem_size in [4, 6, 8, 12, 16]:
+            runner.reboot_and_wait()
+            if not runner.run_experiment(mem_size=mem_size, swap_size=8):
+                print("Experiment failed, exiting...")
+                sys.exit(1)
+            runner.collect("zswap_mem_tuning", f"zswap_conf_{zswap_conf}_mem_{mem_size}_swap_8")
 
 
 # Vary zswap accept_threshold
-def run_experiment_c(runner: RemoteZswapRunner):
-    logging.info("Starting experiment C...")
+def zswap_accept_threshold_exp(runner: RemoteZswapRunner):
+    logging.info("Starting zswap accept threshold experiment...")
     for threshold in [40, 60, 70, 80, 100]:
         runner.configure_grub(f"zswap.enabled=1 zswap.accept_threshold_percent={threshold}")
         time.sleep(10)
         for run in range(1, 6):
             runner.reboot_and_wait()
-            if not runner.run_experiment():
+            if not runner.run_experiment(mem_size=8, swap_size=8):
                 print("Experiment failed, exiting...")
                 sys.exit(1)
-            runner.collect("exp_c", f"thresh_{threshold}_run_{run}")
+            runner.collect("zswap_accept_thresh", f"thresh_{threshold}_run_{run}")
 
 
 # Vary max_pool_percent
-def run_experiment_d(runner: RemoteZswapRunner):
-    logging.info("Starting experiment D...")
+def zswap_max_pool_percent_exp(runner: RemoteZswapRunner):
+    logging.info("Starting vary max pool percent experiment...")
     for pool_percent in [10, 30, 40, 50, 75]:
         runner.configure_grub(f"zswap.enabled=1 zswap.max_pool_percent={pool_percent}")
         time.sleep(10)
         for run in range(1, 6):
             runner.reboot_and_wait()
-            if not runner.run_experiment():
+            if not runner.run_experiment(mem_size=8, swap_size=8):
                 print("Experiment failed, exiting...")
                 sys.exit(1)
-            runner.collect("exp_d", f"pool_{pool_percent}_run_{run}")
+            runner.collect("zswap_max_pool_pct", f"pool_{pool_percent}_run_{run}")
 
 
 # Vary zswap compressor
-def run_experiment_e(runner: RemoteZswapRunner):
-    logging.info("Starting experiment E...")
+def zswap_compressor_exp(runner: RemoteZswapRunner):
+    logging.info("Starting vary compressor experiment...")
     for compressor in ["deflate", "842", "lz4", "lz4hc", "zstd"]:
         runner.insert_module(compressor)
         runner.configure_grub(f"zswap.enabled=1 zswap.compressor={compressor}")
         time.sleep(10)
         for run in range(1, 6):
             runner.reboot_and_wait()
-            if not runner.run_experiment():
+            if not runner.run_experiment(mem_size=8, swap_size=8):
                 print("Experiment failed, exiting...")
                 sys.exit(1)
-            runner.collect("exp_e", f"{compressor}_run_{run}")
+            runner.collect("zswap_compressor", f"{compressor}_run_{run}")
 
 
 # Vary zswap zpool
-def run_experiment_f(runner: RemoteZswapRunner):
-    logging.info("Starting experiment F...")
+def zswap_zpool_exp(runner: RemoteZswapRunner):
+    logging.info("Starting vary zpool experiment...")
     for zpool in ["z3fold", "zsmalloc"]:
         runner.insert_module(zpool)
         runner.configure_grub(f"zswap.enabled=1 zswap.zpool={zpool}")
         time.sleep(10)
         for run in range(1, 6):
             runner.reboot_and_wait()
-            if not runner.run_experiment():
+            if not runner.run_experiment(mem_size=8, swap_size=8):
                 print("Experiment failed, exiting...")
                 sys.exit(1)
-            runner.collect("exp_f", f"{zpool}_run_{run}")
+            runner.collect("zswap_zpool", f"{zpool}_run_{run}")
 
 
 # Test with exclusive_loads enabled
-def run_experiment_g(runner: RemoteZswapRunner):
-    logging.info("Starting experiment G...")
+def zswap_exclusive_loads_on_exp(runner: RemoteZswapRunner):
+    logging.info("Starting exclusive loads experiment...")
     runner.configure_grub("zswap.enabled=1 zswap.exclusive_loads=Y")
     time.sleep(10)
     for run in range(1, 6):
         runner.reboot_and_wait()
-        if not runner.run_experiment():
+        if not runner.run_experiment(mem_size=8, swap_size=8):
             print("Experiment failed, exiting...")
             sys.exit(1)
-        runner.collect("exp_g", f"run_{run}")
+        runner.collect("zswap_exclusive_loads_on", f"run_{run}")
 
 
-# Test with non_same_filled_pages disabled
-def run_experiment_h(runner: RemoteZswapRunner):
-    logging.info("Starting experiment H...")
-    runner.configure_grub("zswap.enabled=1 zswap.non_same_filled_pages_enabled=N")
+# Test with non_same_filled_pages on
+def zswap_non_same_filled_pages_off_exp(runner: RemoteZswapRunner):
+    logging.info("Starting non same filled pages experiment...")
+    runner.configure_grub("zswap.enabled=1 zswap.non_same_filled_pages_enabled=Y")
     time.sleep(10)
     for run in range(1, 6):
         runner.reboot_and_wait()
-        if not runner.run_experiment():
+        if not runner.run_experiment(mem_size=8, swap_size=8):
             print("Experiment failed, exiting...")
             sys.exit(1)
-        runner.collect("exp_h", f"run_{run}")
+        runner.collect("zswap_non_same_filled_pages_off", f"run_{run}")
 
 
 # Test with same_filled_pages disabled
-def run_experiment_i(runner: RemoteZswapRunner):
-    logging.info("Starting experiment I...")
+def zswap_same_filled_pages_off_exp(runner: RemoteZswapRunner):
+    logging.info("Starting same filled pages experiment...")
     runner.configure_grub("zswap.enabled=1 zswap.same_filled_pages_enabled=N")
     time.sleep(10)
     for run in range(1, 6):
         runner.reboot_and_wait()
-        if not runner.run_experiment():
+        if not runner.run_experiment(mem_size=8, swap_size=8):
             print("Experiment failed, exiting...")
             sys.exit(1)
-        runner.collect("exp_i", f"run_{run}")
+        runner.collect("zswap_same_filled_pages_off", f"run_{run}")
 
 
 # Test with shrinker disabled
-def run_experiment_j(runner: RemoteZswapRunner):
-    logging.info("Starting experiment J...")
+def zswap_shrinker_off_exp(runner: RemoteZswapRunner):
+    logging.info("Starting shrinker disabled experiment...")
     runner.configure_grub("zswap.enabled=1 zswap.shrinker_enabled=N")
     time.sleep(10)
-    for run in range(1, 6):
+    for run in range(1, 11):
+        logging.info(f"Running experiment {run}...")
         runner.reboot_and_wait()
-        if not runner.run_experiment():
+        if not runner.run_experiment(mem_size=8, swap_size=8):
             print("Experiment failed, exiting...")
             sys.exit(1)
-        runner.collect("exp_j", f"run_{run}")
+        runner.collect("zswap_shrinker_off", f"run_{run}")
 
 
 def main():
@@ -413,8 +453,8 @@ def main():
     )
     parser.add_argument(
         "experiment",
-        choices=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"],
-        help="Experiment to run (A, B, C, D, E, F, G, H, I, J, K)"
+        choices=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"],
+        help="Experiment to run (A, B, C, D, E, F, G, H, I, J, K, L)"
     )
     parser.add_argument(
         "-k", "--ssh-key",
@@ -447,16 +487,18 @@ def main():
     runner.setup_experiments()
     experiment = args.experiment.upper()
     experiment_functions = {
-        "A": run_experiment_a,
-        "B": run_experiment_b,
-        "C": run_experiment_c,
-        "D": run_experiment_d,
-        "E": run_experiment_e,
-        "F": run_experiment_f,
-        "G": run_experiment_g,
-        "H": run_experiment_h,
-        "I": run_experiment_i,
-        "J": run_experiment_j
+        "A": zswap_off_exp,
+        "B": zswap_off_mem_exp,
+        "C": zswap_on_exp,
+        "D": zswap_mem_tuning_exp,
+        "E": zswap_accept_threshold_exp,
+        "F": zswap_max_pool_percent_exp,
+        "G": zswap_compressor_exp,
+        "H": zswap_zpool_exp,
+        "I": zswap_exclusive_loads_on_exp,
+        "J": zswap_non_same_filled_pages_off_exp,
+        "K": zswap_same_filled_pages_off_exp,
+        "L": zswap_shrinker_off_exp
     }
     if experiment in experiment_functions:
         experiment_functions[experiment](runner)
