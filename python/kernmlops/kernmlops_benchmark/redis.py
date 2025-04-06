@@ -37,6 +37,10 @@ class RedisConfig(ConfigBase):
     thread_count: int = 1
     target: int = 10000
 
+    # Pin tool control parameters
+    use_pin: bool = False
+    pin_tool: str = "/opt/pin/source/tools/ManualExamples/obj-intel64/pinatrace.so"
+
 size_redis = [
     "redis-cli",
     "DBSIZE",
@@ -83,14 +87,12 @@ class RedisBenchmark(Benchmark):
             raise BenchmarkRunningError()
 
         # start the redis server
-        start_redis = [
-            "pin",
-            "-t",
-            "/opt/pin/source/tools/ManualExamples/obj-intel64/pinatrace.so",
-            "--",
-            self.redis_server_name(),
-            "./config/redis.conf",
-        ]
+        redis_cmd = [self.redis_server_name(), "./config/redis.conf"]
+        if self.config.use_pin:
+            start_redis = ["pin", "-t", self.config.pin_tool, "--"] + redis_cmd
+        else:
+            start_redis = redis_cmd
+
         self.server = subprocess.Popen(start_redis)
 
         # Wait for redis
@@ -127,8 +129,6 @@ class RedisBenchmark(Benchmark):
                     "-p",
                     "redis.port=6379",
                     "-p",
-                    "redis.timeout=60000",
-                    "-p",
                     f"recordcount={self.config.record_count}",
                     "-p",
                     f"fieldcount={self.config.field_count}",
@@ -137,6 +137,9 @@ class RedisBenchmark(Benchmark):
                     "-p",
                     f"insertstart={insert_start}",
             ]
+            # Redis commands take longer with PIN tool enabled - wait max 60s
+            if self.config.use_pin:
+                load_redis.extend(["-p", "redis.timeout=60000"])
 
             load_redis = subprocess.Popen(load_redis, preexec_fn=demote())
 
@@ -181,8 +184,6 @@ class RedisBenchmark(Benchmark):
                     "-p",
                     "redis.port=6379",
                     "-p",
-                    "redis.timeout=60000",
-                    "-p",
                     f"requestdistribution={self.config.request_distribution}",
                     "-p",
                     f"threadcount={self.config.thread_count}",
@@ -195,6 +196,8 @@ class RedisBenchmark(Benchmark):
                     "-p",
                     f"fieldlength={self.config.field_length}",
             ]
+            if self.config.use_pin:
+                run_redis.extend(["-p", "redis.timeout=60000"])
             process = subprocess.Popen(run_redis, preexec_fn=demote())
             if process is not None:
                 process.wait()
@@ -234,8 +237,6 @@ class RedisBenchmark(Benchmark):
                     "-p",
                     "redis.port=6379",
                     "-p",
-                    "redis.timeout=60000",
-                    "-p",
                     f"requestdistribution={self.config.request_distribution}",
                     "-p",
                     f"threadcount={self.config.thread_count}",
@@ -246,6 +247,8 @@ class RedisBenchmark(Benchmark):
                     "-p",
                     f"fieldlength={self.config.field_length}",
             ]
+            if self.config.use_pin:
+                run_redis.extend(["-p", "redis.timeout=60000"])
             process = subprocess.Popen(run_redis, preexec_fn=demote())
         self.process = process
 

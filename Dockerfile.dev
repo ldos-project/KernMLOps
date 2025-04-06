@@ -91,7 +91,9 @@ RUN mkdir -p /opt/pin && \
     mv pin-external-3.31-98869-gfa6f126a8-gcc-linux/* . && \
     cd source/tools/ManualExamples && \
     make all TARGET=intel64 -j $(nproc) && \
-    ln -s /opt/pin/pin /usr/local/bin/pin
+    ln -s /opt/pin/pin /usr/local/bin/pin && \
+    cd /opt/pin && rmdir pin-external-3.31-98869-gfa6f126a8-gcc-linux && \
+    rm -rf doc/ extras/ ia32/ intel64/ licensing/ pin.sig
 
 # Base development image
 FROM ${BUILD_IMAGE} AS dev
