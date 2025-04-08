@@ -188,55 +188,6 @@ class RedisBenchmark(Benchmark):
                     f"fieldlength={self.config.field_length}",
             ]
             process = subprocess.Popen(run_redis, preexec_fn=demote())
-            if process is not None:
-                process.wait()
-                if process.returncode != 0:
-                    self.process = process
-                    raise BenchmarkError(f"Redis Run {2 * i} Failed")
-
-            run_redis = [
-                    f"{self.benchmark_dir}/YCSB/bin/ycsb",
-                    "run",
-                    "redis",
-                    "-s",
-                    "-P",
-                    f"{self.benchmark_dir}/YCSB/workloads/workloada",
-                    "-p",
-                    f"operationcount={self.config.operation_count}",
-                    "-p",
-                    f"recordcount={record_count}",
-                    "-p",
-                    "workload=site.ycsb.workloads.CoreWorkload",
-                    "-p",
-                    f"readproportion={self.config.read_proportion}",
-                    "-p",
-                    f"updateproportion={self.config.update_proportion}",
-                    "-p",
-                    f"scanproportion={self.config.scan_proportion}",
-                    "-p",
-                    f"insertproportion={self.config.insert_proportion}",
-                    "-p",
-                    f"readmodifywriteproportion={self.config.rmw_proportion}",
-                    "-p",
-                    f"scanproportion={self.config.scan_proportion}",
-                    "-p",
-                    f"deleteproportion={self.config.delete_proportion}",
-                    "-p",
-                    "redis.host=127.0.0.1",
-                    "-p",
-                    "redis.port=6379",
-                    "-p",
-                    f"requestdistribution={self.config.request_distribution}",
-                    "-p",
-                    f"threadcount={self.config.thread_count}",
-                    "-p",
-                    f"target={self.config.target}",
-                    "-p",
-                    f"fieldcount={self.config.field_count}",
-                    "-p",
-                    f"fieldlength={self.config.field_length}",
-            ]
-            process = subprocess.Popen(run_redis, preexec_fn=demote())
         self.process = process
 
     def poll(self) -> int | None:
