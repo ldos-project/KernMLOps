@@ -35,7 +35,8 @@ make collect
 
 ## Jupyter Setup
 
-You will need docker and pipenv
+You will need docker and pipenv,
+we have a script that is for ubuntu 24.04 `source scripts/install_prerequesites_ubuntu_24_04.sh`.
 
 You can install docker from [docker's website](https://docs.docker.com/engine/install/).
 The tools should work with other container engines but have not been tested yet.

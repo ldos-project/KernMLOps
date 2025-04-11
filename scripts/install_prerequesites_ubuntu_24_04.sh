@@ -18,3 +18,4 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 sudo usermod -a -G docker $(id -nu)
 pipenv install
 newgrp docker -c make docker-image
+newgrp docker -c pipenv shell
