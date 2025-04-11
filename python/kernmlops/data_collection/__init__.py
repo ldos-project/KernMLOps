@@ -9,6 +9,7 @@ from kernmlops_config import ConfigBase
 @dataclass(frozen=True)
 class GenericCollectorConfig(ConfigBase):
     poll_rate: float = 0.5
+    output_interval: str = "1m"
     output_dir: str = "data"
     output_graphs: bool = False
     hooks: list[str] = field(default_factory=bpf.hook_names)
