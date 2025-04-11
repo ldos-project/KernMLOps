@@ -10,6 +10,51 @@ WARNING: Do not clone submodules, this will clone the linux kernel.
 Cloning the kernel is prohibitively expensive.
 That submodule is only necessary if you plan to use in-kernel inference.
 
+## Jupyter Setup -- Recommended
+
+You will need docker and pipenv,
+we have a script that is for ubuntu 24.04 and 22.04 `source scripts/install_prerequesites_ubuntu_24_04.sh`.
+
+### Ubuntu 24.04 or 22.04
+
+```shell
+# Run the full installation -- Expected Time: ~10 mins
+source ./scripts/install_prerequesites_ubuntu_24_04.sh
+
+# Install Hooks for linting -- Expected Time: ~2 mins
+make hooks
+
+# Run jupyter notebook -- Expected Time: instant
+jupyter notebook
+```
+
+### Other Machines
+
+You can install docker from [docker's website](https://docs.docker.com/engine/install/).
+The tools should work with other container engines but have not been tested yet.
+
+You can install this by using either `pip` or `apt` on Ubuntu.
+A helpful link for this should be [here](https://pipenv.pypa.io/en/latest/installation.html).
+Or on later versions of ubuntu `sudo apt install pipenv`.
+From then on launch jupyter notebook like so:
+
+```shell
+# Create and run your management container -- Expected Time: ~5 mins
+make docker-image
+
+
+# Create your virtual environment -- Expected Time: ~5 mins
+pipenv shell
+
+# Install Hooks for linting -- Expected Time: ~2 mins
+make hooks
+
+# Run jupyter notebook -- Expected Time: instant
+jupyter notebook
+```
+
+From here open up the Jupyter not
+
 ## Quick Setup
 
 You will need docker.
@@ -32,30 +77,6 @@ cp config/start_overrides.yaml overrides.yaml
 make collect
 
 ```
-
-## Jupyter Setup
-
-You will need docker and pipenv
-
-You can install docker from [docker's website](https://docs.docker.com/engine/install/).
-The tools should work with other container engines but have not been tested yet.
-
-You can install this by using either `pip` or `apt` on Ubuntu.
-A helpful link for this should be [here](https://pipenv.pypa.io/en/latest/installation.html).
-Or on later versions of ubuntu `sudo apt install pipenv`.
-From then on launch jupyter notebook like so:
-
-```shell
-
-# Create and run your management container -- Expected Time: ~5 mins
-make docker-image
-
-# Create your virtual environment and invoke jupyter -- Expected Time: ~5 mins
-pipenv shell jupyter notebook
-
-```
-
-From here open up the Jupyter not
 
 ## Capturing Data -> Processing in Python
 
