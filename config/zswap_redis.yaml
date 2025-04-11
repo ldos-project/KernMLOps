@@ -8,7 +8,7 @@ benchmark_config:
     overcommit_memory: never_check
   redis:
     record_count: 1000000
-    operation_count: 300000
+    operation_count: 100000
     read_proportion: 0.40
     update_proportion: 0.10
     insert_proportion: 0.05
@@ -22,4 +22,12 @@ collector_config:
     output_dir: data
     output_graphs: false
     hooks:
+      - process_trace
+      - process_metadata
+      - file_data
+      - memory_usage
+      - quanta_runtime
+      - block_io
+      - perf
       - zswap_runtime
+      - mm_rss_stat
