@@ -25,28 +25,39 @@ install_pipenv() {
     if [ ${VERSION_ID} = "24.04" ]; then
         command -v pipenv || sudo apt install -y pipenv
     elif [ ${VERSION_ID} = "22.04" ]; then
-        python3 -m pipenv install && return
+        PIPENV_CMD="python3 -m pipenv"
+        ${PIPENV_CMD} --help >/dev/null && return
         curl -fsSL https://pyenv.run | bash
         PATH="${HOME}/.pyenv/bin:${HOME}/.pyenv/bin:${PATH}"
         sudo apt-get install -y build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev libncurses-dev tk-dev
         sudo apt-get install -y python3-pip
         pip3 install pipenv
-        PIPENV_CMD="python3 -m pipenv"
+        ${PIPENV_CMD} install
     fi
+}
+
+make_pipenv_venv() {
+    ${PIPENV_CMD} install
 }
 
 make_docker_image() {
     DOCKER_INSTALL_CMD="${PIPENV_CMD} run make docker-image; ${PIPENV_CMD} run make docker-image"
     sg docker -c "${DOCKER_INSTALL_CMD}"
+}
 
+source_shell() {
+    SHELL_CMD="${SHELL} -cl \"${PIPENV_CMD} shell\""
+    sudo su ${USER} -g docker -c "${SHELL_CMD}"
 }
 
 . /etc/os-release
 sudo apt-get update -y
+
 install_pipenv
+make_pipenv_venv
+
 install_docker
 sudo usermod -a -G docker $(id -nu)
 make_docker_image
 
-SHELL_CMD="${SHELL} -cl \"${PIPENV_CMD} shell\""
-sudo su ${USER} -g docker -c "${SHELL_CMD}"
+source_shell
