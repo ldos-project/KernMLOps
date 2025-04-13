@@ -54,11 +54,27 @@ def demote(user_id: int | None = None, group_id: int | None = None) -> Callable[
         os.setuid(user_id)
     return do_demote
 
+def get_user_group_ids() -> tuple[int, int]:
+    curr = os.getuid()
+    if curr >= 1000:
+        return (curr, curr)
+    if "UNAME" in os.environ:
+        user_id = getpwnam(os.environ["UNAME"]).pw_uid
+    else:
+        raise Exception("not enough information to get intended user")
+
+    group_id = int(os.environ.get("GID", user_id))
+
+    return (user_id, group_id)
+
+
+
 __all__ = [
     "UPTIME_TIMESTAMP",
     "collection_id_column",
     "cumulative_pma_as_pdf",
     "demote",
+    "get_user_group_ids",
     "table_types",
     "perf",
     "CollectionTable",
