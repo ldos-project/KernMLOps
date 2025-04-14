@@ -1,14 +1,14 @@
 ---
 benchmark_config:
   generic:
-    benchmark: memcached
+    benchmark: mongodb
     cpus: 0
     skip_clear_page_cache: false
-    transparent_hugepages: never
+    transparent_hugepages: always
     overcommit_memory: never_check
-  memcached:
-    record_count: 100000
-    operation_count: 10000
+  mongodb:
+    record_count: 1000000
+    operation_count: 100000
     read_proportion: 0.20
     update_proportion: 0.10
     insert_proportion: 0.10
@@ -23,8 +23,5 @@ collector_config:
     output_graphs: false
     hooks:
       - mm_rss_stat
-      - process_trace
       - memory_usage
-      - quanta_runtime
-      - perf
       - zswap_runtime

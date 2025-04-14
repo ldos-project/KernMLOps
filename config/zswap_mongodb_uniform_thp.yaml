@@ -4,30 +4,24 @@ benchmark_config:
     benchmark: mongodb
     cpus: 0
     skip_clear_page_cache: false
-    transparent_hugepages: never
+    transparent_hugepages: always
     overcommit_memory: never_check
   mongodb:
     record_count: 1000000
-    operation_count: 100000
-    read_proportion: 0.40
+    operation_count: 10000
+    read_proportion: 0.20
     update_proportion: 0.10
-    insert_proportion: 0.05
+    insert_proportion: 0.10
     rmw_proportion: 0.10
-    scan_proportion: 0.05
+    scan_proportion: 0.10
     delete_proportion: 0.30
-    request_distribution: "zipfian"
+    request_distribution: "uniform"
 collector_config:
   generic:
     poll_rate: 0.1
     output_dir: data
     output_graphs: false
     hooks:
-      - process_trace
-      - process_metadata
-      - file_data
-      - memory_usage
-      - quanta_runtime
-      - block_io
-      - perf
-      - zswap_runtime
       - mm_rss_stat
+      - memory_usage
+      - zswap_runtime
