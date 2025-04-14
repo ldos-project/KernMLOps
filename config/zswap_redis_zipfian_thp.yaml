@@ -1,14 +1,14 @@
 ---
 benchmark_config:
   generic:
-    benchmark: memcached
+    benchmark: redis
     cpus: 0
     skip_clear_page_cache: false
-    transparent_hugepages: never
+    transparent_hugepages: always
     overcommit_memory: never_check
-  memcached:
+  redis:
     record_count: 100000
-    operation_count: 10000
+    operation_count: 5000
     read_proportion: 0.20
     update_proportion: 0.10
     insert_proportion: 0.10

@@ -14,12 +14,9 @@ collector_config:
     output_dir: data
     output_graphs: false
     hooks:
+      - mm_rss_stat
       - process_trace
-      - process_metadata
-      - file_data
       - memory_usage
       - quanta_runtime
-      - block_io
       - perf
       - zswap_runtime
-      - mm_rss_stat
