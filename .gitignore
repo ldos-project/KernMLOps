@@ -191,3 +191,4 @@ module/*.img
 .tmp/
 *.stats
 benchmark/zswap/results/
+images/
