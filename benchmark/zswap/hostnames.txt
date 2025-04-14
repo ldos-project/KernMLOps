@@ -1,0 +1,23 @@
+dwg@pc739.emulab.net
+dwg@pc749.emulab.net
+dwg@pc847.emulab.net
+dwg@pc846.emulab.net
+dwg@pc743.emulab.net
+dwg@pc734.emulab.net
+dwg@pc742.emulab.net
+dwg@pc708.emulab.net
+dwg@pc701.emulab.net
+dwg@pc746.emulab.net
+dwg@pc858.emulab.net
+dwg@pc731.emulab.net
+# dwg@pc724.emulab.net
+# dwg@pc736.emulab.net
+# dwg@pc711.emulab.net
+# dwg@pc737.emulab.net
+# dwg@pc751.emulab.net
+# dwg@pc735.emulab.net
+# dwg@pc860.emulab.net
+# dwg@pc753.emulab.net
+# dwg@pc750.emulab.net
+# dwg@pc733.emulab.net
+# dwg@pc728.emulab.net
