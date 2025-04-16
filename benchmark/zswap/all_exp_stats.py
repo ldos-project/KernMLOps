@@ -21,16 +21,16 @@ def main():
     thp = 'thp' if args.thp else ''
 
     experiments = [
-        'off',
-        'off_mem',
-        'on',
-        'accept_thresh',
-        'max_pool_pct',
-        'compressor',
-        'zpool',
-        'exclusive_loads_on',
-        'non_same_filled_pages_off',
-        'same_filled_pages_off',
+        'zswap_off',
+        'zswap_off_mem',
+        'zswap_on',
+        'zswap_accept_thresh',
+        'zswap_max_pool_pct',
+        'zswap_compressor',
+        'zswap_zpool',
+        'zswap_exclusive_loads_on',
+        'zswap_non_same_filled_pages_off',
+        'zswap_same_filled_pages_off',
         # 'shrinker_off',
         # 'cpu_tuning'
     ]

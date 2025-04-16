@@ -24,9 +24,9 @@ class ExperimentAnalyzer:
 
         # Construct experiment directory based on format
         if thp_config:
-            experiment_dir = f"{benchmark_name}_{dist}_{thp_config}_zswap_{experiment_name}"
+            experiment_dir = f"{benchmark_name}_{dist}_{thp_config}_{experiment_name}"
         else:
-            experiment_dir = f"{benchmark_name}_{dist}_zswap_{experiment_name}"
+            experiment_dir = f"{benchmark_name}_{dist}_{experiment_name}"
 
         print(experiment_dir)
         # Define parameter categories to analyze
