@@ -7,14 +7,15 @@ benchmark_config:
     transparent_hugepages: always
     overcommit_memory: never_check
   redis:
-    record_count: 100000
-    operation_count: 50000
+    record_count: 262144
+    operation_count: 1024
+    thread_count: 8
     read_proportion: 0.20
     update_proportion: 0.10
     insert_proportion: 0.10
     rmw_proportion: 0.10
     scan_proportion: 0.10
-    delete_proportion: 0.30
+    delete_proportion: 0.10
     request_distribution: "uniform"
 collector_config:
   generic:

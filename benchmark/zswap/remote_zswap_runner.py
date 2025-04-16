@@ -199,6 +199,9 @@ class RemoteZswapRunner:
         ]
         for cmd in setup_commands:
             self.execute_command(cmd)
+            # Reset connection after adding user to docker group
+            if "usermod" in cmd:
+                self.check_ssh()
 
 
     def run_experiment(self, mem_size: str="", swap_size: int=0, num_cpus: int=0) -> bool:
@@ -217,6 +220,7 @@ class RemoteZswapRunner:
 
         pre_experiment_commands = [
             "rm -rf ~/KernMLOps/data/curated/*",
+            "rm -f ~/KernMLOps/RunTime*",
             f"cp -v ~/KernMLOps/config/zswap_{self.config}.yaml ~/KernMLOps/overrides.yaml",
             "sudo sysctl -w vm.dirty_background_bytes=16384",
             "sudo sysctl -w vm.dirty_bytes=32768",
@@ -268,7 +272,7 @@ class RemoteZswapRunner:
         runtime_filename = f"RunTime_{timestamp}.out"
 
         # Run the experiment and save the output to the timestamped file
-        collect_cmd = base_cmd + f"collect 2>&1 | tee >(grep RunTime > {runtime_filename})"
+        collect_cmd = base_cmd + f"collect | grep RunTime | tee {runtime_filename}"
 
         exit_code, stdout, stderr = self.execute_command(
             collect_cmd,
