@@ -110,19 +110,21 @@ class ExperimentAnalyzer:
         }
 
         if collection_times:
-            coll_mean, coll_total, coll_ci = self._calculate_stats(collection_times)
+            coll_mean, coll_total, coll_ci, coll_min = self._calculate_stats(collection_times)
             results['collection_times'].update({
                 'mean': coll_mean,
                 'total': coll_total,
-                'confidence_interval': coll_ci
+                'confidence_interval': coll_ci,
+                'min': coll_min
             })
 
         if zswap_durations_sec:
-            zswap_mean, zswap_total, zswap_ci = self._calculate_stats(zswap_durations_sec)
+            zswap_mean, zswap_total, zswap_ci, zswap_min = self._calculate_stats(zswap_durations_sec)
             results['zswap_durations'].update({
                 'mean': zswap_mean,
                 'total': zswap_total,
-                'confidence_interval': zswap_ci
+                'confidence_interval': zswap_ci,
+                'min': zswap_min
             })
 
         # Add parameter-specific statistics if applicable
@@ -142,19 +144,21 @@ class ExperimentAnalyzer:
 
                 # Calculate stats for this parameter value
                 if data['collection_times']:
-                    coll_mean, coll_total, coll_ci = self._calculate_stats(data['collection_times'])
+                    coll_mean, coll_total, coll_ci, coll_min = self._calculate_stats(data['collection_times'])
                     results['param_values'][value]['collection_times'].update({
                         'mean': coll_mean,
                         'total': coll_total,
-                        'confidence_interval': coll_ci
+                        'confidence_interval': coll_ci,
+                        'min': coll_min
                     })
 
                 if data['zswap_durations']:
-                    zswap_mean, zswap_total, zswap_ci = self._calculate_stats(data['zswap_durations'])
+                    zswap_mean, zswap_total, zswap_ci, zswap_min = self._calculate_stats(data['zswap_durations'])
                     results['param_values'][value]['zswap_durations'].update({
                         'mean': zswap_mean,
                         'total': zswap_total,
-                        'confidence_interval': zswap_ci
+                        'confidence_interval': zswap_ci,
+                        'min': zswap_min
                     })
 
         if verbose:
@@ -163,35 +167,36 @@ class ExperimentAnalyzer:
         return results
 
     def _process_run(self, run_dir, verbose=False):
-        run_name = os.path.basename(run_dir)
+        # run_name = os.path.basename(run_dir)
         result = {}
 
+        # TODO: Ignore zswap_runtime for now, just access collection time properly
+        # Collection time is located in run_*/runtime/RunTime*.out
+        # run_data = self.data_import.read_parquet_dir(run_dir)
+        # if 'system_info' in run_data:
+        result['collection_time'] = self._extract_collection_time(run_dir)
+        # if 'zswap_runtime' in run_data:
+            # result['zswap_duration'] = self._extract_zswap_duration(run_data, run_name, verbose)
+        return result
+
+    # def _extract_collection_time(self, run_data, run_name, verbose=False):
+    def _extract_collection_time(self, run_dir):
+        full_path = ""
+        for dirpath, dirnames, filenames in os.walk(run_dir):
+            for filename in filenames:
+                if 'RunTime' in filename:
+                    full_path= os.path.join(dirpath, filename)
+
+        sum_ms = 0
         try:
-            run_data = self.data_import.read_parquet_dir(run_dir)
-            if 'system_info' in run_data:
-                result['collection_time'] = self._extract_collection_time(run_data, run_name, verbose)
-            if 'zswap_runtime' in run_data:
-                result['zswap_duration'] = self._extract_zswap_duration(run_data, run_name, verbose)
-            return result
-        except Exception:
-            return None
+            with open(full_path, 'r') as f:
+                for line in f:
+                    sum_ms += int(line.strip().split(',')[2])
+        except Exception as e:
+            print(f"Error reading file: {str(e)}")
 
-    def _extract_collection_time(self, run_data, run_name, verbose=False):
-        system_info_df = run_data['system_info']
-        if 'collection_time_sec' not in system_info_df.columns:
-            return None
-
-        try:
-            valid_times = system_info_df.select(
-                pl.col('collection_time_sec')
-            ).filter(pl.col('collection_time_sec').is_not_null())
-
-            if len(valid_times) == 1:
-                return valid_times.item()
-        except Exception:
-            pass
-
-        return None
+        sum_s = sum_ms / 1000.0
+        return sum_s
 
     def _extract_zswap_duration(self, run_data, run_name, verbose=False):
         zswap_df = run_data['zswap_runtime']
@@ -218,10 +223,11 @@ class ExperimentAnalyzer:
     def _calculate_stats(self, data_list):
         n = len(data_list)
         if n == 0:
-            return None, None, None
+            return None, None, None, None
 
         mean_val = np.mean(data_list)
         total_val = np.sum(data_list)
+        min_val = np.min(data_list)
 
         ci = None
         if n > 1:
@@ -238,7 +244,7 @@ class ExperimentAnalyzer:
             except Exception:
                 ci = None
 
-        return mean_val, total_val, ci
+        return mean_val, total_val, ci, min_val
 
     def _print_summary(self, results, experiment_name=None, param_specific_analysis=False):
         print("     --- Aggregation Summary ---")
@@ -252,8 +258,9 @@ class ExperimentAnalyzer:
             total = ct.get('total')
             mean = ct.get('mean')
             ci = ct.get('confidence_interval')
+            min_val = ct.get('min')
 
-            print(f"    Total: {total:.2f}s, Average: {mean:.2f}s")
+            print(f"    Total: {total:.2f}s, Average: {mean:.2f}s, Min: {min_val:.2f}s")
 
             if ci and len(ct['values']) > 1:
                 std_dev = np.std(ct['values'], ddof=1)
@@ -267,9 +274,8 @@ class ExperimentAnalyzer:
             total = zs.get('total')
             mean = zs.get('mean')
             ci = zs.get('confidence_interval')
-
-            print(f"    Total: {total:.2f}s, Average: {mean:.2f}s")
-
+            min_val = zs.get('min')
+            print(f"    Total: {total:.2f}s, Average: {mean:.2f}s, Min: {min_val:.2f}s")
             if ci and len(zs['values']) > 1:
                 std_dev = np.std(zs['values'], ddof=1)
                 print(f"    StdDev: {std_dev:.2f}s, 95% CI: [{ci[0]:.2f}, {ci[1]:.2f}]s")
@@ -277,19 +283,16 @@ class ExperimentAnalyzer:
         # Parameter-specific Statistics
         if param_specific_analysis and 'param_values' in results:
             print(f"\n    --- {experiment_name} Parameter Analysis ---")
-
             for value, stats in results['param_values'].items():
                 print(f"\n    -- {experiment_name}={value} --")
-
                 # Collection Time
                 ct = stats['collection_times']
                 if ct['count'] > 0:
                     mean = ct.get('mean')
                     total = ct.get('total')
                     ci = ct.get('confidence_interval')
-
-                    print(f"    Collection Time ({ct['count']} runs) - Total: {total:.2f}s, Average: {mean:.2f}s")
-
+                    min_val = ct.get('min')
+                    print(f"    Collection Time ({ct['count']} runs) - Total: {total:.2f}s, Average: {mean:.2f}s, Min: {min_val:.2f}s")
                     if ci and len(ct['values']) > 1:
                         std_dev = np.std(ct['values'], ddof=1)
                         print(f"    StdDev: {std_dev:.2f}s, 95% CI: [{ci[0]:.2f}, {ci[1]:.2f}]s")
@@ -300,16 +303,14 @@ class ExperimentAnalyzer:
                     mean = zs.get('mean')
                     total = zs.get('total')
                     ci = zs.get('confidence_interval')
-
-                    print(f"    ZSwap Duration ({zs['count']} runs) - Total: {total:.2f}s, Average: {mean:.2f}s")
-
+                    min_val = zs.get('min')
+                    print(f"    ZSwap Duration ({zs['count']} runs) - Total: {total:.2f}s, Average: {mean:.2f}s, Min: {min_val:.2f}s")
                     if ci and len(zs['values']) > 1:
                         std_dev = np.std(zs['values'], ddof=1)
                         print(f"    StdDev: {std_dev:.2f}s, 95% CI: [{ci[0]:.2f}, {ci[1]:.2f}]s")
 
 if __name__ == "__main__":
     import argparse
-
     parser = argparse.ArgumentParser(description='Aggregate experiment results.')
     parser.add_argument('--base-dir', default='data/curated')
     parser.add_argument('-b', '--benchmark', required=True)
@@ -317,7 +318,6 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--dist', default='uniform')
     parser.add_argument('-e', '--experiment', required=True)
     parser.add_argument('-q', '--quiet', action='store_true')
-
     args = parser.parse_args()
 
     analyzer = ExperimentAnalyzer(args.base_dir)

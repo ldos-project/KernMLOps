@@ -71,7 +71,8 @@ def main():
         ssh_key=args.ssh_key,
         port=args.port,
         config=args.config,
-        memory=args.memory
+        memory=args.memory,
+        single_run=args.single_run
     )
     runner.setup_experiments()
     experiment = args.experiment.upper()
