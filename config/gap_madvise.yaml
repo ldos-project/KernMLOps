@@ -1,0 +1,19 @@
+---
+benchmark_config:
+  generic:
+    benchmark: gap
+    cpus: 0
+    skip_clear_page_cache: false
+    transparent_hugepages: madvise
+    overcommit_memory: never_check
+collector_config:
+  generic:
+    poll_rate: 0.1
+    output_dir: data
+    output_graphs: false
+    hooks:
+      - mm_rss_stat
+      - process_trace
+      - madvise
+      - perf
+      - unmap_range
