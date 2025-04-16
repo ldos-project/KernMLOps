@@ -120,10 +120,10 @@ def test_loop(dataloader, model, loss_fn, test_content, *, classification: bool)
 
 
 tensors_path = "data/tensors"
-rows = 4
-cols = 3
-features_subdirectory = f"block_io/{cols}_{rows}_segment_spartan"
-train_dataset = "even" # "all" # "even_reads_only" # "reads_only"
+rows = 1
+cols = 5
+features_subdirectory = f"block_io/{cols}_{rows}_segment_spartan_fwhiz"
+train_dataset = "reads_only" # "all" # "even_reads_only" # "reads_only"
 latency_cutoff = "p95_1460us"
 classification = latency_cutoff != "latency_us"
 
