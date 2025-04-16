@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 import time
+from datetime import datetime
 
 import paramiko
 
@@ -169,6 +170,7 @@ class RemoteZswapRunner:
                 "--exclude=.venv",
                 "--exclude=data/",
                 "--exclude=benchmark/zswap/pinatrace.out",
+                "--exclude=images/",
                 local_kmlops_path,
                 # FIXME: should be user's home directory on remote
                 f"{self.remote_host}:/users/dwg/"
@@ -192,20 +194,18 @@ class RemoteZswapRunner:
             "gpg --keyserver hkp://keyserver.ubuntu.com --refresh-keys",
             "sudo apt-get install docker.io -y",
             "sudo usermod -aG docker $USER",
-            "cd ~/KernMLOps && make docker-image > /dev/null 2>&1"
+            "docker pull dariusgrassi/kernmlops",
+            "cd ~/KernMLOps && docker tag dariusgrassi/kernmlops $(whoami | tr A-Z a-z)-kernmlops:$(git log --pretty=\"%h\" -1 Dockerfile.dev requirements.txt)"
         ]
         for cmd in setup_commands:
             self.execute_command(cmd)
-            # Reset connection after adding user to docker group
-            if "usermod" in cmd:
-                self.check_ssh()
 
 
     def run_experiment(self, mem_size: str="", swap_size: int=0, num_cpus: int=0) -> bool:
         cmd = (
             "cd ~/KernMLOps && "
             "source ~/.bashrc && "
-            "make INTERACTIVE=\"\" "
+            "make INTERACTIVE=\"it\" "
             "CONTAINER_CMD=\"bash -lc 'make install-ycsb'\" "
             "docker"
         )
@@ -215,16 +215,24 @@ class RemoteZswapRunner:
             get_pty=True
         )
 
-        self.execute_command("rm -rf ~/KernMLOps/data/curated/*")
-        self.execute_command(f"cp -v ~/KernMLOps/config/zswap_{self.config}.yaml ~/KernMLOps/overrides.yaml")
+        pre_experiment_commands = [
+            "rm -rf ~/KernMLOps/data/curated/*",
+            f"cp -v ~/KernMLOps/config/zswap_{self.config}.yaml ~/KernMLOps/overrides.yaml",
+            "sudo sysctl -w vm.dirty_background_bytes=16384",
+            "sudo sysctl -w vm.dirty_bytes=32768",
+            "sudo sysctl -w vm.dirty_expire_centisecs=100",
+            "sudo sysctl -w vm.dirty_writeback_centisecs=100",
+        ]
+        logging.info("Cleaning up data/curated and aggressively shrinking the page cache...")
+        for cmd in pre_experiment_commands:
+            self.execute_command(cmd)
         if self.config == "gap":
             self.execute_command("cd ~/KernMLOps && bash scripts/setup-benchmarks/setup-gap.sh")
 
         logging.info(f"Running experiment with config file: zswap_{self.config}.yaml")
         base_cmd = (
             "cd ~/KernMLOps && "
-            "bash -c \'source ~/.bashrc && "
-            "make INTERACTIVE=\"\" "
+            "make "
         )
         container_opts = []
 
@@ -255,12 +263,29 @@ class RemoteZswapRunner:
         if container_opts:
             base_cmd += f"CONTAINER_OPTS=\"{' '.join(container_opts)}\" "
 
-        base_cmd += "collect\'"
+        # Create a timestamped filename for RunTime
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        runtime_filename = f"RunTime_{timestamp}.out"
+
+        # Run the experiment and save the output to the timestamped file
+        collect_cmd = base_cmd + f"collect 2>&1 | tee >(grep RunTime > {runtime_filename})"
+
         exit_code, stdout, stderr = self.execute_command(
-            base_cmd,
+            collect_cmd,
             ignore_errors=True,
             get_pty=True
         )
+
+        # After experiment completes, create runtime directory and copy the file
+        post_commands = [
+            "mkdir -p ~/KernMLOps/data/curated/runtime",
+            f"cp -v ~/KernMLOps/{runtime_filename} ~/KernMLOps/data/curated/runtime/"
+        ]
+
+        for cmd in post_commands:
+            self.execute_command(cmd)
+
+        logging.info("Experiment complete! Runtime results saved to data/curated/runtime/")
         return exit_code == 0
 
 
@@ -286,6 +311,12 @@ class RemoteZswapRunner:
         if not os.path.exists(local_results_path):
             logging.debug(f"Could not find results directory at {local_results_path}, creating one...")
             os.makedirs(local_results_path)
+
+        # Ensure runtime directory exists locally
+        runtime_path = os.path.join(os.path.dirname(f"data/curated/{exp_name}/{run_number}/runtime/"))
+        if not os.path.exists(runtime_path):
+            os.makedirs(runtime_path)
+
         rsync_cmd = [
             "rsync", "-az",
             "-e", f"ssh -i {self.ssh_key} -p {self.port}",
