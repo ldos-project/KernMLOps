@@ -3,7 +3,8 @@ import torch.nn as nn
 import numpy as np
 from typing import List, Tuple
 import textwrap
-
+import argparse
+from pathlib import Path
 
 class ModelConverter:
     def __init__(self, model: nn.Module, input_shape: Tuple[int, ...]):
@@ -127,8 +128,8 @@ static void forward(const float* input, float* output) {
         max_layer_size = max(dim[1] for dim in self.layer_dims)
 
         header = f"""#include <linux/module.h>
-#include <linux/module.h> /* Needed by all modules */ 
-#include <linux/printk.h> /* Needed for pr_info() */ 
+#include <linux/module.h> /* Needed by all modules */
+#include <linux/printk.h> /* Needed for pr_info() */
 #include <asm/fpu/api.h>
 #include <linux/timex.h>
 #include <linux/delay.h>
@@ -147,7 +148,7 @@ static void forward(const float* input, float* output) {
 
 // output print function
 void printArr(float* arr, int n) {
-    for (int i = 0; i < n; i++){ 
+    for (int i = 0; i < n; i++){
           float x = arr[i];
           int int_x = (int) x;
           float dec_x_temp = (x-int_x)*1000;
@@ -204,35 +205,39 @@ def convert_model(model_path: str, input_shape: Tuple[int, ...], output_file: st
 
 # Example test code
 if __name__ == "__main__":
-    # Create a simple test model
-    class SimpleNet(nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.fc1 = nn.Linear(12, 256)
-            self.relu = nn.ReLU()
+    parser = argparse.ArgumentParser(description='Converts Models to modules')
+    parser.add_argument('--input', type=str, required=True, help="Input file path")
+    parser.add_argument('--output', type=str, required=True, help="Output file path")
+    parser.add_argument('--dim', type=int, required=True, action='append', help="Input vector dimension")
+    args = parser.parse_args()
 
-            self.fc2 = nn.Linear(256, 256)
-            self.relu1 = nn.ReLU()
-            self.fc3 = nn.Linear(256, 256)
-            self.relu2 = nn.ReLU()
-            self.fc4 = nn.Linear(256, 2)
+    input_path = Path(args.input)
+    output_path = Path(args.output)
 
-    def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu1(self.fc2(x))
-        x = self.relu2(self.fc3(x))
-        x = self.fc4(x)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        return x
+    class NeuralNetwork(nn.Module):
+         def __init__(self):
+             super().__init__()
+             self.fc1 = nn.Linear(args.dim[0], args.dim[1])
+             self.relu = nn.ReLU()
+             self.fc2 = nn.Linear(args.dim[1], args.dim[2])
+             self.relu1 = nn.ReLU()
+             self.fc3 = nn.Linear(args.dim[2], args.dim[3])
+             self.relu2 = nn.ReLU()
+             self.fc4 = nn.Linear(args.dim[3], args.dim[4])
 
-    # Initialize and save test model
-    # model = SimpleNet()
-    # torch.save(model, "test_model.pth")
+         def forward(self, x):
+             logits = self.linear_relu_stack(x)
+             return logits
+
+    torch.serialization.add_safe_globals({'NeuralNetwork': NeuralNetwork})
 
     # Convert to C
     c_code = convert_model(
-        "./test_model.pth",
-        (12,),
-        "model_kernel_mod_e2egen.c",
+        input_path,
+        tuple(args.dim[0:1]),
+        output_path,
     )
-    print("Generated C code saved to model_kernel_mod.c")
+
+    print(f"Model in {input_path} turned into generated C code saved to {output_path}")
