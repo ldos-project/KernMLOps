@@ -6,10 +6,10 @@
 #include <asm/bug.h>
 #include <linux/ktime.h>
 
-extern void gemv_relu_kernel(float* Y, float* A, float* X, int M, int N, int stride_am,
+extern void gemv_add_relu_kernel(float* Y, float* A, float* X, float* B, int M, int N, int stride_am,
                         int x, int y, int z, int gridX, int gridY, int gridZ);
 
-void launch_gemv_relu(float* Y, float* A, float* X, int M, int N, int stride_am);
+void launch_gemv_add_relu(float* Y, float* A, float* X, float* B, int M, int N, int stride_am);
 const int BLOCK_SIZE = 8;
 
 extern void run_on_stack(void* new_stack, void(*f)(void));
@@ -55,27 +55,13 @@ void work(void) {
     struct timespec64 t0,t1;
     ktime_get_real_ts64(&t0); 
 
-    launch_gemv_relu(l1, weights0, in, nn_size, INPUT_SIZE, aligned_in_size);
-
-    pr_info("l2: %px", l2);
-    pr_info("w1: %px", weights1);
-    pr_info("w1 size: %d", aligned_nn_size * aligned_nn_size * sizeof(float));
-    pr_info("l1: %px", l1);
-    pr_info("nn: %d", aligned_nn_size);
- 
-    launch_gemv_relu(l2, weights1, l1, nn_size, nn_size, aligned_nn_size);
-    launch_gemv_relu(l3, weights2, l2, nn_size, nn_size, aligned_nn_size);
-
-    pr_info("out: %px", out);
-    pr_info("w3: %px", weights3);
-    pr_info("w3 size: %d", aligned_nn_size * aligned_out_size * sizeof(float));
-    pr_info("l3: %px", l3);
-    pr_info("nn: %d", aligned_nn_size);
-
-    launch_gemv_relu(out, weights3, l3, OUTPUT_SIZE, nn_size, aligned_nn_size);
+    launch_gemv_add_relu(l1, weights0, in, bias0, nn_size, INPUT_SIZE, aligned_in_size);
+    launch_gemv_add_relu(l2, weights1, l1, bias1, nn_size, nn_size, aligned_nn_size);
+    launch_gemv_add_relu(l3, weights2, l2, bias2, nn_size, nn_size, aligned_nn_size);
+    launch_gemv_add_relu(out, weights3, l3, bias3, OUTPUT_SIZE, nn_size, aligned_nn_size);
 
     /*
-    launch_gemv_relu(l1, weights0, in, aligned_nn_size, aligned_in_size, aligned_in_size);
+    launch_gemv_add_relu(l1, weights0, in, aligned_nn_size, aligned_in_size, aligned_in_size);
     pr_info("done 1");
 
     pr_info("l2: %px", l2);
@@ -83,9 +69,9 @@ void work(void) {
     pr_info("w1 size: %d", aligned_nn_size * aligned_nn_size * sizeof(float));
     pr_info("l1: %px", l1);
     pr_info("nn: %d", aligned_nn_size);
-    launch_gemv_relu(l2, weights1, l1, aligned_nn_size, aligned_nn_size, aligned_nn_size);
+    launch_gemv_add_relu(l2, weights1, l1, aligned_nn_size, aligned_nn_size, aligned_nn_size);
     pr_info("done 2");
-    launch_gemv_relu(l3, weights2, l2, aligned_nn_size, aligned_nn_size, aligned_nn_size);
+    launch_gemv_add_relu(l3, weights2, l2, aligned_nn_size, aligned_nn_size, aligned_nn_size);
     pr_info("done 3");
 
     pr_info("out: %px", out);
@@ -94,7 +80,7 @@ void work(void) {
     pr_info("l3: %px", l3);
     pr_info("nn: %d", aligned_nn_size);
  
-    launch_gemv_relu(out, weights3, l3, aligned_out_size, aligned_nn_size, aligned_out_size);
+    launch_gemv_add_relu(out, weights3, l3, aligned_out_size, aligned_nn_size, aligned_out_size);
     pr_info("done 4");
     */
 
@@ -147,13 +133,12 @@ void cleanup_module(void)
     pr_info("kernel module goodbye\n");
 } 
 
-void launch_gemv_relu(float* Y, float* A, float* X, int M, int N, int stride_am) {
+void launch_gemv_add_relu(float* Y, float* A, float* X, float* B, int M, int N, int stride_am) {
     int grid = (M + BLOCK_SIZE - 1) / BLOCK_SIZE;
     int i;
 
     for (i = 0; i < grid; i++) {
-	pr_info("grid %d\n", i);
-	gemv_relu_kernel(Y, A, X, M, N, stride_am,
+	gemv_add_relu_kernel(Y, A, X, B, M, N, stride_am,
 			 i, 0, 0, grid, 1, 1);
     }
 }

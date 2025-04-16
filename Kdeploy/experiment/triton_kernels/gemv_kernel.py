@@ -16,20 +16,27 @@ M rows and N columns.
 
 
 @triton.jit
-def gemv_relu_kernel(
+def gemv_add_relu_kernel(
     Y,
     A,
     X,
+    B,
     M,
     N,
     stride_am,
     BLOCK_SIZE_M: tl.constexpr,
     BLOCK_SIZE_N: tl.constexpr,
 ):
+    # RELU(A * X + B)
+    # A: (M, N), X: (N,), B: (M,)
+
     # Each program block handles BLOCK_SIZE_M rows.
     pid = tl.program_id(0)
     rm = pid * BLOCK_SIZE_M + tl.arange(0, BLOCK_SIZE_M)
-    acc = tl.zeros((BLOCK_SIZE_M,), dtype=tl.float32)
+
+    mask = rm < M 
+    acc = tl.load(B + rm, mask=mask)
+    #acc = tl.zeros((BLOCK_SIZE_M,), dtype=tl.float32)
 
     # Compute the number of iterations required to cover the columns.
     num_iters = tl.cdiv(N, BLOCK_SIZE_N)
@@ -64,6 +71,7 @@ def gemv_relu_kernel(
 def gemv(
     weight: torch.Tensor,
     x: torch.Tensor,
+    b: torch.Tensor,
     output: torch.Tensor,
     num_threads=0,
 ):
@@ -84,7 +92,7 @@ def gemv(
     print(M, BLOCK_SIZE_M, grid({"BLOCK_SIZE_M": BLOCK_SIZE_M}))
     print("stride", weight.stride(0))
 
-    gemv_relu_kernel[grid](output, weight, x, M, N, weight.stride(0), BLOCK_SIZE_M=BLOCK_SIZE_M, BLOCK_SIZE_N=BLOCK_SIZE_N,
+    gemv_add_relu_kernel[grid](output, weight, x, b, M, N, weight.stride(0), BLOCK_SIZE_M=BLOCK_SIZE_M, BLOCK_SIZE_N=BLOCK_SIZE_N,
                       num_threads=num_threads)
 
     return output
@@ -94,14 +102,17 @@ torch.manual_seed(0)
 
 triton.runtime.driver.set_active_to_cpu()
 
-weight = torch.randn((93, 57), device='cpu', dtype=torch.float32)
-x = torch.randn((57), device='cpu', dtype=torch.float32)
-triton_output = gemv(weight, x, None)
+weight = torch.randn((935, 572), device='cpu', dtype=torch.float32)
+x = torch.randn((572), device='cpu', dtype=torch.float32)
+bias = torch.randn((935), device='cpu', dtype=torch.float32)
+
+triton_output = gemv(weight, x, bias, None)
+
 # torch.matmul will select bf16 kernels on Linux Arm if x is 1-d, which has lower precision.
 # So we reshape x to be 2-d, which will invoke different kernels.
-torch_output = torch.nn.functional.relu(torch.matmul(weight, x[:, None]).reshape(-1))
-print(f"triton_cpu_output_with_{weight.dtype}_inputs={triton_output}")
-print(f"torch_cpu_output_with_{weight.dtype}_inputs={torch_output}")
+torch_output = torch.nn.functional.relu(torch.matmul(weight, x[:, None]).reshape(-1) + bias)
+#print(f"triton_cpu_output_with_{weight.dtype}_inputs={triton_output}")
+#print(f"torch_cpu_output_with_{weight.dtype}_inputs={torch_output}")
 rtol = 0
 if torch.allclose(triton_output, torch_output, atol=1e-4, rtol=rtol):
     print("✅ TritonCPU and TorchCPU match")

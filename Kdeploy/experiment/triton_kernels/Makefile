@@ -1,6 +1,6 @@
 
-PY_FILE := gemv_kernel.py
-TRITON_KERNELS := gemv_relu_kernel 
+PY_FILE := gemv_kernel.py 
+TRITON_KERNELS := gemv_add_relu_kernel 
 KERNEL_MODULE_SRC := main
 USER_SRC := user
 
@@ -9,8 +9,8 @@ TRITON_KERNELS_O := $(TRITON_KERNELS:=.o)
 
 O_FILES := $(TRITON_KERNELS_O) run_on_stack.o
 
-obj-m += my_module20.o
-my_module20-objs := $(KERNEL_MODULE_SRC).o $(O_FILES)
+obj-m += my_module.o
+my_module-objs := $(KERNEL_MODULE_SRC).o $(O_FILES)
 CFLAGS_main.o += -mhard-float
 
 PWD := $(CURDIR)
