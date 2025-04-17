@@ -10,4 +10,4 @@ linnos-inference-capture.o: linnos-inference-capture.bpf.c
   	-I/usr/src/linux-headers-$(shell uname -r)/arch/x86/include/generated/
 
 linnos-inference-capture: linnos-inference-capture.cpp linnos-inference-capture.o
-	g++ -o $@ $< -lbpf
+	g++ -o $@ $< -lbpf -I../../fstore/
