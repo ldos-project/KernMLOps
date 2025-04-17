@@ -19,6 +19,7 @@ int main() {
       .key_size = 4,
       .value_size = 8,
       .max_entries = 100,
+      .map_flags = BPF_F_MMAPABLE,
   };
 
   int ebpf_fd = syscall(SYS_bpf, BPF_MAP_CREATE, &attr, sizeof(attr));
@@ -74,8 +75,23 @@ int main() {
   };
 
   err = ioctl(gsfd, GET_ONE, (unsigned long)&gsa);
-  assert(err == 0);
+  if (err != 0) {
+    auto err = errno;
+    std::cerr << "Something failed while getting: " << err << ", " << std::strerror(err)
+              << std::endl;
+    return err;
+  }
   assert(gsa.value == SAMPLE_VALUE);
+
+  gsa = {.key = 0, .value = 0, .map_name = unsafeHashConvert(NAME)};
+
+  err = ioctl(gsfd, GET_MAPPED, (unsigned long)&gsa);
+  if (err != 0) {
+    auto err = errno;
+    std::cerr << "Something failed while getting mapped: " << err << ", " << std::strerror(err)
+              << std::endl;
+    return err;
+  }
 
   err = ioctl(fd, UNREGISTER_MAP, unsafeHashConvert(NAME));
   assert(err == 1);

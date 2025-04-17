@@ -40,6 +40,16 @@ int fstore_get_num_keys(u64 map_name,
 		size_t* size);
 EXPORT_SYMBOL_GPL(fstore_get_num_keys);
 
+int fstore_get_map_array_start(u64 map_name,
+				size_t key_size,
+				size_t value_size,
+				size_t num_elements,
+				void** map_ptr);
+EXPORT_SYMBOL_GPL(fstore_get_map_array_start);
+
+int fstore_put_map_array(u64 map_name);
+EXPORT_SYMBOL_GPL(fstore_put_map_array);
+
 struct file_operations fops = {
 	.owner = THIS_MODULE,
 	.read = NULL,
@@ -165,6 +175,39 @@ int fstore_get(u64 map_name,
 	return err;
 }
 
+int fstore_get_map_array_start(u64 map_name,
+				size_t key_size,
+				size_t value_size,
+				size_t num_elements,
+				void** map_ptr) {
+	//Get the map
+	int err = 0;
+	struct bpf_map* map = NULL;
+	hash_t* item = NULL;
+	hash_for_each_possible_rcu_notrace(fstore_map, item, hnode, map_name) {
+		map = item->map;
+		if(IS_ERR(map)) return -EKEYEXPIRED;
+		else { bpf_map_inc(map); break; }
+	}
+	if(err) return err;
+	if(!map) return -ENOENT;
+
+	//Check its type
+	if(map->map_type != BPF_MAP_TYPE_ARRAY) return -EINVAL;
+
+	//Shibboleth to verify if the module knows the limits.
+	if(map->key_size != key_size) return -EACCES;
+	if(map->value_size != value_size) return -EACCES;
+	if(map->max_entries != num_elements) return -EACCES;
+	if(!(map->map_flags & BPF_F_MMAPABLE)) return -EACCES;
+
+	//Get the starting pointer
+	struct bpf_array* array = container_of(map, struct bpf_array, map);
+	*map_ptr = array->value;
+
+	return 0;
+}
+
 int fstore_get_value_size(u64 map_name,
 			size_t* size) {
 	int err = 0;
@@ -199,6 +242,20 @@ int fstore_get_num_keys(u64 map_name,
 	if(err == -EKEYEXPIRED) return -EKEYEXPIRED;
 	if(i == 0) return -ENOKEY;
 	return err;
+}
+
+int fstore_put_map_array(u64 map_name)
+{
+	struct bpf_map* map;
+	int i = 0;
+	hash_t* item = NULL;
+	hash_for_each_possible_rcu_notrace(fstore_map, item, hnode, map_name) {
+		i++;
+		map = item->map;
+		if(IS_ERR(map)) i--;
+		else bpf_map_put(map);
+	}
+	return i;
 }
 
 static long fstore_ioctl(struct file *file,
