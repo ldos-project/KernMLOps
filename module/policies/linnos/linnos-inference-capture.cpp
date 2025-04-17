@@ -112,6 +112,10 @@ int main() {
   int ret = syscall(SYS_finit_module, kmod_fd, "", 0);
   ASSERT_ERRNO(ret >= 0);
 
+  std::string read_stdin = "";
+  while (read_stdin != "END")
+    getline(std::cin, read_stdin);
+
   ret = syscall(SYS_delete_module, kname, 0);
   ASSERT_ERRNO(ret == 0);
 
