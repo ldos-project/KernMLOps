@@ -1,4 +1,11 @@
+#include "../../fstore/fstore.h"
+#include "../../linux/drivers/md/md.h"
+#include "../../linux/drivers/md/raid1.h"
+#include "linnos-inference-capture.h"
 #include <asm/fpu/api.h>
+#include <linux/bio.h>
+#include <linux/blk_types.h>
+#include <linux/blkdev.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/module.h> /* Needed by all modules */
@@ -8,7 +15,9 @@
 #define INPUT_SIZE     4
 #define OUTPUT_SIZE    2
 
-u32 select(u32 device) {
+#define IO_BLOCKED     ((struct bio*)1)
+
+static u32 select(u32 device) {
   switch (device) {
     case 271581184:
       return 0;
@@ -19,6 +28,10 @@ u32 select(u32 device) {
   }
   return 3;
 }
+
+int (*ml_choose_best_rdev_raid1)(struct r1conf* conf, struct r1bio* r1_bio);
+
+bool rdev_readable(struct md_rdev* rdev, struct r1bio* r1_bio);
 
 static const float weights0[] = {
     -0.193689, -0.332377, 0.399570, 0.136509,  0.093448,  -0.007472, 0.116340,  0.360244,
@@ -111,29 +124,30 @@ static void forward(const float* input, float* output, float* arr1, float* arr2)
 atomic_t start_loc = ATOMIC_INIT(0);
 
 typedef struct lengths {
-  atomic_t segments;
-  atomic_t 4k_ios;
+  u64 segments;
+  u64 ios_4k;
 } queue_lengths;
 
-queue_lengths qs*;
+queue_lengths* qs;
 
-int infer(struct r1conf* conf, struct r1bio* r1_bio) {
+static int infer(struct r1conf* conf, struct r1bio* r1_bio) {
   unsigned int raid_disks = conf->raid_disks;
   unsigned int start = ((unsigned int)atomic_inc_return(&start_loc)) % raid_disks;
 
   struct md_rdev* rdev;
 
   unsigned int curr = start;
-  rdev = conf->mirrors[disk].rdev;
   kernel_fpu_begin();
   float input[INPUT_SIZE];
-  float sync_flag = (r1_bio->master_bio->opf & REQ_SYNC) ? 1 : 0;
-  float nomerge_flag = (r1_bio->master_bio->opf & REQ_NOMERGE) ? 1 : 0;
+  float sync_flag = (r1_bio->master_bio->bi_opf & REQ_SYNC) ? 1 : 0;
+  float nomerge_flag = (r1_bio->master_bio->bi_opf & REQ_NOMERGE) ? 1 : 0;
   input[2] = sync_flag;
   input[3] = nomerge_flag;
   for (unsigned int i = 0; i < raid_disks; i++) {
     float output[OUTPUT_SIZE];
-    float arr1[MAX_LAYER_SIZE] float arr2[MAX_LAYER_SIZE] curr = (start + i) % raid_disks;
+    float arr1[MAX_LAYER_SIZE];
+    float arr2[MAX_LAYER_SIZE];
+    curr = (start + i) % raid_disks;
 
     if (r1_bio->bios[curr] == IO_BLOCKED) {
       continue;
@@ -146,10 +160,10 @@ int infer(struct r1conf* conf, struct r1bio* r1_bio) {
     if (rdev->bdev == NULL) {
       continue;
     }
-    u32 index = select(disk_devt(rdev->bdev));
+    u32 index = select(disk_devt(rdev->bdev->bd_disk));
 
-    input[0] = atomic_read(&qs[index]->segment);
-    input[1] = atomic_read(&qs[index]->4k_ios);
+    input[0] = READ_ONCE(qs[index].segments);
+    input[1] = READ_ONCE(qs[index].ios_4k);
     forward(input, output, arr1, arr2);
     if (output[0] - output[1]) {
       break;
@@ -159,13 +173,25 @@ int infer(struct r1conf* conf, struct r1bio* r1_bio) {
   return curr;
 }
 
-// Example usage function
+int fstore_get_map_array_start(u64 map_name, size_t key_size, size_t value_size,
+                               size_t num_elements, void** map_ptr);
+
+int fstore_put_map_array(u64 map_name);
+
+__u64 map_id;
+
 int __init init_module(void) {
+  if (convert8byteStringHash(NAME, &map_id))
+    return -EINVAL;
+  int err = fstore_get_map_array_start(map_id, 4, sizeof(queue_lengths), 3, (void**)&qs);
+  if (err != 0)
+    return err;
   ml_choose_best_rdev_raid1 = infer;
   return 0;
 }
 
 void __exit cleanup_module(void) {
+  fstore_put_map_array(map_id);
   ml_choose_best_rdev_raid1 = NULL;
   pr_info("Goodbye \n");
 }
