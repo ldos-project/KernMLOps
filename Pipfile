@@ -24,6 +24,10 @@ docker = "*"
 pexpect = "*"
 plotnine = "*"
 pyarrow = "*"
+dask = "== 2024.11.1"
+featurewiz = ">= 0.6.1"
+torch = ">= 2.6.0"
+pandas = ">= 2.2.3"
 
 [dev-packages]
 
