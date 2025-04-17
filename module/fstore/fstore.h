@@ -12,6 +12,8 @@ struct register_input {
 	__u32 fd;
 };
 
+
+
 #ifdef __cplusplus
 #include <optional>
 
@@ -32,6 +34,18 @@ consteval __u64 unsafeHashConvert(const char* string) {
 		hash |= ((__u64)string[i]) << (i * 8);
 	}
   	return hash;
+}
+#else // __cplusplus
+
+static int convert8byteStringHash(char* string, __u64* val) {
+	__u64 hash = 0;
+	__u8 i = 0;
+	for (; string[i] != '\0' && i < 8; i++) {
+		hash |= ((__u64)string[i]) << (i * 8);
+	}
+	if (string[i] != '\0') return -1;
+	*val = hash;
+	return 0;
 }
 
 #endif // __cplusplus
