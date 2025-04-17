@@ -2,8 +2,6 @@
 import torch
 import torch.nn as nn
 
-from parse_and_generate import *
-
 class SimpleNet(nn.Module):
     def __init__(self, n):
         super().__init__()
@@ -16,7 +14,6 @@ class SimpleNet(nn.Module):
         self.relu2 = nn.ReLU()
         self.fc4 = nn.Linear(n, 2)
 
-
     def forward(self, x):
         x = self.relu(self.fc1(x))
         x = self.relu1(self.fc2(x))
@@ -27,11 +24,9 @@ class SimpleNet(nn.Module):
 
 
 if __name__ == "__main__":
-    for i in [8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]:
-        model = SimpleNet(i)
-        name = "models/model_%d.pth" % i
-        c_name = "template/model_%d.c" % i
-        torch.save(model, name) 
-        c_code = convert_model(name, (12,), c_name)
+#    for i in [8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]:
+    model = SimpleNet(32)
 
-        print ("Generated C code saved to", c_name)
+    compiled = torch.compile(torch.square)
+    out = compiled(torch.arange(12, dtype=torch.float32))
+    print(out)

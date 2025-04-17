@@ -85,8 +85,8 @@ void work(void) {
     */
 
     ktime_get_real_ts64(&t1); 
-    long long us = (t1.tv_sec - t0.tv_sec) * 1000000ULL + (t1.tv_nsec - t0.tv_nsec) / 1000;
-    pr_info("%lld us", us);
+    long long ns = (t1.tv_sec - t0.tv_sec) * 1000000000ULL + (t1.tv_nsec - t0.tv_nsec);
+    pr_info("%lld ns", ns);
 
     kernel_fpu_end();
 

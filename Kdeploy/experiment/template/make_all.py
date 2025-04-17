@@ -19,9 +19,11 @@ with open("Makefile", "w") as f:
 
 
 for i in sizes:
-    os.system("sudo insmod model_%d.ko" % i)
-    time.sleep(0.5)
-    os.system("sudo rmmod model_%d" % i)
-    os.system("sudo dmesg | tail -n 2")
+    print("============== SIZE %d ==============" % i)
+    for j in range(40):
+        os.system("sudo insmod model_%d.ko" % i)
+        time.sleep(0.01)
+        os.system("sudo rmmod model_%d" % i)
+        os.system("sudo dmesg | tail -n 2 | grep 'ns' ")
 
 
