@@ -7,6 +7,7 @@
 enum GET_SET_COMMAND {
 	BENCH_GET_MANY = 0x100,
 	BENCH_GET_ARRAY = 0x10,
+	BENCH_GET_MAPPED = 0x1000,
 };
 
 struct bench_get_args {
