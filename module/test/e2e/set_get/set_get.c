@@ -46,6 +46,14 @@ int fstore_get_value_size(u64 map_name,
 int fstore_get_num_keys(u64 map_name,
 			size_t* size);
 
+int fstore_get_map_array_start(u64 map_name,
+				size_t key_size,
+				size_t value_size,
+				size_t num_elements,
+				void** map_ptr);
+
+int fstore_put_map_array(u64 map_name);
+
 typedef struct get_set_args gsa_t;
 
 static long get_set_ioctl(struct file* file,
@@ -87,6 +95,29 @@ static long get_set_ioctl(struct file* file,
 				err = -EINVAL;
 			}
 		}
+		break;
+	case GET_MAPPED:
+		if( copy_from_user(&gsa, (gsa_t*) data, sizeof(gsa_t)) )
+		{
+			pr_err("Getting initial struct impossible\n");
+			err = -EINVAL;
+			break;
+		}
+		u64* blah = NULL;
+		err = fstore_get_map_array_start(gsa.map_name,
+						4, 8, 100, (void**) &blah);
+		if(err == 0) {
+			gsa.value = blah[gsa.key];
+			if( copy_to_user(&uptr->value,
+					&(gsa.value),
+					sizeof(gsa.value)) ) {
+				pr_err("Returning was thwarted\n");
+				err = -EINVAL;
+			}
+			fstore_put_map_array(gsa.map_name);
+		}
+		break;
+
 	default:
 		break;
 	}
