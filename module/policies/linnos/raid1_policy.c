@@ -161,6 +161,10 @@ static int infer(struct r1conf* conf, struct r1bio* r1_bio) {
       continue;
     }
     u32 index = select(disk_devt(rdev->bdev->bd_disk));
+    if (index > 2) {
+      pr_err("Extremely bad error has occurred\n");
+      return curr;
+    }
 
     input[0] = READ_ONCE(qs[index].segments);
     input[1] = READ_ONCE(qs[index].ios_4k);
