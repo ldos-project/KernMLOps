@@ -5,7 +5,8 @@
 #define NAME "set_get"
 
 enum GET_SET_COMMAND {
-	GET_ONE,
+	GET_ONE = 0x10,
+	GET_MAPPED = 0x100,
 };
 
 struct get_set_args {
