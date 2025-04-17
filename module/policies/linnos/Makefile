@@ -29,3 +29,14 @@ raid1_policy.ko: raid1_policy.c
 
 run: linnos-inference-capture raid1_policy.ko linnos-inference-capture.o
 	sudo ./$<
+
+clean:
+	-rm linnos-inference-capture
+	-rm linnos-inference-capture.o
+	-rm *module*
+	-rm *.mod*
+	-rm *.o*
+	-rm .*.o*
+	-rm *.ko*
+	-rm .*.cmd
+	-rm Module.symvers
