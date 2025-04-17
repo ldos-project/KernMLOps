@@ -1,10 +1,11 @@
+import argparse
+import textwrap
+from pathlib import Path
+from typing import Tuple
+
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import List, Tuple
-import textwrap
-import argparse
-from pathlib import Path
+
 
 class ModelConverter:
     def __init__(self, model: nn.Module, input_shape: Tuple[int, ...]):
@@ -165,9 +166,9 @@ int __init init_module(void){
     float input [INPUT_SIZE];
     float output [OUTPUT_SIZE];
     for (int i = 0; i < INPUT_SIZE; i++){
-	    input [i] = 0.1;
+      input [i] = 0.1;
     }
-	forward(input, output);
+  forward(input, output);
     printArr(output, OUTPUT_SIZE);
     kernel_fpu_end();
     return 0;
@@ -176,7 +177,7 @@ int __init init_module(void){
 void __exit cleanup_module(void)
 {
 
-	pr_info("Goodbye \\n");
+  pr_info("Goodbye \\n");
 }
 
 MODULE_LICENSE("GPL");
@@ -216,22 +217,18 @@ if __name__ == "__main__":
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    class NeuralNetwork(nn.Module):
+    class MLPModel(nn.Module):
          def __init__(self):
-             super().__init__()
+             super(MLPModel, self).__init__()
              self.fc1 = nn.Linear(args.dim[0], args.dim[1])
              self.relu = nn.ReLU()
              self.fc2 = nn.Linear(args.dim[1], args.dim[2])
-             self.relu1 = nn.ReLU()
-             self.fc3 = nn.Linear(args.dim[2], args.dim[3])
-             self.relu2 = nn.ReLU()
-             self.fc4 = nn.Linear(args.dim[3], args.dim[4])
 
          def forward(self, x):
              logits = self.linear_relu_stack(x)
              return logits
 
-    torch.serialization.add_safe_globals({'NeuralNetwork': NeuralNetwork})
+    torch.serialization.add_safe_globals({'MLPModel': MLPModel})
 
     # Convert to C
     c_code = convert_model(
