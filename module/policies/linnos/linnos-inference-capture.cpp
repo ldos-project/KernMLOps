@@ -20,13 +20,24 @@ int map_fd = -1;
 int fstore_fd = -1;
 bool installed = false;
 int kmod_fd = -1;
+constexpr __u64 map_id = unsafeHashConvert(NAME);
+
+#define ASSERT_ERRNO_DIRTY(x)                                                      \
+  if (!(x)) {                                                                      \
+    int err_errno = errno;                                                         \
+    fprintf(stderr, "%s:%d: errno:%s\n", __FILE__, __LINE__, strerror(err_errno)); \
+    std::exit(-err_errno);                                                         \
+  }
 
 void cleanup() {
   if (kmod_fd >= 0)
     close(kmod_fd);
 
-  if (installed)
-    ioctl(map_fd, UNREGISTER_MAP, unsafeHashConvert(NAME));
+  std::cout << "Value of Installed:\t" << installed << std::endl;
+  if (installed) {
+    int ret = ioctl(fstore_fd, UNREGISTER_MAP, map_id);
+    ASSERT_ERRNO_DIRTY(ret == 1);
+  }
 
   if (fstore_fd >= 0)
     close(fstore_fd);
@@ -48,18 +59,15 @@ std::vector<std::tuple<const char*, const char*>> probes = std::vector({
     std::tuple("trace_block_rq_complete", "block_rq_complete"),
 });
 
-const char* probes = "linnos-inference-capture.o";
-const char* kmodule = "linnos-inference-capture.ko";
-const char* kname = "linnos-inference-capture";
-
-const char* map_name = NAME;
-u64 map_id = unsafeHashConvert(map_name);
+const char* probes_file = "linnos-inference-capture.o";
+const char* kmodule = "raid1_policy.ko";
+const char* kname = "raid1_policy";
 
 int main() {
   struct bpf_object* obj;
 
   // See if we can open the object file
-  obj = bpf_object__open_file("linnos-inference-capture.o", NULL);
+  obj = bpf_object__open_file(probes_file, NULL);
   ASSERT_ERRNO(obj)
 
   if (bpf_object__load(obj)) {
@@ -86,14 +94,14 @@ int main() {
 
   // Now we need to register with the feature store
   // open the feature store.
-  int fstore_fd = open("/dev/fstore_device", O_RDWR);
+  fstore_fd = open("/dev/fstore_device", O_RDWR);
   ASSERT_ERRNO(fstore_fd >= 0);
 
   register_input reg = {
-      .map_name = unsafeHashConvert(NAME),
-      .fd = 0,
+      .map_name = map_id,
+      .fd = (__u32)map_fd,
   };
-  int err = ioctl(map_fd, REGISTER_MAP, (unsigned long)&reg);
+  int err = ioctl(fstore_fd, REGISTER_MAP, (unsigned long)&reg);
   ASSERT_ERRNO(err == 0);
   installed = true;
 
@@ -104,7 +112,7 @@ int main() {
   int ret = syscall(SYS_finit_module, kmod_fd, "", 0);
   ASSERT_ERRNO(ret >= 0);
 
-  int ret = syscall(SYS_delete_module, kname, 0);
+  ret = syscall(SYS_delete_module, kname, 0);
   ASSERT_ERRNO(ret == 0);
 
   cleanup();
