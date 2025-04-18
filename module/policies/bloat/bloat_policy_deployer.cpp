@@ -43,6 +43,17 @@ int main(int argc, char** argv) {
   struct bpf_program* prog = bpf_object__find_program_by_name(obj, "raw_trace_rss_stat");
   int prog_fd = bpf_program__fd(prog);
 
+  int singular_cache_fd = bpf_object__find_map_fd_by_name(obj, "singular_cache_array");
+  RETURN_ERRNO(singular_cache_fd >= 0);
+  int rss_headers_fd = bpf_object__find_map_fd_by_name(obj, "rss_head_idx");
+  RETURN_ERRNO(rss_headers_fd >= 0);
+  int rss_data_fd = bpf_object__find_map_fd_by_name(obj, "rss_buffer");
+  RETURN_ERRNO(rss_data_fd >= 0);
+  int dtlb_header_fd = bpf_object__find_map_fd_by_name(obj, "dtlb_header");
+  RETURN_ERRNO(dtlb_header_fd >= 0);
+  int dtlb_data_fd = bpf_object__find_map_fd_by_name(obj, "dtlb_buffer");
+  RETURN_ERRNO(dtlb_data_fd >= 0);
+
   // Attach to tracepoint
   struct bpf_link* link = bpf_program__attach_raw_tracepoint(prog, "rss_stat");
   RETURN_ERRNO(link);
