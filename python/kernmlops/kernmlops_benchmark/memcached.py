@@ -13,6 +13,7 @@ from kernmlops_benchmark.errors import (
     BenchmarkRunningError,
 )
 from kernmlops_config import ConfigBase
+from pytimeparse.timeparse import timeparse
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,7 @@ class MemcachedConfig(ConfigBase):
     request_distribution: str = "uniform"
     thread_count: int = 1
     target: int = 10000
+    sleep: str | None = None
 
 
 class MemcachedBenchmark(Benchmark):
@@ -119,10 +121,14 @@ class MemcachedBenchmark(Benchmark):
         if delete_foo.returncode != 0:
             raise BenchmarkError("Delete Single Memcached Record Failing")
 
+        space : int | float | None = None if self.config.sleep is None else timeparse(self.config.sleep)
         process: subprocess.Popen | None = None
         for i in range(self.config.repeat):
             if process is not None:
                 process.wait()
+                if space is not None :
+                    print(f"Sleeping for {space} seconds")
+                    time.sleep(space)
                 if process.returncode != 0:
                     self.process = process
                     raise BenchmarkError("Memcached Run {(2 * i) - 1} Failed")
