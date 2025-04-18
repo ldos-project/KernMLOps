@@ -15,6 +15,7 @@ from kernmlops_benchmark.errors import (
 from kernmlops_config import ConfigBase
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
+from pytimeparse.timeparse import timeparse
 
 
 @dataclass(frozen=True)
@@ -36,6 +37,7 @@ class MongoDbConfig(ConfigBase):
     request_distribution: str = "uniform"
     thread_count: int = 1
     target: int = 10000
+    sleep: str | None = None
     url: str = "mongodb://localhost:27017/"
 
 kill_mongod = [
@@ -110,10 +112,13 @@ class MongoDbBenchmark(Benchmark):
         if ping_mongod is None:
             raise BenchmarkError("MongoDB Failed To Start")
 
+        space : int | float | None = timeparse(self.config.sleep)
         process: subprocess.Popen | None = None
         for i in range(self.config.repeat):
             if process is not None:
                 process.wait()
+                if space is not None :
+                    time.sleep(space)
                 if process.returncode != 0:
                     self.process = process
                     raise BenchmarkError(f"MongoDB Run {(2 * i) - 1} Failed")
@@ -196,6 +201,8 @@ class MongoDbBenchmark(Benchmark):
             process = subprocess.Popen(run_mongodb, preexec_fn=demote())
             if process is not None:
                 process.wait()
+                if space is not None :
+                    time.sleep(space)
                 if process.returncode != 0:
                     self.process = process
                     raise BenchmarkError(f"MongoDB Run {2 * i} Failed")
