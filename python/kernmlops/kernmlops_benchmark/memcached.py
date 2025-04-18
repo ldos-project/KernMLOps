@@ -121,7 +121,7 @@ class MemcachedBenchmark(Benchmark):
         if delete_foo.returncode != 0:
             raise BenchmarkError("Delete Single Memcached Record Failing")
 
-        space : int | float | None = timeparse(self.config.sleep)
+        space : int | float | None = None if self.config.sleep is None else timeparse(self.config.sleep)
         process: subprocess.Popen | None = None
         for i in range(self.config.repeat):
             if process is not None:
