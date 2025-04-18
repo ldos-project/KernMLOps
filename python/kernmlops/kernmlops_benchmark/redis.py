@@ -84,6 +84,9 @@ class RedisBenchmark(Benchmark):
         if self.server is not None:
             raise BenchmarkRunningError()
 
+
+        time.sleep(180)
+        
         # start the redis server
         start_redis = [
             self.redis_server_name(),
