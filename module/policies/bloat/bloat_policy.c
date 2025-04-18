@@ -13,6 +13,11 @@
 
 void sort(void* base, size_t num, size_t size, cmp_func_t cmp_func, swap_func_t swap_func);
 
+int fstore_get_map_array_start(u64 map_name, size_t key_size, size_t value_size,
+                               size_t num_elements, void** map_ptr);
+
+int fstore_put_map_array(u64 map_name);
+
 static const float weights0[] = {
     0.017325,  -0.102724, -0.076493, -0.103416, 0.142636,  -0.235354, -0.065574, 0.003554,
     -0.051728, -0.074628, 0.069469,  0.119377,  -0.052321, 0.052125,  0.095846,  -0.045546,
@@ -95,86 +100,88 @@ static void forward(const float* input, float* output, float* temp1, float* temp
 u32* target_tgid;
 static int is_blocked = 0;
 
-static void block_cache() {
+static void block_page_fault_special(void) {
   if (*target_tgid != 0)
     is_blocked = 1;
 }
 
-static void unblock_cache() {
+static void unblock_page_fault_special(void) {
   if (target_tgid != 0)
     is_blocked = 0;
 }
 
-struct data {
+typedef struct data {
   __u64 ts;
   __u64 count;
   __u64 valid;
 } data_t;
 
 u64* rss_head;
-u64* tlb_head;
+u64* dtlb_head;
 data_t* rss_data;
-data_t* tlb_data;
+data_t* dtlb_data;
 
-struct to_sort {
+typedef struct to_sort {
   __u64 ts;
   __u64 count;
 } sortable_t;
 
-void read_data(data_t* data_buffer, u64* head_ptr, sortable_t* buffer, int len) {
-  __u64 start = READ_ONCE(head_ptr);
-  __u64 trials = BUFFER_SIZE >> 1;
+static void read_data(data_t* data_buffer, u64* head_ptr, sortable_t* buffer, int len) {
+  __u64 start = READ_ONCE(*head_ptr);
+  __u64 trials = BUFFER_ENTRIES >> 1;
   for (int c = len - 1; c >= 0 && trials >= 0; trials--) {
     start = (start - 1) % BUFFER_ENTRIES;
     data_t* point = data_buffer + start;
     cmpxchg_acquire(&point->valid, 1, 2);
-    buffer[c]->count = point->count;
-    buffer[c]->ts = point->ts;
+    buffer[c].count = point->count;
+    buffer[c].ts = point->ts;
     if (cmpxchg_release(&point->valid, 2, 1) == 1) {
       c--;
     }
   }
 }
 
-int sort_data(const void* a, const void* b) {
+static int sort_data(const void* a, const void* b) {
   sortable_t sa = *(const sortable_t*)a;
   sortable_t sb = *(const sortable_t*)b;
   return sa.ts - sb.ts;
 }
 
-void get_data_into_float(float* input) {
+static void get_data_into_float(float* input) {
   sortable_t rss[10];
   sortable_t dtlb[10];
   read_data(rss_data, rss_head, rss, 10);
   read_data(dtlb_data, dtlb_head, dtlb, 10);
-  sort(rss, 10, sizeof(sortable_t), sort_data);
-  sort(dtlb_data, 10, sizeof(sortable_t), sort_data);
-  for (i = 0; i < 10; i++) {
-    input[i * 2] = (float)(rss[i]);
-    input[i * 2 + 1] = (float)(dtlb[i]);
+  sort(rss, 10, sizeof(sortable_t), sort_data, NULL);
+  sort(dtlb_data, 10, sizeof(sortable_t), sort_data, NULL);
+  for (int i = 0; i < 10; i++) {
+    input[i * 2] = (float)(rss[i].count);
+    input[i * 2 + 1] = (float)(dtlb[i].count);
   }
 }
 
-int infer(struct mm_struct* mm, int unmapped, int referenced) {
+static int infer(struct mm_struct* mm, int unmapped, int referenced) {
   if (mm->owner->tgid != *target_tgid) {
     return unmapped && (!referenced || referenced < HPAGE_PMD_NR / 2);
   }
   pr_info("Found you");
-  kernel_fpu_begin();
   float input[20];
   float temp1[MAX_LAYER_SIZE];
   float temp2[MAX_LAYER_SIZE];
   float output[2];
   get_data_into_float(input);
+  kernel_fpu_begin();
   forward(input, output, temp1, temp2);
   // First output is now, second output is 5 timesteps forwards
   if (output[1] >= 0.8)
-    block_cache();
+    block_page_fault_special();
   int cmp = (output[0] >= 0.8) || (output[1] >= 0.8);
+  if (output[1] < 0.5 && output[2] < 0.5)
+    unblock_page_fault_special();
   kernel_fpu_end();
   if (cmp)
-    return unmapped && (!reference || referenced < HPAGE_PMD_NR - 2) return unmapped &&
-           (!referenced || referenced < HPAGE_PMD_NR / 2);
+    return unmapped && (!referenced || referenced < HPAGE_PMD_NR - 2);
+  return unmapped && (!referenced || referenced < HPAGE_PMD_NR / 2);
 }
 
 int (*ml_throttle_hugepage_faults)(struct vm_fault* vmf);
@@ -182,49 +189,48 @@ int (*ml_throttle_hugepage_faults)(struct vm_fault* vmf);
 int (*ml_referenced_page_limit_collapse)(struct mm_struct* mm, int unmapped, int referenced);
 
 static int should_throttle_fault(struct vm_fault* vmf) {
-  if (target_tgid == -1)
+  if (target_tgid == 0)
     return 0;
   if (vmf->vma && vmf->vma->vm_mm && vmf->vma->vm_mm->owner &&
-      vmf->vma->vm_mm->owner->tgid == target_tgid && is_blocked) {
+      vmf->vma->vm_mm->owner->tgid == *target_tgid && is_blocked) {
     return 1;
   }
   return 0;
 }
 
-__u64 map_id[5]
+__u64 map_id[5];
 
-    // Example usage function
-    int __init
-    init_module(void) {
+// Example usage function
+int __init init_module(void) {
   pr_info("Kernel Module Init \n");
   // get the cache
   if (convert8byteStringHash(CACHE, &map_id[0]))
     return -EINVAL;
-  int err = fstore_get_map_array_start(map_id, 4, 4, 1, (void**)target_tgid);
+  int err = fstore_get_map_array_start(map_id[0], 4, 4, 1, (void**)target_tgid);
   if (err != 0)
     return err;
 
   if (convert8byteStringHash(RHEAD, &map_id[1]))
     return -EINVAL;
-  int err = fstore_get_map_array_start(map_id, 4, 8, 1, (void**)rss_head);
+  err = fstore_get_map_array_start(map_id[1], 4, 8, 1, (void**)rss_head);
   if (err != 0)
     return err;
 
   if (convert8byteStringHash(RDATA, &map_id[2]))
     return -EINVAL;
-  int err = fstore_get_map_array_start(map_id, 4, 24, BUFFER_ENTRIES, (void**)rss_data);
+  err = fstore_get_map_array_start(map_id[2], 4, 24, BUFFER_ENTRIES, (void**)rss_data);
   if (err != 0)
     return err;
 
   if (convert8byteStringHash(THEAD, &map_id[3]))
     return -EINVAL;
-  int err = fstore_get_map_array_start(map_id, 4, 8, 1, (void**)tlb_head);
+  err = fstore_get_map_array_start(map_id[3], 4, 8, 1, (void**)dtlb_head);
   if (err != 0)
     return err;
 
   if (convert8byteStringHash(TDATA, &map_id[4]))
     return -EINVAL;
-  int err = fstore_get_map_array_start(map_id, 4, 24, BUFFER_ENTRIES, (void**)tlb_data);
+  err = fstore_get_map_array_start(map_id[4], 4, 24, BUFFER_ENTRIES, (void**)dtlb_data);
   if (err != 0)
     return err;
 
