@@ -111,13 +111,11 @@ int trace_rss_stat(struct trace_event_raw_rss_stat* args) {
   return 0;
 }
 
-#define CPUS 64
-
 struct {
   __uint(type, BPF_MAP_TYPE_ARRAY);
   __uint(max_entries, 1);
   __type(key, u32);
-  __type(value, rss_data_t);
+  __type(value, u64);
   __uint(map_flags, BPF_F_MMAPABLE);
 } dtlb_header SEC(".maps");
 

@@ -4,7 +4,7 @@ KBUILD ?= $(PWD)/../../kbuild
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 ccflags-y += -msse -mhard-float
 
-default: run
+default: build
 
 echo:
 	@echo obj-m ${obj-m}
@@ -28,7 +28,9 @@ bloat_policy_deployer: bloat_policy_deployer.cpp
 bloat_policy.ko: bloat_policy.c
 	+${MAKE} KBUILD_EXTRA_SYMBOLS=${KBUILD_EXTRA_SYMBOLS} -C ${KBUILD} M=${ROOT_DIR} modules
 
-run: bloat_policy_deployer bloat_probe.o bloat_policy.ko
+build: bloat_policy_deployer bloat_probe.o bloat_policy.ko
+
+run: build
 	sudo ./$<
 
 clean:
