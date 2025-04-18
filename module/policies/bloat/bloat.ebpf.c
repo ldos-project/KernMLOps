@@ -1,3 +1,4 @@
+#include "bloat.h"
 #include "../vmlinux.h"
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_helpers.h>
@@ -38,8 +39,6 @@ struct {
   __type(value, u64);
   __uint(map_flags, BPF_F_MMAPABLE);
 } rss_head_idx SEC(".maps");
-
-#define BUFFER_ENTRIES 256
 
 struct {
   __uint(type, BPF_MAP_TYPE_ARRAY);
