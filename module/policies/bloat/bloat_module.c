@@ -1,13 +1,17 @@
 #include "../../fstore/fstore.h"
+#include "bloat.h"
 #include <asm/fpu/api.h>
 #include <linux/delay.h>
 #include <linux/mm.h>
 #include <linux/module.h> /* Needed by all modules */
 #include <linux/printk.h> /* Needed for pr_info() */
 #include <linux/timex.h>
+
 #define MAX_LAYER_SIZE 16
 #define INPUT_SIZE     20
 #define OUTPUT_SIZE    2
+
+void sort(void* base, size_t num, size_t size, cmp_func_t cmp_func, swap_func_t swap_func);
 
 static const float weights0[] = {
     0.017325,  -0.102724, -0.076493, -0.103416, 0.142636,  -0.235354, -0.065574, 0.003554,
@@ -88,17 +92,89 @@ static void forward(const float* input, float* output, float* temp1, float* temp
 }
 
 // Make a cache for vmfault
-static int target_tgid = -1;
+u32* target_tgid;
 static int is_blocked = 0;
 
 static void block_cache() {
-  if (target_tgid != -1)
+  if (*target_tgid != 0)
     is_blocked = 1;
 }
 
 static void unblock_cache() {
-  if (target_tgid != -1)
+  if (target_tgid != 0)
     is_blocked = 0;
+}
+
+struct data {
+  __u64 ts;
+  __u64 count;
+  __u64 valid;
+} data_t;
+
+u64* rss_head;
+u64* tlb_head;
+data_t* rss_data;
+data_t* tlb_data;
+
+struct to_sort {
+  __u64 ts;
+  __u64 count;
+} sortable_t;
+
+void read_data(data_t* data_buffer, u64* head_ptr, sortable_t* buffer, int len) {
+  __u64 start = READ_ONCE(head_ptr);
+  __u64 trials = BUFFER_SIZE >> 1;
+  for (int c = len - 1; c >= 0 && trials >= 0; trials--) {
+    start = (start - 1) % BUFFER_ENTRIES;
+    data_t* point = data_buffer + start;
+    cmpxchg_acquire(&point->valid, 1, 2);
+    buffer[c]->count = point->count;
+    buffer[c]->ts = point->ts;
+    if (cmpxchg_release(&point->valid, 2, 1) == 1) {
+      c--;
+    }
+  }
+}
+
+int sort_data(const void* a, const void* b) {
+  sortable_t sa = *(const sortable_t*)a;
+  sortable_t sb = *(const sortable_t*)b;
+  return sa.ts - sb.ts;
+}
+
+void get_data_into_float(float* input) {
+  sortable_t rss[10];
+  sortable_t dtlb[10];
+  read_data(rss_data, rss_head, rss, 10);
+  read_data(dtlb_data, dtlb_head, dtlb, 10);
+  sort(rss, 10, sizeof(sortable_t), sort_data);
+  sort(dtlb_data, 10, sizeof(sortable_t), sort_data);
+  for (i = 0; i < 10; i++) {
+    input[i * 2] = (float)(rss[i]);
+    input[i * 2 + 1] = (float)(dtlb[i]);
+  }
+}
+
+int infer(struct mm_struct* mm, int unmapped, int referenced) {
+  if (mm->owner->tgid != *target_tgid) {
+    return unmapped && (!referenced || referenced < HPAGE_PMD_NR / 2);
+  }
+  pr_info("Found you");
+  kernel_fpu_begin();
+  float input[20];
+  float temp1[MAX_LAYER_SIZE];
+  float temp2[MAX_LAYER_SIZE];
+  float output[2];
+  get_data_into_float(input);
+  forward(input, output, temp1, temp2);
+  // First output is now, second output is 5 timesteps forwards
+  if (output[1] >= 0.8)
+    block_cache();
+  int cmp = (output[0] >= 0.8) || (output[1] >= 0.8);
+  kernel_fpu_end();
+  if (cmp)
+    return unmapped && (!reference || referenced < HPAGE_PMD_NR - 2) return unmapped &&
+           (!referenced || referenced < HPAGE_PMD_NR / 2);
 }
 
 int (*ml_throttle_hugepage_faults)(struct vm_fault* vmf);
@@ -115,23 +191,55 @@ static int should_throttle_fault(struct vm_fault* vmf) {
   return 0;
 }
 
-// Example usage function
-int __init init_module(void) {
+__u64 map_id[5]
+
+    // Example usage function
+    int __init
+    init_module(void) {
   pr_info("Kernel Module Init \n");
-  kernel_fpu_begin();
-  float input[INPUT_SIZE];
-  float output[OUTPUT_SIZE];
-  for (int i = 0; i < INPUT_SIZE; i++) {
-    input[i] = 0.1;
-  }
-  forward(input, output);
-  printArr(output, OUTPUT_SIZE);
-  kernel_fpu_end();
+  // get the cache
+  if (convert8byteStringHash(CACHE, &map_id[0]))
+    return -EINVAL;
+  int err = fstore_get_map_array_start(map_id, 4, 4, 1, (void**)target_tgid);
+  if (err != 0)
+    return err;
+
+  if (convert8byteStringHash(RHEAD, &map_id[1]))
+    return -EINVAL;
+  int err = fstore_get_map_array_start(map_id, 4, 8, 1, (void**)rss_head);
+  if (err != 0)
+    return err;
+
+  if (convert8byteStringHash(RDATA, &map_id[2]))
+    return -EINVAL;
+  int err = fstore_get_map_array_start(map_id, 4, 24, BUFFER_ENTRIES, (void**)rss_data);
+  if (err != 0)
+    return err;
+
+  if (convert8byteStringHash(THEAD, &map_id[3]))
+    return -EINVAL;
+  int err = fstore_get_map_array_start(map_id, 4, 8, 1, (void**)tlb_head);
+  if (err != 0)
+    return err;
+
+  if (convert8byteStringHash(TDATA, &map_id[4]))
+    return -EINVAL;
+  int err = fstore_get_map_array_start(map_id, 4, 24, BUFFER_ENTRIES, (void**)tlb_data);
+  if (err != 0)
+    return err;
+
+  ml_referenced_page_limit_collapse = infer;
+  ml_throttle_hugepage_faults = should_throttle_fault;
   return 0;
 }
 
 void __exit cleanup_module(void) {
   pr_info("Goodbye \n");
+  ml_referenced_page_limit_collapse = NULL;
+  ml_throttle_hugepage_faults = NULL;
+  for (int i = 0; i < 5; i++) {
+    fstore_put_map_array(map_id[i]);
+  }
 }
 
 MODULE_LICENSE("GPL");
