@@ -2,7 +2,7 @@ obj-m += bloat_policy.o
 KBUILD_EXTRA_SYMBOLS := $(realpath ../../fstore/Module.symvers)
 KBUILD ?= $(PWD)/../../kbuild
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-ccflags-y += -msse
+ccflags-y += -msse -mhard-float
 
 default: run
 
@@ -25,10 +25,10 @@ bloat_probe.o: bloat.ebpf.c
 bloat_policy_deployer: bloat_policy_deployer.cpp
 	g++ -std=gnu++2b -o $@ $< -lbpf -I../../fstore/
 
-raid1_policy.ko: raid1_policy.c
+bloat_policy.ko: bloat_policy.c
 	+${MAKE} KBUILD_EXTRA_SYMBOLS=${KBUILD_EXTRA_SYMBOLS} -C ${KBUILD} M=${ROOT_DIR} modules
 
-run: bloat_policy_deployer bloat_probe.o
+run: bloat_policy_deployer bloat_probe.o bloat_policy.ko
 	sudo ./$<
 
 clean:
