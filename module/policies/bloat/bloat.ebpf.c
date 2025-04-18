@@ -10,6 +10,7 @@ struct {
   __uint(max_entries, 1);
   __type(key, u32);
   __type(value, u32);
+  __uint(map_flags, BPF_F_MMAPABLE);
 } singular_cache_array SEC(".maps");
 
 const u32 zero_index = 0;
