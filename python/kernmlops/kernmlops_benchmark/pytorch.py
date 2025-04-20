@@ -1,9 +1,13 @@
+# File: kernmlops_benchmark/pytorch_benchmark.py
+#!/usr/bin/env python3
+import os
 import subprocess
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import cast
 
-from data_schema import GraphEngine, demote
+from data_schema import GraphEngine
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
 from kernmlops_benchmark.errors import (
     BenchmarkError,
@@ -13,21 +17,18 @@ from kernmlops_benchmark.errors import (
 )
 from kernmlops_config import ConfigBase
 from pytimeparse.timeparse import timeparse
+from torchvision import datasets, transforms
 
 
 @dataclass(frozen=True)
-class PytorchConfig(ConfigBase):
+class PyTorchConfig(ConfigBase):
     repeat: int = 1
-    # Path (relative to benchmark_dir) of your training script
-    script: str = "train.py"
-    # Core training hyperparameters
+    train_script: str = "python/kernmlops/kernmlops_benchmark/train.py"
     epochs: int = 1
     batch_size: int = 32
     learning_rate: float = 0.001
     device: str = "cpu"
-    # If you want a pause between repeats, e.g. "5s", "1m"
     sleep: str | None = None
-
 
 class PyTorchBenchmark(Benchmark):
 
@@ -37,67 +38,78 @@ class PyTorchBenchmark(Benchmark):
 
     @classmethod
     def default_config(cls) -> ConfigBase:
-        return PytorchConfig()
+        return PyTorchConfig()
 
     @classmethod
     def from_config(cls, config: ConfigBase) -> "Benchmark":
-        generic_config = cast(GenericBenchmarkConfig, getattr(config, "generic"))
-        pt_config      = cast(PytorchConfig,      getattr(config, cls.name()))
-        return PyTorchBenchmark(generic_config=generic_config, config=pt_config)
+        generic = cast(GenericBenchmarkConfig, getattr(config, "generic"))
+        pt_cfg  = cast(PyTorchConfig, getattr(config, cls.name()))
+        return PyTorchBenchmark(generic_config=generic, config=pt_cfg)
 
-    def __init__(self, *, generic_config: GenericBenchmarkConfig, config: PytorchConfig):
+    def __init__(self, *, generic_config: GenericBenchmarkConfig, config: PyTorchConfig):
         self.generic_config = generic_config
         self.config         = config
-        # assume your train.py lives under <benchmark_dir>/pytorch/
-        self.benchmark_dir = self.generic_config.get_benchmark_dir() / "pytorch"
+        self.benchmark_dir  = self.generic_config.get_benchmark_dir() / "pytorch"
         self.process: subprocess.Popen | None = None
 
     def is_configured(self) -> bool:
-        return (self.benchmark_dir / self.config.script).exists()
+        return Path(self.config.train_script).is_file()
 
     def setup(self) -> None:
+        # ensure benchmark directories
         if self.process is not None:
             raise BenchmarkRunningError("Benchmark already running")
-        # any one‑time setup steps: e.g., download dataset, prepare env
         self.generic_config.generic_setup()
+
+        # download dataset if missing
+        data_root = self.generic_config.get_benchmark_dir() / "dataset" / self.name()
+        if not data_root.exists():
+            data_root.mkdir(parents=True, exist_ok=True)
+            # perform download using torchvision
+            transform = transforms.Compose([transforms.ToTensor()])
+            # download both train and test splits
+            datasets.FashionMNIST(root=str(data_root), train=True, download=True, transform=transform)
+            datasets.FashionMNIST(root=str(data_root), train=False, download=True, transform=transform)
 
     def run(self) -> None:
         if self.process is not None:
             raise BenchmarkRunningError("Benchmark already running")
 
-        # parse optional sleep interval
-        pause = None if self.config.sleep is None else timeparse(self.config.sleep)
-        proc: subprocess.Popen | None = None
+        pause : int | float | None = None if self.config.sleep is None else timeparse(self.config.sleep)
+
+        last_proc: subprocess.Popen | None = None
 
         for i in range(self.config.repeat):
-            if proc is not None:
-                proc.wait()
-                if proc.returncode != 0:
-                    self.process = proc
-                    raise BenchmarkError(f"PyTorch run #{i} failed (exit {proc.returncode})")
-                if pause is not None:
+            if last_proc is not None:
+                last_proc.wait()
+                if last_proc.returncode != 0:
+                    self.process = last_proc
+                    raise BenchmarkError(f"PyTorch run #{i} failed (exit {last_proc.returncode})")
+                if pause:
                     time.sleep(pause)
 
-            cmd = [
-                "python",
-                str(self.benchmark_dir / self.config.script),
-                "--epochs",       str(self.config.epochs),
-                "--batch-size",   str(self.config.batch_size),
-                "--learning-rate",str(self.config.learning_rate),
-                "--device",       self.config.device,
-            ]
-            proc = subprocess.Popen(cmd, preexec_fn=demote())
-        # keep last run for polling/waiting
-        self.process = proc
+            # script_path = self.config.train_script
+            # data_root = self.generic_config.get_benchmark_dir() / "dataset" / "pytorch"
+
+            cmd = ["python", "python/kernmlops/kernmlops_benchmark/train2.py"]
+            # cmd = [
+            #     "python",
+            #     str(script_path),
+            #     "--epochs", str(self.config.epochs),
+            #     "--batch-size", str(self.config.batch_size),
+            #     "--learning-rate", str(self.config.learning_rate),
+            #     "--device", self.config.device,
+            #     "--data-root",   str(data_root),
+            # ]
+            last_proc = subprocess.Popen(cmd, env=os.environ.copy())
+
+        self.process = last_proc
+        print(f"Process done, return code: {last_proc.returncode}")
 
     def poll(self) -> int | None:
         if self.process is None:
             raise BenchmarkNotRunningError()
-        ret = self.process.poll()
-        if ret is not None:
-            # nothing to clean up here
-            pass
-        return ret
+        return self.process.poll()
 
     def wait(self) -> None:
         if self.process is None:
@@ -113,5 +125,4 @@ class PyTorchBenchmark(Benchmark):
     def plot_events(cls, graph_engine: GraphEngine) -> None:
         if graph_engine.collection_data.benchmark != cls.name():
             raise BenchmarkNotInCollectionData()
-        # implement any post‑hoc plotting you'd like here
         raise NotImplementedError("No event plotting defined for PyTorch")

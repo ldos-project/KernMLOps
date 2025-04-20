@@ -14,3 +14,5 @@ shfmt-py >= 3.7.0
 typing_extensions >= 4.11.0
 pymongo >= 3.5.1
 pytimeparse >= 1.1.8
+torch >= 2.0.0
+torchvision >= 0.15.0
