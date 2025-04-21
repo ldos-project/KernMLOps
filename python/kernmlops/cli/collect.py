@@ -182,11 +182,13 @@ def run_collect(
         )
     ]
 
+    print("LOCK ACQUIRE")
     output_lock.acquire()
     ended = True
     collection_tables = output_collections_to_file(collection_id, collection_tables, bpf_programs, "end", benchmark.name(), generic_config.output_dfs, output_dir)
     output_lock.release()
     collection_data = data_schema.CollectionData.from_tables(collection_tables)
+    print("LOCK RELEASE")
 
     if generic_config.output_graphs:
         collection_data.graph(out_dir=generic_config.get_output_dir() / "graphs")

@@ -1,5 +1,6 @@
 import sys
-import traceback
+
+# import traceback
 from dataclasses import asdict
 from pathlib import Path
 
@@ -67,6 +68,7 @@ def cli_collect_data(
         benchmark=benchmark,
         verbose=verbose,
     )
+    print("RETURNING from cli_collect_data")
 
 
 @cli_collect.command("dump")
@@ -177,6 +179,9 @@ def main():
     try:
         # TODO(Patrick): use logging
         cli.main(prog_name="kernmlops")
+        print("RETURNING from main")
     except Exception:
-        print(traceback.format_exc())
+        print("HELLO")
+        # print(f"AN ERROR OCCURRED: {e}\n")
+        # print(traceback.format_exc())
         sys.exit(1)

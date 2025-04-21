@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from data_schema import GraphEngine
+from data_schema import GraphEngine, demote
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
 from kernmlops_benchmark.errors import (
     BenchmarkError,
@@ -91,7 +91,7 @@ class PyTorchBenchmark(Benchmark):
             # script_path = self.config.train_script
             # data_root = self.generic_config.get_benchmark_dir() / "dataset" / "pytorch"
 
-            cmd = ["python", "python/kernmlops/kernmlops_benchmark/train2.py"]
+            # cmd = ["python", "python/kernmlops/kernmlops_benchmark/train2.py"]
             # cmd = [
             #     "python",
             #     str(script_path),
@@ -101,28 +101,33 @@ class PyTorchBenchmark(Benchmark):
             #     "--device", self.config.device,
             #     "--data-root",   str(data_root),
             # ]
-            last_proc = subprocess.Popen(cmd, env=os.environ.copy())
+            # last_proc = subprocess.Popen(cmd, env=os.environ.copy(), preexec_fn=demote())
+            last_proc = subprocess.Popen(['cat', 'overrides.yaml'], env=os.environ.copy(), preexec_fn=demote())
 
         self.process = last_proc
-        print(f"Process done, return code: {last_proc.returncode}")
+        # print(f"Process done, return code: {last_proc.returncode}")
 
     def poll(self) -> int | None:
         if self.process is None:
             raise BenchmarkNotRunningError()
+        print("POLLING process")
         return self.process.poll()
 
     def wait(self) -> None:
         if self.process is None:
             raise BenchmarkNotRunningError()
+        print("WAITING for process")
         self.process.wait()
 
     def kill(self) -> None:
         if self.process is None:
             raise BenchmarkNotRunningError()
+        print("TERMINATING process")
         self.process.terminate()
 
     @classmethod
     def plot_events(cls, graph_engine: GraphEngine) -> None:
+        print("PLOT EVENTS")
         if graph_engine.collection_data.benchmark != cls.name():
             raise BenchmarkNotInCollectionData()
         raise NotImplementedError("No event plotting defined for PyTorch")
