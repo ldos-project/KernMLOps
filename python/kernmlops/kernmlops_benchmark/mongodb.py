@@ -279,7 +279,8 @@ class MongoDbBenchmark(Benchmark):
         # Drop databases
         client = MongoClient(self.config.url)
         for db in client.list_databases():
-            client.drop_database(db['name'])
+            if db['name'] != 'admin':
+                client.drop_database(db['name'])
 
         # Terminate server
         self.server.terminate()
