@@ -34,6 +34,7 @@ class RedisConfig(ConfigBase):
     delete_proportion: float = 0.00
 
     # Distribution and performance parameters
+    field_length_distribution: str = "uniform"
     request_distribution: str = "uniform"
     thread_count: int = 1
     target: int = 10000
@@ -135,6 +136,8 @@ class RedisBenchmark(Benchmark):
                     f"fieldlength={self.config.field_length}",
                     "-p",
                     f"insertstart={insert_start}",
+                    "-p",
+                    f"fieldlengthdistribution={self.config.field_length_distribution}",
             ]
 
             load_redis = subprocess.Popen(load_redis, preexec_fn=demote())
@@ -191,6 +194,8 @@ class RedisBenchmark(Benchmark):
                     f"fieldcount={self.config.field_count}",
                     "-p",
                     f"fieldlength={self.config.field_length}",
+                    "-p",
+                    f"fieldlengthdistribution={self.config.field_length_distribution}",
             ]
             process = subprocess.Popen(run_redis, preexec_fn=demote())
             if process is not None:
