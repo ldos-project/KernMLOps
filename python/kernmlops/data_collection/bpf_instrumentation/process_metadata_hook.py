@@ -74,6 +74,8 @@ class ProcessMetadataHook(BPFProgram):
     self.osquery_instance.instance.wait()  # pyright: ignore [reportOptionalMemberAccess]
 
   def data(self) -> list[CollectionTable]:
+    if len(self.process_metadata) == 0:
+        return []
     return [
       ProcessMetadataTable.from_df_id(
         pl.DataFrame(
