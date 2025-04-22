@@ -31,11 +31,11 @@ class ExperimentAnalyzer:
         print(experiment_dir)
         # Define parameter categories to analyze
         param_categories = {
-            'accept_thresh': [40, 60, 70, 80, 100],
-            'compressor': ['842', 'deflate', 'lz4', 'lz4hc', 'zstd'],
-            'cpu_tuning': [2, 4, 8, 16, 32],
-            'max_pool_pct': [10, 30, 40, 50, 75],
-            'zpool': ['z3fold', 'zsmalloc']
+            'zswap_accept_thresh': [40, 60, 70, 80, 100],
+            'zswap_compressor': ['842', 'deflate', 'lz4', 'lz4hc', 'zstd'],
+            'zswap_cpu_tuning': [2, 4, 8, 16, 32],
+            'zswap_max_pool_pct': [10, 30, 40, 50, 75],
+            'zswap_zpool': ['z3fold', 'zsmalloc']
         }
 
         path_pattern = os.path.join(
@@ -78,15 +78,15 @@ class ExperimentAnalyzer:
 
                         # Match pattern depends on the experiment type
                         match_str = ''
-                        if experiment_name == 'accept_thresh':
+                        if experiment_name == 'zswap_accept_thresh':
                             match_str = f"thresh_{value_str}"
-                        elif experiment_name == 'compressor':
+                        elif experiment_name == 'zswap_compressor':
                             match_str = f"{value_str}_"
-                        elif experiment_name == 'cpu_tuning':
+                        elif experiment_name == 'zswap_cpu_tuning':
                             match_str = f"cpus_{value_str}"
-                        elif experiment_name == 'max_pool_pct':
+                        elif experiment_name == 'zswap_max_pool_pct':
                             match_str = f"pool_{value_str}"
-                        elif experiment_name == 'zpool':
+                        elif experiment_name == 'zswap_zpool':
                             match_str = f"{value_str}_"
 
                         if match_str in run_basename:

@@ -1,0 +1,28 @@
+# ZSwap Test Commands
+# Memory Size: 1G
+# Benchmark: redis_uniform
+
+./benchmark/zswap/run_zswap_test.py dwg@pc746.emulab.net A redis_uniform
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc749.emulab.net B redis_uniform
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc773.emulab.net C redis_uniform
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc750.emulab.net E redis_uniform
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc735.emulab.net F redis_uniform
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc728.emulab.net G redis_uniform
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc778.emulab.net H redis_uniform
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc771.emulab.net I redis_uniform
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc846.emulab.net J redis_uniform
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc724.emulab.net K redis_uniform
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc768.emulab.net L redis_uniform
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc751.emulab.net M redis_uniform
+./benchmark/zswap/run_zswap_test.py dwg@pc742.emulab.net A redis_uniform_thp
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc736.emulab.net B redis_uniform_thp
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc743.emulab.net C redis_uniform_thp
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc731.emulab.net E redis_uniform_thp
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc701.emulab.net F redis_uniform_thp
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc708.emulab.net G redis_uniform_thp
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc858.emulab.net H redis_uniform_thp
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc711.emulab.net I redis_uniform_thp
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc722.emulab.net J redis_uniform_thp
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc737.emulab.net K redis_uniform_thp
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc847.emulab.net L redis_uniform_thp
+./benchmark/zswap/run_zswap_test.py -m 1G dwg@pc739.emulab.net M redis_uniform_thp

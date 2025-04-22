@@ -14,11 +14,14 @@ def main():
                         default='uniform', help='Distribution type (default: uniform)')
     parser.add_argument('-t', '--thp', action='store_true',
                         help='Enable THP setting (if flag is present, thp="thp", otherwise empty string)')
+    parser.add_argument('-z', '--zswap_duration', action='store_true',
+                        help='Parse and plot zswap durations (default: False)')
     args = parser.parse_args()
 
     benchmark = args.benchmark
     dist = args.dist
     thp = 'thp' if args.thp else ''
+    plot_zswap_duration = args.zswap_duration
 
     experiments = [
         'zswap_off',
@@ -73,22 +76,25 @@ def main():
                 error = 0
             collection_times.append(mean)
             error_bars.append(error)
-        # Collect mean zswap runtime between runs with CI
-        zs = results['zswap_durations']
-        if zs['count'] > 0:
-            zmean = zs.get('mean')
-            zci = zs.get('confidence_interval')
-            print(f"ZSwap Mean: {zmean:.2f}s")
-            if zci and len(zs['values']) > 1:
-                print(f"95% CI: [{zci[0]:.2f}, {zci[1]:.2f}]s")
-                zerror = (zci[1] - zci[0]) / 2
+
+        # Collect mean zswap runtime between runs with CI if enabled
+        if plot_zswap_duration:
+            zs = results['zswap_durations']
+            if zs['count'] > 0:
+                zmean = zs.get('mean')
+                zci = zs.get('confidence_interval')
+                print(f"ZSwap Mean: {zmean:.2f}s")
+                if zci and len(zs['values']) > 1:
+                    print(f"95% CI: [{zci[0]:.2f}, {zci[1]:.2f}]s")
+                    zerror = (zci[1] - zci[0]) / 2
+                else:
+                    zerror = 0
             else:
+                zmean = 0
                 zerror = 0
-        else:
-            zmean = 0
-            zerror = 0
-        zswap_times.append(zmean)
-        zswap_error_bars.append(zerror)
+            zswap_times.append(zmean)
+            zswap_error_bars.append(zerror)
+
         # Collect per-param means and CI for applicable experiments
         try:
             for value in results['param_values']:
@@ -137,25 +143,30 @@ def main():
 
     # Create chart for overall collection times
     pretty_experiments = [
-        'Zswap OFF, no cgroup',
-        'Zswap OFF, w/ cgroup 2G',
-        'Zswap ON, w/ cgroup 2G, defaults',
-        'Tuned % Accept Threshold',
-        'Tuned Max Pool %',
-        'Tuned Compressor',
-        'Tuned Zpool',
-        'Exclusive Loads ON',
-        'Non-Same-Filled Pages OFF',
-        'Same-Filled Pages OFF',
-        'Shrinker OFF',
-        'Tuned # CPUs'
+        'Unconstrained Benchmark',
+        'Normal Swapping',
+        'Swapping w/ Zswap ON (defaults)',
+        'Zswap % Accept Threshold',
+        'Zswap Max Pool %',
+        'Zswap Compressor',
+        'Zswap Zpool',
+        'Zswap Exclusive Loads ON',
+        'Zswap Same-Filled Pages ONLY',
+        'Zswap No Same-Filled Pages',
+        # 'Shrinker OFF',
+        # 'Tuned # CPUs'
     ]
     plt.figure(figsize=(12,6))
 
+    # Always plot collection times
     plt.bar(pretty_experiments, collection_times, yerr=error_bars, capsize=5,
             ecolor='black', alpha=0.75, label='Benchmark Runtime')
-    plt.bar(pretty_experiments, zswap_times, yerr=zswap_error_bars, capsize=5,
-            ecolor='black', alpha=0.75, label='Zswap Wall Time')
+
+    # Only plot zswap times if enabled
+    if plot_zswap_duration:
+        plt.bar(pretty_experiments, zswap_times, yerr=zswap_error_bars, capsize=5,
+                ecolor='black', alpha=0.75, label='Zswap Wall Time')
+
     plt.xticks(rotation=30, ha='right')
     plt.xlabel('Zswap Experiment Type')
     plt.ylabel('Collection Time (sec)')
