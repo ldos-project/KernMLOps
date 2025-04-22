@@ -12,7 +12,7 @@ import data_collection
 import data_schema
 import polars as pl
 from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
-from data_schema import demote, get_user_group_ids
+from data_schema import get_user_group_ids
 from kernmlops_benchmark import (
     Benchmark,
     BenchmarkNotConfiguredError,
@@ -149,8 +149,9 @@ def run_collect(
     os.chown(output_dir, user_id, group_id)
     os.chown(Path(output_dir/benchmark.name()), user_id, group_id)
     os.chown(Path(output_dir/benchmark.name()/collection_id), user_id, group_id)
-    output_thread = Thread(target = output_data_thread, args = (collection_id, bpf_programs, benchmark.name(), run_event, generic_config.output_dfs, output_dir, output_lock,
-                                                                ended, output_interval, user_id, group_id))
+    output_thread = Thread(target = output_data_thread, args = (collection_id, bpf_programs, benchmark.name(),
+                                                                run_event, generic_config.output_dfs, output_dir,
+                                                                output_lock, ended, output_interval, user_id, group_id))
     output_thread.daemon = True
     output_thread.start()
 
@@ -167,7 +168,6 @@ def run_collect(
     for bpf_program in bpf_programs:
         bpf_program.close()
 
-    demote()()
     if verbose:
         print(f"Benchmark ran for {collection_time_sec}s")
 
@@ -184,7 +184,9 @@ def run_collect(
 
     output_lock.acquire()
     ended = True
-    collection_tables = output_collections_to_file(collection_id, collection_tables, bpf_programs, "end", benchmark.name(), generic_config.output_dfs, output_dir)
+    collection_tables = output_collections_to_file(collection_id, collection_tables, bpf_programs, "end",
+                                                   benchmark.name(), generic_config.output_dfs, output_dir,
+                                                   (user_id, group_id))
     output_lock.release()
     collection_data = data_schema.CollectionData.from_tables(collection_tables)
 
