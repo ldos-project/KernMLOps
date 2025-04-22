@@ -12,14 +12,14 @@ That submodule is only necessary if you plan to use in-kernel inference.
 
 ## Jupyter Setup -- Recommended
 
-You will need docker and pipenv,
-we have a script that is for ubuntu 24.04 and 22.04 `source scripts/install_prerequesites_ubuntu_24_04.sh`.
+You will need docker and uv,
+we have a script that is for ubuntu 24.04 and 22.04 `source scripts/setup_prep_env.sh`.
 
 ### Ubuntu 24.04 or 22.04
 
 ```shell
 # Run the full installation -- Expected Time: ~10 mins
-source ./scripts/install_prerequesites_ubuntu_24_04.sh
+source ./scripts/setup_prep_env.sh
 
 # Install Hooks for linting -- Expected Time: ~2 mins
 make hooks
@@ -32,10 +32,12 @@ jupyter notebook
 
 You can install docker from [docker's website](https://docs.docker.com/engine/install/).
 The tools should work with other container engines but have not been tested yet.
+My suggestion is to make sure to add yourself to the docker group after.
 
-You can install this by using either `pip` or `apt` on Ubuntu.
-A helpful link for this should be [here](https://pipenv.pypa.io/en/latest/installation.html).
-Or on later versions of ubuntu `sudo apt install pipenv`.
+We rely on the uv tool for python package management.
+Here is a [helpful link](https://docs.astral.sh/uv/getting-started/installation/)
+for installation.
+
 From then on launch jupyter notebook like so:
 
 ```shell
@@ -44,7 +46,9 @@ make docker-image
 
 
 # Create your virtual environment -- Expected Time: ~5 mins
-pipenv shell
+uv venv
+uv sync
+source .venv/bin/activate
 
 # Install Hooks for linting -- Expected Time: ~2 mins
 make hooks
