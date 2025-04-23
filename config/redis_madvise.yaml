@@ -7,16 +7,19 @@ benchmark_config:
     transparent_hugepages: madvise
     overcommit_memory: never_check
   redis:
-    repeat: 5
-    record_count: 1000
-    operation_count: 1000
+    repeat: 1
+    outer_repeat: 4
+    thread_count: 16
+    record_count: 16384
+    operation_count: 16384
     read_proportion: 0.20
     update_proportion: 0.10
-    insert_proportion: 0.10
+    insert_proportion: 0.00
     rmw_proportion: 0.10
     scan_proportion: 0.10
-    delete_proportion: 0.30
-    request_distribution: "zipfian"
+    delete_proportion: 0.50
+    field_length_distribution: "zipfian"
+    explicit_purge: true
 collector_config:
   generic:
     poll_rate: 0.1
