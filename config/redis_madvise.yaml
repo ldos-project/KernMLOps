@@ -7,6 +7,7 @@ benchmark_config:
     transparent_hugepages: madvise
     overcommit_memory: never_check
   redis:
+    repeat: 5
     record_count: 1000
     operation_count: 1000
     read_proportion: 0.20
@@ -25,5 +26,5 @@ collector_config:
       - mm_rss_stat
       - process_trace
       - madvise
-      - unmap_range
       - perf
+      - unmap_range

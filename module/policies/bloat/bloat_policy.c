@@ -98,7 +98,7 @@ static void forward(const float* input, float* output, float* temp1, float* temp
 
 // Make a cache for vmfault
 u32* target_tgid;
-static int is_blocked = 0;
+static int is_blocked;
 
 static void block_page_fault_special(void) {
   if (*target_tgid != 0)
@@ -161,10 +161,11 @@ static void get_data_into_float(float* input) {
 }
 
 static int infer(struct mm_struct* mm, int unmapped, int referenced) {
+  pr_info("Got this tgid %lu\n", mm->owner->tgid);
   if (mm->owner->tgid != *target_tgid) {
     return unmapped && (!referenced || referenced < HPAGE_PMD_NR / 2);
   }
-  pr_info("Found you");
+  pr_info("Found you\n");
   float input[20];
   float temp1[MAX_LAYER_SIZE];
   float temp2[MAX_LAYER_SIZE];
@@ -189,7 +190,8 @@ int (*ml_throttle_hugepage_faults)(struct vm_fault* vmf);
 int (*ml_referenced_page_limit_collapse)(struct mm_struct* mm, int unmapped, int referenced);
 
 static int should_throttle_fault(struct vm_fault* vmf) {
-  if (target_tgid == 0)
+  pr_info("Throttling\n");
+  if (*target_tgid == 0)
     return 0;
   if (vmf->vma && vmf->vma->vm_mm && vmf->vma->vm_mm->owner &&
       vmf->vma->vm_mm->owner->tgid == *target_tgid && is_blocked) {
@@ -211,6 +213,8 @@ int __init init_module(void) {
     pr_info("Cache error\n");
     return err;
   }
+
+  pr_info("The pid we are targeting is %ld\n", *target_tgid);
 
   if (convert8byteStringHash(RHEAD, &map_id[1]))
     return -EINVAL;
@@ -244,6 +248,7 @@ int __init init_module(void) {
     return err;
   }
 
+  is_blocked = 1;
   ml_referenced_page_limit_collapse = infer;
   ml_throttle_hugepage_faults = should_throttle_fault;
   return 0;
