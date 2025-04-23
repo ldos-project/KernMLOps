@@ -103,11 +103,8 @@ RUN curl https://sh.rustup.rs -sSf | bash -s -- -y \
   && . $HOME/.cargo/env \
   && cargo install watchexec-cli
 
-COPY --chown=root requirements.txt /root/requirements.txt
-RUN pip install \
-  --break-system-packages \
-  --no-warn-script-location \
-  -r /root/requirements.txt
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
 RUN ln -s /usr/bin/python3.12 /usr/bin/python
 
 RUN echo "export LIB_PFM4_DIR=/dependencies/libpfm4" >> /root/.profile
@@ -117,6 +114,15 @@ RUN apt-get update && \
 
 # May be required for Ubuntu:24.04 images that come with uid 1000
 RUN deluser --remove-home ubuntu
+
+COPY --chown=root pyproject.toml /root/pyproject.toml
+RUN pip install uv --break-system-packages && \
+  uv pip compile /root/pyproject.toml -o requirements.txt && \
+  uv pip install \
+  --system \
+  --break-system-packages \
+  -r requirements.txt
+
 
 ARG UNAME
 ARG UID
