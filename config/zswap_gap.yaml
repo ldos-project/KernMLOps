@@ -1,0 +1,19 @@
+---
+benchmark_config:
+  generic:
+    benchmark: gap
+    cpus: 0
+    skip_clear_page_cache: false
+    transparent_hugepages: never
+    overcommit_memory: never_check
+  gap:
+    trials: 2
+collector_config:
+  generic:
+    poll_rate: 0.1
+    output_dir: data
+    output_graphs: false
+    hooks:
+      - mm_rss_stat
+      - memory_usage
+      - zswap_runtime
