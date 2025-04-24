@@ -24,6 +24,7 @@ class RedisConfig(ConfigBase):
     # Core operation parameters
     field_count: int = 256
     field_length: int = 16
+    min_field_length: int = 16
     operation_count: int = 1000000
     record_count: int = 1000000
     read_proportion: float = 0.5
@@ -40,6 +41,7 @@ class RedisConfig(ConfigBase):
     thread_count: int = 1
     target: int = 10000
     sleep: str | None = None
+    server_sleep: str | None = None
     explicit_purge: bool = False
 
 size_redis = [
@@ -111,7 +113,9 @@ class RedisBenchmark(Benchmark):
         if ping_redis.returncode != 0:
             raise BenchmarkError("Redis Failed To Start")
 
-        #time.sleep(10)
+        server_space : int | float | None = None if self.config.server_sleep is None else timeparse(self.config.server_sleep)
+        if server_space is not None :
+            time.sleep(server_space)
 
         space : int | float | None = None if self.config.sleep is None else timeparse(self.config.sleep)
         process: subprocess.Popen | None = None
@@ -147,6 +151,8 @@ class RedisBenchmark(Benchmark):
                         f"fieldcount={self.config.field_count}",
                         "-p",
                         f"fieldlength={self.config.field_length}",
+                        "-p",
+                        f"minfieldlength={self.config.min_field_length}",
                         "-p",
                         f"insertstart={insert_start}",
                         "-p",
@@ -208,6 +214,10 @@ class RedisBenchmark(Benchmark):
                         f"fieldcount={self.config.field_count}",
                         "-p",
                         f"fieldlength={self.config.field_length}",
+                        "-p",
+                        f"minfieldlength={self.config.min_field_length}",
+                        "-p",
+                        f"fieldlengthdistribution={self.config.field_length_distribution}",
                 ]
                 process = subprocess.Popen(run_redis, preexec_fn=demote())
         self.process = process

@@ -8,17 +8,20 @@ benchmark_config:
     overcommit_memory: never_check
   redis:
     repeat: 1
-    outer_repeat: 4
+    field_count: 1
+    min_field_length: 4096
+    field_length: 2097152
+    outer_repeat: 20
     thread_count: 16
-    record_count: 16384
-    operation_count: 16384
-    read_proportion: 0.20
-    update_proportion: 0.10
+    record_count: 4096
+    operation_count: 4096
+    read_proportion: 0.05
+    update_proportion: 0.00
     insert_proportion: 0.00
-    rmw_proportion: 0.10
-    scan_proportion: 0.10
-    delete_proportion: 0.50
-    field_length_distribution: "zipfian"
+    rmw_proportion: 0.00
+    scan_proportion: 0.00
+    delete_proportion: 0.95
+    field_length_distribution: "uniform"
     explicit_purge: true
 collector_config:
   generic:
