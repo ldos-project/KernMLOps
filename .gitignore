@@ -191,3 +191,5 @@ module/*.img
 .tmp/
 *.stats
 benchmark/zswap/results/
+*.lock
+typescript

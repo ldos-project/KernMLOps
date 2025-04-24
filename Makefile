@@ -41,10 +41,11 @@ ifeq (${KERNMLOPS_CONFIG_FILE},)
 endif
 
 BASE_IMAGE_NAME ?= kernmlops
+DEV_IMAGE_NAME ?= tewaro/${BASE_IMAGE_NAME}-dev
 BCC_IMAGE_NAME ?= ${BASE_IMAGE_NAME}-deps
 IMAGE_NAME ?= ${LOWER_UNAME}-${BASE_IMAGE_NAME}
 SRC_DIR ?= $(shell pwd)
-VERSION ?= $(shell git log --pretty="%h" -1 Dockerfile.dev requirements.txt)
+VERSION ?= $(shell git log --pretty="%h" -1 Dockerfile.dev pyproject.toml)
 
 CONTAINER_SRC_DIR ?= /KernMLOps
 CONTAINER_WORKDIR ?= ${CONTAINER_SRC_DIR}
@@ -169,6 +170,8 @@ dump:
 defaults:
 	@python python/kernmlops collect defaults
 
+base-image-name:
+	@echo ${BASE_IMAGE_NAME}:${VERSION}
 
 # Provisioning commands
 provision-benchmarks:
@@ -189,9 +192,12 @@ provision-development:
 
 # Docker commands
 docker-image:
-	@${MAKE} docker-image-dependencies
+	# Check if image already exists.
+	@docker image inspect ${DEV_IMAGE_NAME}:${VERSION} 2>&1 > /dev/null || \
+		(docker pull ${DEV_IMAGE_NAME}:${VERSION} ||\
+		${MAKE} docker-image-dependencies)
 	docker --context ${CONTAINER_CONTEXT} build \
-	--build-arg BUILD_IMAGE=${BCC_IMAGE_NAME}:latest \
+	--build-arg BUILD_IMAGE=${DEV_IMAGE_NAME}:${VERSION} \
 	--build-arg SRC_DIR=${CONTAINER_SRC_DIR} \
 	--build-arg UNAME=${UNAME} \
 	--build-arg IS_CI=false \
@@ -199,14 +205,19 @@ docker-image:
 	--build-arg GID=${GID} \
 	-t ${IMAGE_NAME}:${VERSION} \
 	--file Dockerfile.dev \
-	--target dev .
+	--target user .
 
 docker-image-dependencies:
 	@mkdir -p data/curated
 	docker --context ${CONTAINER_CONTEXT} build \
-	-t ${BCC_IMAGE_NAME}:latest \
+	-t ${BCC_IMAGE_NAME}:${VERSION} \
 	--file Dockerfile.dev \
 	--target deps .
+	docker --context ${CONTAINER_CONTEXT} build \
+	--build-arg BUILD_IMAGE=${BCC_IMAGE_NAME}:${VERSION} \
+	-t ${DEV_IMAGE_NAME}:${VERSION} \
+	--file Dockerfile.dev \
+	--target dev .
 
 docker:
 	@if [ ! -d "${KERNEL_DEV_HEADERS_DIR}" ]; then \
