@@ -1,0 +1,25 @@
+---
+benchmark_config:
+  generic:
+    benchmark: mongodb
+    cpus: 0
+    transparent_hugepages: never
+  mongodb:
+    field_count: 512
+    field_length: 512
+    operation_count: 1000
+    record_count: 4096
+    read_proportion: 0.20
+    update_proportion: 0.10
+    insert_proportion: 0.10
+    rmw_proportion: 0.10
+    scan_proportion: 0.10
+    delete_proportion: 0.30
+    request_distribution: "uniform"
+collector_config:
+  generic:
+    poll_rate: 0.1
+    output_dir: data
+    output_graphs: false
+    hooks:
+      - None
