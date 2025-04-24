@@ -55,6 +55,13 @@ RUN apt-get update -y \
     libgoogle-perftools-dev \
     && apt-get clean
 
+# lib_pfm4
+RUN echo "export LIB_PFM4_DIR=/dependencies/libpfm4" >> /root/.profile
+RUN apt-get update && \
+    apt-get install -y openjdk-11-jdk && \
+    echo 'export PATH=$PATH:/usr/lib/jvm/java-11-openjdk-amd64/bin' >> /root/.profile
+
+
 # Install MongoDB
 RUN apt-get update && \
     apt-get install -y gnupg curl && \
@@ -75,19 +82,14 @@ RUN git clone https://github.com/redis/redis.git -b 7.4.2 --depth 1 \
   && cd ../ \
   && rm -rf redis
 
-
 # Install memcached
 RUN apt-get update && \
     apt-get install -y \
         memcached && \
     apt-get clean
 
-COPY scripts/settings.xml /etc/maven/settings.xml
-
 # Base development image
 FROM ${BUILD_IMAGE} AS dev
-
-ARG IS_CI=true
 
 RUN apt-get update -y \
   &&  apt-get install -y \
@@ -98,20 +100,7 @@ RUN apt-get update -y \
   psmisc \
   && apt-get clean
 
-RUN curl https://sh.rustup.rs -sSf | bash -s -- -y \
-  && echo . "$HOME/.cargo/env" > $HOME/.bashrc \
-  && . $HOME/.cargo/env \
-  && cargo install watchexec-cli
-
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-
 RUN ln -s /usr/bin/python3.12 /usr/bin/python
-
-RUN echo "export LIB_PFM4_DIR=/dependencies/libpfm4" >> /root/.profile
-RUN apt-get update && \
-    apt-get install -y openjdk-11-jdk && \
-    echo 'export PATH=$PATH:/usr/lib/jvm/java-11-openjdk-amd64/bin' >> /root/.profile
-
 # May be required for Ubuntu:24.04 images that come with uid 1000
 RUN deluser --remove-home ubuntu
 
@@ -123,10 +112,15 @@ RUN pip install uv --break-system-packages && \
   --break-system-packages \
   -r requirements.txt
 
+FROM ${BUILD_IMAGE} AS user
+
+ARG IS_CI=true
 
 ARG UNAME
 ARG UID
 ARG GID
+
+COPY scripts/settings.xml /etc/maven/settings.xml
 
 RUN if [ "${UNAME}" != "root" ] ; then groupadd -g ${GID} ${UNAME} \
       ;  useradd -ms /bin/bash  -u "${UID}" -g "${GID}" ${UNAME}; fi
