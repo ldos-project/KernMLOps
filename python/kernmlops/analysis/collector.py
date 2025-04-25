@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import cast
 
 import pexpect
 
@@ -13,10 +14,12 @@ class Collector:
         self.config: Path = config
         self.verbose = verbose
 
-    def start_collection(self, logfile=None):
-        self.collect_process = pexpect.spawn("make docker", env=self.env, timeout=None, logfile=logfile)
+    def start_collection(self, logfile=None) -> None:
+        env = cast(os._Environ[str], {**os.environ, **self.env})
+        self.collect_process = pexpect.spawn("make docker", env=env, timeout=None, logfile=logfile)
         self.collect_process.expect_exact(["Started benchmark"])
 
+    @staticmethod
     def _after_run_generate_file_data() -> dict[str, list[Path]]:
         start_path : Path = Path("./data")
         list_of_collect_id_dirs = start_path.glob("*/*/*")
@@ -30,9 +33,9 @@ class Collector:
             output[index].append(f)
         return output
 
-    def wait(self) -> int:
+    def wait(self) -> dict[str, list[Path]]:
         if self.collect_process is None:
-            return
+            return {}
         self.collect_process.expect([pexpect.EOF])
         self.collect_process.wait()
         ret = Collector._after_run_generate_file_data()

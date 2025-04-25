@@ -26,13 +26,15 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./.venv/
-          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-venv-
       # Install python dependencies only if cache was not hit
       # `--system-site-packages` argument is used to allow access to system site packages (e.g., bcc)
+      - name: Install BCC
+        run: sudo apt-get update -y && sudo apt install -y python3-bpfcc && python3 -c 'import site; print(site.getsitepackages())'
       - name: Install Dependencies 📦
-        run: python -m venv --system-site-packages ./.venv && . ./.venv/bin/activate && pip install -r requirements.txt
+        run: curl -LsSf https://astral.sh/uv/install.sh | /usr/bin/sh && uv venv --system-site-packages && uv sync
         if: steps.cache-venv.outputs.cache-hit != 'true'
       - name: Run Ruff Linter 🚨
         run: . ./.venv/bin/activate && make lint

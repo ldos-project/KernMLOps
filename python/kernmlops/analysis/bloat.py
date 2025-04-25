@@ -29,7 +29,7 @@ def filter_process_trace(process_trace_df: pl.DataFrame) -> pl.DataFrame :
     combined_df = start_df.join(end_df, "pid")
     return combined_df.with_columns((pl.col("end_ns") - pl.col("start_ns")).alias("duration"))
 
-def process_trace_start_end_ts(process_trace_df: pl.DataFrame, proc_name: str, index: int) ->(int, int, int):
+def process_trace_start_end_ts(process_trace_df: pl.DataFrame, proc_name: str, index: int) -> tuple[int, int, int]:
     trace_df = filter_process_trace(process_trace_df).sort(pl.col("start_ns"))
     df = trace_df.filter(pl.col("full_name") == proc_name)
     # print(df)
@@ -79,7 +79,9 @@ def filter_rss_with_ts(rss_trace_df: pl.DataFrame, start: int, end: int):
     df = df.sort(pl.col("ts_ns")).fill_null(strategy="forward").fill_null(strategy="backward")
     return df.filter(pl.col("ts_ns").is_between(start, end, closed='both'))
 
-def get_proper_rss(proc_path: [Path], rss_path: [Path], rss_name: str, rss_ind: int, runner_name: str, runner_ind: int, tag:str):
+def get_proper_rss(proc_path: list[Path], rss_path: list[Path],
+                   rss_name: str, rss_ind: int,
+                   runner_name: str, runner_ind: int, tag:str) -> pl.DataFrame:
     proc_trace_df = pl.read_parquet(proc_path, allow_missing_columns=True)
     rss_df = pl.read_parquet(rss_path, allow_missing_columns=True)
 
@@ -88,7 +90,9 @@ def get_proper_rss(proc_path: [Path], rss_path: [Path], rss_name: str, rss_ind: 
     clean_rss_df = filter_rss_with_ts(clean_rss_pid(rss_df, pid), start, end)
     return clean_rss_df.with_columns((pl.col("ts_ns") - pl.min("ts_ns")).alias("norm_ts_ns")).with_columns(pl.lit(tag).alias('policy'))
 
-def export_graph_data_frame(inputs: [(str, dict[str, [Path]])], proc_tag: str, proc_ind: int, time_proc_tag: str, time_proc_index: int) -> pl.DataFrame:
+def export_graph_data_frame(inputs: list[tuple[str, dict[str, list[Path]]]],
+                            proc_tag: str, proc_ind: int,
+                            time_proc_tag: str, time_proc_index: int) -> pl.DataFrame:
     df = pl.DataFrame()
     for (tag, filedict) in inputs:
         append_df = get_proper_rss(filedict["process_trace"],
@@ -101,7 +105,9 @@ def export_graph_data_frame(inputs: [(str, dict[str, [Path]])], proc_tag: str, p
     df = df.with_columns((pl.col("norm_ts_ns") / (10**9)/ 60).alias("norm_ts_mins"))
     return df
 
-def create_graph(inputs: [(str, dict[str, Path])], proc_tag: str, proc_ind: int, time_proc_tag: str, time_proc_index: int, title: str) -> None:
+def create_graph(inputs: list[tuple[str, dict[str, list[Path]]]],
+                 proc_tag: str, proc_ind: int,
+                 time_proc_tag: str, time_proc_index: int, title: str) -> ggplot:
     df = export_graph_data_frame(inputs, proc_tag, proc_ind, time_proc_tag, time_proc_index)
     plt0 = (ggplot(df)
             + aes("norm_ts_mins", y="count", colour="policy")
