@@ -13,6 +13,7 @@ from kernmlops_benchmark.errors import (
     BenchmarkRunningError,
 )
 from kernmlops_config import ConfigBase
+from pytimeparse.timeparse import timeparse
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,7 @@ class MemcachedConfig(ConfigBase):
     # Core operation parameters
     field_count: int = 256
     field_length: int = 16
+    min_field_length: int = 16
     operation_count: int = 1000000
     record_count: int = 1000000
     read_proportion: float = 0.5
@@ -32,10 +34,12 @@ class MemcachedConfig(ConfigBase):
     delete_proportion: float = 0.00
 
     # Distribution and performance parameters
+    field_length_distribution: str = "uniform"
     request_distribution: str = "uniform"
     thread_count: int = 1
     target: int = 10000
-
+    sleep: str | None = None
+    server_sleep: str | None = None
 
 class MemcachedBenchmark(Benchmark):
 
@@ -119,13 +123,21 @@ class MemcachedBenchmark(Benchmark):
         if delete_foo.returncode != 0:
             raise BenchmarkError("Delete Single Memcached Record Failing")
 
+        server_space : int | float | None = None if self.config.server_sleep is None else timeparse(self.config.server_sleep)
+        if server_space is not None :
+            time.sleep(server_space)
+
+        space : int | float | None = None if self.config.sleep is None else timeparse(self.config.sleep)
+
         process: subprocess.Popen | None = None
         for i in range(self.config.repeat):
             if process is not None:
                 process.wait()
+                if space is not None :
+                    time.sleep(space)
                 if process.returncode != 0:
                     self.process = process
-                    raise BenchmarkError("Memcached Run {(2 * i) - 1} Failed")
+                    raise BenchmarkError("Memcached Run {i} Failed")
 
             insert_start = i * self.config.record_count
             # Run loads
@@ -146,7 +158,11 @@ class MemcachedBenchmark(Benchmark):
                     "-p",
                     f"fieldlength={self.config.field_length}",
                     "-p",
+                    f"minfieldlength={self.config.min_field_length}",
+                    "-p",
                     f"insertstart={insert_start}",
+                    "-p",
+                    f"fieldlengthdistribution={self.config.field_length_distribution}",
             ]
             load_memcached = subprocess.run(load_memcached, preexec_fn=demote())
 
@@ -192,11 +208,13 @@ class MemcachedBenchmark(Benchmark):
                 "-p",
                 f"target={self.config.target}",
                 "-p",
-                f"insertstart={insert_start}",
-                "-p",
                 f"fieldcount={self.config.field_count}",
                 "-p",
                 f"fieldlength={self.config.field_length}",
+                "-p",
+                f"minfieldlength={self.config.min_field_length}",
+                "-p",
+                f"fieldlengthdistribution={self.config.field_length_distribution}",
             ]
             process = subprocess.Popen(run_memcached, preexec_fn=demote())
         self.process = process
