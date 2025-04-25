@@ -149,15 +149,13 @@ class RemoteZswapRunner:
             self.execute_remote_command(base+cmd, verbose=verbose)
         return 0
 
-    # Runs make collect inside memory-constrained container and pipes benchmark output to logfile
-    # XXX: Test without memory constraints for now to validate
-    #   - Benchmark is starting
-    #   - Logfile is being created
+    # Runs make collect inside memory-constrained container and saves benchmark output in results
     def run_mem_constrained_ycsb_experiment(self, mem=DEFAULT_MEM_SIZE):
         # Set user-level permissions on ycsb installation
         # XXX: This might be a bug
         self.execute_remote_command('sudo chown -R $(whoami):$(id -gn) kernmlops-benchmark/ycsb')
-        self.execute_remote_command('make -C KernMLOps collect | tee output.log', get_pty=True, write_to_file=True)
+        # Run benchmark with memory constraints and unlimited swap
+        self.execute_remote_command(f"make -C KernMLOps CONTAINER_OPTS=\'--memory={mem} --memory-swap=-1\' collect | tee output.log", get_pty=True, write_to_file=True)
         self.execute_remote_command('rm -vf output.log')
 
     """
