@@ -54,6 +54,8 @@ class RemoteZswapRunner:
                 stderr_str = stderr.read().decode('utf-8')
                 print('Command failed!')
                 print(f"STDERR: {stderr_str}")
+        else:
+            print("SSH connection is not established!")
         return -1
 
     def reboot_machine(self):
@@ -109,18 +111,36 @@ class RemoteZswapRunner:
     # provides option to setup either redis or mongodb benchmark
     # should run make install-yscb and copy over correct config
     def setup_ycsb_experiment(self, benchmark: str, verbose=False):
+        if benchmark not in ['redis', 'mongodb']:
+            print("Error! YCSB benchmark must be Redis or MongoDB")
+            return -1
         self.execute_remote_command("make -C KernMLOps CONTAINER_CMD='make install-ycsb' docker", get_pty=True, verbose=verbose)
         self.execute_remote_command(f"cd KernMLOps/ && cp -v config/{benchmark}_no_collect.yaml overrides.yaml", verbose=verbose)
+        return 0
+
+    # runs a bunch of sysctl commands to aggressively shrink the Linux page
+    # cache, so that it doesn't interfere with our zswap measurements. We do
+    # this because the page cache is system-wide, and would be full if the
+    # entire machine's memory was *actually* under enough pressure to invoke
+    # zswap. otherwise, the rather empty page cache interferes with the fidelity
+    # of our measurements.
+    def shrink_page_cache(self, verbose=False):
+        base = 'sudo sysctl -w vm.'
+        page_cache_configs = [
+            'drop_caches=3',
+            'dirty_background_ratio=1',
+            'dirty_ratio=2',
+            'dirty_background_bytes=16384',
+            'dirty_bytes=32768',
+            'vfs_cache_pressure=500',
+            'min_free_kbytes=252144',
+            'page-cluster=0',
+        ]
+        for cmd in page_cache_configs:
+            self.execute_remote_command(base+cmd, verbose=verbose)
+        return 0
 
     """
-    # should run a bunch of sysctl commands to aggressively shrink the
-    # Linux page cache so it doesn't interfere with our zswap
-    # measurements we do this because the page cache is system-wide,
-    # whereas it would be full if the entire machine's memory was
-    # *actually* under enough pressure to invoke zswap
-    def shrink_page_cache(self):
-
-
     # should use gups install script to setup gups benchmark tool
     def setup_gups_experiment(self):
         pass
@@ -161,6 +181,7 @@ def main():
     runner.configure_zswap(parameter='enabled', value='1')
     runner.setup_kernmlops(owner='dariusgrassi', branch='zswap-runner')
     runner.setup_ycsb_experiment(benchmark='redis')
+    runner.shrink_page_cache()
 
 if __name__ == '__main__':
     main()
