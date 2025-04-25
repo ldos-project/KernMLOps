@@ -1,9 +1,12 @@
+import logging
 import os
 import re
 import sys
 import time
 
 import paramiko
+
+logging.getLogger("paramiko.transport").setLevel(logging.CRITICAL)
 
 DEFAULT_MEM_SIZE='1G' # the default memory constraint for experiments
 
