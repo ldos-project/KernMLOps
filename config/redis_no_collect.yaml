@@ -3,7 +3,9 @@ benchmark_config:
   generic:
     benchmark: redis
     cpus: 0
+    skip_clear_page_cache: false
     transparent_hugepages: never
+    overcommit_memory: never_check
   redis:
     field_count: 512
     field_length: 512

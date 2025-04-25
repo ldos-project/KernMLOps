@@ -140,14 +140,19 @@ class RemoteZswapRunner:
             self.execute_remote_command(base+cmd, verbose=verbose)
         return 0
 
+    # Runs make collect inside memory-constrained container and pipes benchmark output to logfile
+    # XXX: Test without memory constraints for now to validate
+    #   - Benchmark is starting
+    #   - Logfile is being created
+    def run_mem_constrained_ycsb_experiment(self, mem=DEFAULT_MEM_SIZE):
+        # Set user-level permissions on ycsb installation
+        # XXX: This might be a bug
+        self.execute_remote_command('sudo chown -R $(whoami):$(id -gn) kernmlops-benchmark/ycsb')
+        self.execute_remote_command('make -C KernMLOps collect | tee output.log', get_pty=True, verbose=True)
+
     """
     # should use gups install script to setup gups benchmark tool
     def setup_gups_experiment(self):
-        pass
-
-    # this should take a parameter to constrain the memory by some amount
-    # this should run make collect and pipe the output to a log file
-    def run_mem_constrained_kmlops_benchmark(self, mem=DEFAULT_MEM_SIZE):
         pass
 
     # collect all run logs
@@ -178,10 +183,11 @@ def main():
     runner.establish_connection()
     runner.reset_connection()
     # runner.reboot_machine()
-    runner.configure_zswap(parameter='enabled', value='1')
+    runner.configure_zswap(parameter='enabled', value='0')
     runner.setup_kernmlops(owner='dariusgrassi', branch='zswap-runner')
     runner.setup_ycsb_experiment(benchmark='redis')
     runner.shrink_page_cache()
+    runner.run_mem_constrained_ycsb_experiment()
 
 if __name__ == '__main__':
     main()
