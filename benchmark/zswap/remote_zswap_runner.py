@@ -43,11 +43,22 @@ class RemoteZswapRunner:
             self.ssh.close()
         return self.establish_connection()
 
-    def execute_remote_command(self, command: str, get_pty: bool=False, verbose: bool=False, write_to_file: bool=False, output_filename: str=None):
+    def execute_remote_command(
+        self,
+        command: str,
+        get_pty: bool=False,
+        verbose: bool=False,
+        write_to_file: bool=False,
+        output_filename: str=None,
+        ignore_errors: bool=False,
+    ):
         output_dir = 'benchmark/zswap/results'
         if self.ssh:
             print(f"Executing remote command: {command}")
             stdin, stdout, stderr = self.ssh.exec_command(command, get_pty=get_pty)
+            strerr = stderr.read().decode('utf-8').strip()
+            if strerr and not ignore_errors:
+                raise Exception(f"Command execution error: {strerr}")
             exit_code = stdout.channel.recv_exit_status()
             if exit_code == 0:
                 stdout_str = stdout.read().decode('utf-8').strip()
@@ -114,7 +125,7 @@ class RemoteZswapRunner:
         return 0
 
     def setup_kernmlops(self, verbose=False, owner='ldos-project', branch='main'):
-        self.execute_remote_command(f"git clone -b {branch} https://github.com/{owner}/KernMLOps.git", verbose=verbose)
+        self.execute_remote_command(f"git clone -b {branch} https://github.com/{owner}/KernMLOps.git", verbose=verbose, ignore_errors=True)
         # skip activating the virtual environment at the end since we're remote
         self.execute_remote_command('cd KernMLOps/ && sed -i \'/^source_shell$/s/^/# /\' scripts/setup_prep_env.sh', verbose=verbose)
         self.execute_remote_command('export PATH=$PATH:$HOME/.local/bin && cd KernMLOps/ && bash scripts/setup_prep_env.sh', get_pty=True, verbose=verbose)
