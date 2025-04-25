@@ -106,6 +106,12 @@ class RemoteZswapRunner:
         self.execute_remote_command('export PATH=$PATH:$HOME/.local/bin && cd KernMLOps/ && bash scripts/setup_prep_env.sh', get_pty=True, verbose=verbose)
         return 0
 
+    # provides option to setup either redis or mongodb benchmark
+    # should run make install-yscb and copy over correct config
+    def setup_ycsb_experiment(self, benchmark: str, verbose=False):
+        self.execute_remote_command("make -C KernMLOps CONTAINER_CMD='make install-ycsb' docker", get_pty=True, verbose=verbose)
+        self.execute_remote_command('cd KernMLOps/ && cp -v config/start_overrides.yaml overrides.yaml', verbose=verbose)
+
     """
     # should run a bunch of sysctl commands to aggressively shrink the
     # Linux page cache so it doesn't interfere with our zswap
@@ -114,11 +120,6 @@ class RemoteZswapRunner:
     # *actually* under enough pressure to invoke zswap
     def shrink_page_cache(self):
 
-    # provides option to setup either redis or mongodb benchmark
-    # should run make install-yscb and copy over correct config
-    def setup__ycsb_experiment(self, benchmark: str):
-        - pull kernmlops repository (pull my local repo branch for now)
-        - pull up-to-date docker image from dockerhub to avoid lengthy build times
 
     # should use gups install script to setup gups benchmark tool
     def setup_gups_experiment(self):
@@ -158,7 +159,8 @@ def main():
     runner.reset_connection()
     # runner.reboot_machine()
     runner.configure_zswap(parameter='enabled', value='1')
-    runner.setup_kernmlops(verbose=True)
+    runner.setup_kernmlops()
+    runner.setup_ycsb_experiment(benchmark='redis')
 
 if __name__ == '__main__':
     main()
