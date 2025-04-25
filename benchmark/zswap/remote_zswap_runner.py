@@ -156,7 +156,6 @@ class RemoteZswapRunner:
         self.execute_remote_command('sudo chown -R $(whoami):$(id -gn) kernmlops-benchmark/ycsb')
         # Run benchmark with memory constraints and unlimited swap
         self.execute_remote_command(f"make -C KernMLOps CONTAINER_OPTS=\'--memory={mem} --memory-swap=-1\' collect | tee output.log", get_pty=True, write_to_file=True)
-        self.execute_remote_command('rm -vf output.log')
 
     """
     # should use gups install script to setup gups benchmark tool
