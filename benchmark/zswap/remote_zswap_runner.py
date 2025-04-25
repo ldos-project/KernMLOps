@@ -99,8 +99,8 @@ class RemoteZswapRunner:
         self.execute_remote_command(zswap_command)
         return 0
 
-    def setup_kernmlops(self, verbose=False):
-        self.execute_remote_command('git clone https://github.com/ldos-project/KernMLOps.git', verbose=verbose)
+    def setup_kernmlops(self, verbose=False, owner='ldos-project', branch='main'):
+        self.execute_remote_command(f"git clone -b {branch} https://github.com/{owner}/KernMLOps.git", verbose=verbose)
         # skip activating the virtual environment at the end since we're remote
         self.execute_remote_command('cd KernMLOps/ && sed -i \'/^source_shell$/s/^/# /\' scripts/setup_prep_env.sh', verbose=verbose)
         self.execute_remote_command('export PATH=$PATH:$HOME/.local/bin && cd KernMLOps/ && bash scripts/setup_prep_env.sh', get_pty=True, verbose=verbose)
@@ -110,7 +110,7 @@ class RemoteZswapRunner:
     # should run make install-yscb and copy over correct config
     def setup_ycsb_experiment(self, benchmark: str, verbose=False):
         self.execute_remote_command("make -C KernMLOps CONTAINER_CMD='make install-ycsb' docker", get_pty=True, verbose=verbose)
-        self.execute_remote_command('cd KernMLOps/ && cp -v config/start_overrides.yaml overrides.yaml', verbose=verbose)
+        self.execute_remote_command(f"cd KernMLOps/ && cp -v config/{benchmark}_no_collect.yaml overrides.yaml", verbose=verbose)
 
     """
     # should run a bunch of sysctl commands to aggressively shrink the
@@ -159,7 +159,7 @@ def main():
     runner.reset_connection()
     # runner.reboot_machine()
     runner.configure_zswap(parameter='enabled', value='1')
-    runner.setup_kernmlops()
+    runner.setup_kernmlops(owner='dariusgrassi', branch='zswap-runner')
     runner.setup_ycsb_experiment(benchmark='redis')
 
 if __name__ == '__main__':
