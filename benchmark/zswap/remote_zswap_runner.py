@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import time
 
@@ -40,6 +41,7 @@ class RemoteZswapRunner:
         return self.establish_connection()
 
     def execute_remote_command(self, command: str, get_pty: bool=False, verbose: bool=False, write_to_file: bool=False, output_filename: str=None):
+        output_dir = 'benchmark/zswap/results'
         if self.ssh:
             print(f"Executing remote command: {command}")
             stdin, stdout, stderr = self.ssh.exec_command(command, get_pty=get_pty)
@@ -50,7 +52,6 @@ class RemoteZswapRunner:
                     print('Remote command output:')
                     print(stdout_str)
                 if write_to_file:
-                    output_dir = 'benchmark/zswap/results'
                     os.makedirs(output_dir, exist_ok=True)
                     if output_filename is None:
                         output_filename = f"cmd_output_{int(time.time())}.txt"
@@ -160,20 +161,33 @@ class RemoteZswapRunner:
             output_filename=f"{benchmark}_{int(time.time())}.txt"
         )
 
-    """
-    # this should walk through a single ycsb benchmark log file and aggregate the runtimes
-    def parse_ycsb_logfile_runtime(self):
-        pass
+    # Read a single ycsb benchmark log file and aggregate the runtimes into one
+    def parse_ycsb_runtime(self, filename: str):
+        print(filename)
+        matching_lines = []
+        with open(filename, 'r') as file:
+            for line in file:
+                if 'RunTime' in line:
+                   matching_lines.append(line.strip())
+        cumulative_ms = 0
+        for line in matching_lines:
+           rt = int(line.split(',')[2])
+           cumulative_ms += rt
+        print(f"Runtime: {cumulative_ms / 1000.0:.2f} s")
+        return cumulative_ms
 
-    # this should either create or append to a results file
-    # used for saving the results of all the benchmarks
-    def save_resultsfile(self, filename: str, text: str):
-        pass
+    def find_and_parse_logfiles(self, regex: str):
+        results_dir = 'benchmark/zswap/results'
+        # Assume the filename is a regex
+        rgx = re.compile(regex)
+        file_matches = []
+        for fname in os.listdir(results_dir):
+            if os.path.isfile(os.path.join(results_dir, fname)) and rgx.search(fname):
+                file_matches.append(fname)
+        for ycsb_log in file_matches:
+            fpath = os.path.join(results_dir, ycsb_log)
+            self.parse_ycsb_runtime(fpath)
 
-    # this should walk through all the logfiles for that run and calculate the mean, std, and 95% ci
-    def parse_all_benchmark_runtimes(self):
-        pass
-    """
 
 # For testing RemoteZswapRunner functionality
 def main():
@@ -189,6 +203,7 @@ def main():
     runner.setup_ycsb_experiment(benchmark='redis')
     runner.shrink_page_cache()
     runner.run_mem_constrained_ycsb_experiment(benchmark='redis_uniform_nozswap')
+    runner.find_and_parse_logfiles('redis_uniform*')
 
 if __name__ == '__main__':
     main()
