@@ -39,16 +39,25 @@ class RemoteZswapRunner:
             self.ssh.close()
         return self.establish_connection()
 
-    def execute_remote_command(self, command: str, get_pty: bool=False, verbose: bool=False):
+    def execute_remote_command(self, command: str, get_pty: bool=False, verbose: bool=False, write_to_file: bool=False, output_filename: str=None):
         if self.ssh:
             print(f"Executing remote command: {command}")
             stdin, stdout, stderr = self.ssh.exec_command(command, get_pty=get_pty)
             exit_code = stdout.channel.recv_exit_status()
             if exit_code == 0:
+                stdout_str = stdout.read().decode('utf-8').strip()
                 if verbose:
-                    stdout_str = stdout.read().decode('utf-8').strip()
                     print('Remote command output:')
                     print(stdout_str)
+                if write_to_file:
+                    output_dir = 'benchmark/zswap/results'
+                    os.makedirs(output_dir, exist_ok=True)
+                    if output_filename is None:
+                        output_filename = f"cmd_output_{int(time.time())}.txt"
+                    output_path = os.path.join(output_dir, output_filename)
+                    with open(output_path, 'w') as f:
+                        f.write(stdout_str)
+                    print(f"Output saved to {output_path}")
                 return 0
             else:
                 stderr_str = stderr.read().decode('utf-8')
@@ -148,7 +157,8 @@ class RemoteZswapRunner:
         # Set user-level permissions on ycsb installation
         # XXX: This might be a bug
         self.execute_remote_command('sudo chown -R $(whoami):$(id -gn) kernmlops-benchmark/ycsb')
-        self.execute_remote_command('make -C KernMLOps collect | tee output.log', get_pty=True, verbose=True)
+        self.execute_remote_command('make -C KernMLOps collect | tee output.log', get_pty=True, write_to_file=True)
+        self.execute_remote_command('rm -vf output.log')
 
     """
     # should use gups install script to setup gups benchmark tool
