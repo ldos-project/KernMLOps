@@ -88,7 +88,6 @@ class RemoteZswapRunner:
         time.sleep(30)
         return 0
 
-    # configures zswap parameters through the sysfs interface
     def configure_zswap(self, parameter: str, value: str):
         param_options = [
             'accept_threshold_percent',
@@ -150,23 +149,18 @@ class RemoteZswapRunner:
         return 0
 
     # Runs make collect inside memory-constrained container and saves benchmark output in results
-    def run_mem_constrained_ycsb_experiment(self, mem=DEFAULT_MEM_SIZE):
+    def run_mem_constrained_ycsb_experiment(self, benchmark: str, mem=DEFAULT_MEM_SIZE):
         # Set user-level permissions on ycsb installation
         # XXX: This might be a bug
         self.execute_remote_command('sudo chown -R $(whoami):$(id -gn) kernmlops-benchmark/ycsb')
         # Run benchmark with memory constraints and unlimited swap
-        self.execute_remote_command(f"make -C KernMLOps CONTAINER_OPTS=\'--memory={mem} --memory-swap=-1\' collect | tee output.log", get_pty=True, write_to_file=True)
+        self.execute_remote_command(f"make -C KernMLOps CONTAINER_OPTS=\'--memory={mem} --memory-swap=-1\' collect | tee output.log",
+            get_pty=True,
+            write_to_file=True,
+            output_filename=f"{benchmark}_{int(time.time())}.txt"
+        )
 
     """
-    # should use gups install script to setup gups benchmark tool
-    def setup_gups_experiment(self):
-        pass
-
-    # collect all run logs
-    # this should use rsync to collect all the benchmark log files
-    def collect_logs(self):
-        pass
-
     # this should walk through a single ycsb benchmark log file and aggregate the runtimes
     def parse_ycsb_logfile_runtime(self):
         pass
@@ -194,7 +188,7 @@ def main():
     runner.setup_kernmlops(owner='dariusgrassi', branch='zswap-runner')
     runner.setup_ycsb_experiment(benchmark='redis')
     runner.shrink_page_cache()
-    runner.run_mem_constrained_ycsb_experiment()
+    runner.run_mem_constrained_ycsb_experiment(benchmark='redis_uniform_nozswap')
 
 if __name__ == '__main__':
     main()
