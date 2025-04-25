@@ -7,7 +7,7 @@ import paramiko
 DEFAULT_MEM_SIZE='1G' # the default memory constraint for experiments
 
 class RemoteZswapRunner:
-    def __init__(self, remote_host, ssh_key, port, ssh_timeout=600):
+    def __init__(self, remote_host, ssh_key, port=22, ssh_timeout=600):
         self.remote_host = remote_host
         self.username, self.hostname = remote_host.split('@')
         self.ssh = None
@@ -99,17 +99,14 @@ class RemoteZswapRunner:
         self.execute_remote_command(zswap_command)
         return 0
 
-    """
     def setup_kernmlops(self, verbose=False):
         self.execute_remote_command('git clone https://github.com/ldos-project/KernMLOps.git', verbose=verbose)
-        # skip building the docker image and activating the virtual environment
-        self.execute_remote_command('cd KernMLOps/ && sed -i \'/^make_docker_image$/s/^/# /\' scripts/setup_prep_env.sh', verbose=verbose)
+        # skip activating the virtual environment at the end since we're remote
         self.execute_remote_command('cd KernMLOps/ && sed -i \'/^source_shell$/s/^/# /\' scripts/setup_prep_env.sh', verbose=verbose)
-        # install uv and docker, setup venv
-        self.execute_remote_command('cd KernMLOps/ && source scripts/setup_prep_env.sh', verbose=verbose)
-        # TODO: pull kmlops docker image from dockerhub
+        self.execute_remote_command('export PATH=$PATH:$HOME/.local/bin && cd KernMLOps/ && bash scripts/setup_prep_env.sh', get_pty=True, verbose=verbose)
         return 0
 
+    """
     # should run a bunch of sysctl commands to aggressively shrink the
     # Linux page cache so it doesn't interfere with our zswap
     # measurements we do this because the page cache is system-wide,
@@ -156,13 +153,12 @@ def main():
     print("Testing out the RemoteZswapRunner class...")
     runner = RemoteZswapRunner(
         remote_host='dwg@pc701.emulab.net',
-        ssh_key='~/.ssh/cloudlab',
-        port=22)
+        ssh_key='~/.ssh/cloudlab')
     runner.establish_connection()
     runner.reset_connection()
     # runner.reboot_machine()
     runner.configure_zswap(parameter='enabled', value='1')
-    # runner.setup_kernmlops(verbose=True)
+    runner.setup_kernmlops(verbose=True)
 
 if __name__ == '__main__':
     main()
