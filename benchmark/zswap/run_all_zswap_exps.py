@@ -15,6 +15,7 @@
 Maximum 40 runs in parallel = 648 synchronous runs
 10 minutes per run = 6,480 minutes = 108 hrs = 4.5 days
 """
+import copy
 import queue
 import signal
 import sys
@@ -84,6 +85,7 @@ class RemoteHostThreadPool:
             runner.setup_kernmlops(owner='dariusgrassi', branch='zswap-runner')
             runner.setup_ycsb_experiment(benchmark=benchmark)
             runner.shrink_page_cache()
+            print('Setup complete, running benchmark...')
             runner.run_mem_constrained_ycsb_experiment(benchmark='_'.join(config.values()))
         # acquire lock to queue and return host to pool when done
         finally:
@@ -137,7 +139,10 @@ def worker_function(pool, config_queue):
         try:
             config = config_queue.get(block=False)
             try:
-                pool.start_zswap_experiment(config)
+                for i in range(1,5):
+                    # Avoid dict being passed by reference
+                    config_copy = copy.deepcopy(config)
+                    pool.start_zswap_experiment(config_copy)
             finally:
                 config_queue.task_done()
         except queue.Empty:
