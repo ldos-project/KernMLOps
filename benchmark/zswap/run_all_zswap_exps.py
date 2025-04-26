@@ -37,7 +37,7 @@ def signal_handler(sig, frame):
 def read_hostnames_from_file(filename: str):
     try:
         with open(filename, 'r') as f:
-            return [line.strip() for line in f if line.strip()]
+            return [line.strip() for line in f if (line.strip() and line[0] != '#')]
     except FileNotFoundError:
         print(f"Error: File {filename} not found!")
         sys.exit(1)
@@ -57,8 +57,7 @@ class RemoteHostThreadPool:
         self.thread_lock = threading.Lock()
 
     # A single thread instantiates RemoteZswapRunner
-    # XXX: Doesn't start an experiment for now, just establishes connection
-    def start_zswap_experiment(self, config):
+    def start_zswap_experiment(self, config: dict[str, str]):
         # Block thread while available_hosts is empty
         host_id = None
         while not shutdown_event.is_set():
@@ -67,21 +66,25 @@ class RemoteHostThreadPool:
                 break
             except queue.Empty:
                 continue
-
         # If shutdown was requested while waiting for a host, return immediately
         if shutdown_event.is_set():
             if host_id is not None:
                 self.available_hosts.put(host_id)
             return
-
+        # Actually trigger the experiment on the remote host
         try:
-            print(f"start_zswap_experiment ({host_id}): config {config}")
             runner = RemoteZswapRunner(
                 remote_host=host_id,
                 ssh_key='~/.ssh/cloudlab'
             )
             runner.establish_connection()
-            time.sleep(10)
+            benchmark = config.pop('workloads')
+            runner.configure_zswap(parameter='enabled', value='Y')
+            runner.config_zswap_params(config)
+            runner.setup_kernmlops(owner='dariusgrassi', branch='zswap-runner')
+            runner.setup_ycsb_experiment(benchmark=benchmark)
+            runner.shrink_page_cache()
+            runner.run_mem_constrained_ycsb_experiment(benchmark='_'.join(config.values()))
         # acquire lock to queue and return host to pool when done
         finally:
             with self.thread_lock:
@@ -115,19 +118,16 @@ def run_all_experiments():
         )
         workers.append(worker)
         worker.start()
-
     try:
         # Wait for all tasks to be processed or for shutdown signal
         while not config_queue.empty() and not shutdown_event.is_set():
             time.sleep(1)
-
         # If shutdown was requested, wait for workers to finish current tasks
         if shutdown_event.is_set():
             print("Waiting for workers to finish current tasks...")
             timeout = 30  # Give workers 30 seconds to finish
             for worker in workers:
                 worker.join(timeout=timeout / len(workers))
-
     except KeyboardInterrupt:
         print("\nKeyboard interrupt received. Initiating shutdown...")
         shutdown_event.set()
@@ -141,16 +141,13 @@ def worker_function(pool, config_queue):
             finally:
                 config_queue.task_done()
         except queue.Empty:
-            # Check for shutdown every second if queue is empty
             time.sleep(1)
 
 if __name__ == "__main__":
     # Register signal handler for graceful shutdown
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
-
     run_all_experiments()
-
     if shutdown_event.is_set():
         print("Shutdown complete.")
     else:
