@@ -85,6 +85,7 @@ class RemoteHostThreadPool:
             runner.setup_kernmlops(owner='dariusgrassi', branch='zswap-runner')
             runner.setup_ycsb_experiment(benchmark=benchmark)
             runner.shrink_page_cache()
+            runner.clear_swap()
             print('Setup complete, running benchmark...')
             log_fname = '_'.join(config.values())
             runner.run_mem_constrained_ycsb_experiment(benchmark=log_fname)

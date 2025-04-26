@@ -105,6 +105,12 @@ class RemoteZswapRunner:
         time.sleep(30)
         return 0
 
+    def clear_swap(self, verbose=False):
+        self.execute_remote_command('sudo swapoff -a')
+        self.execute_remote_command('sudo swapon -a')
+        self.execute_remote_command('free -m | grep Swap && cat /proc/meminfo | grep Z', verbose=verbose)
+        print('Swap cleared!')
+
     def configure_zswap(self, parameter: str, value: str):
         param_options = [
             'accept_threshold_percent',
@@ -220,6 +226,7 @@ def main():
     runner.establish_connection()
     runner.reset_connection()
     # runner.reboot_machine()
+    runner.clear_swap(verbose=True)
     runner.configure_zswap(parameter='enabled', value='0')
     runner.setup_kernmlops(owner='dariusgrassi', branch='zswap-runner')
     runner.setup_ycsb_experiment(benchmark='redis')
