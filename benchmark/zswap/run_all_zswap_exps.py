@@ -22,6 +22,11 @@ import time
 
 from remote_zswap_runner import RemoteZswapRunner
 
+ZSWAP_CONFIGS = [
+    'workloads', 'compressor', 'zpool', 'max_pool_percent',
+    'accept_threshold_percent', 'shrinker_enabled', 'exclusive_loads',
+    'same_filled_pages_enabled', 'non_same_filled_pages_enabled'
+]
 
 def read_hostnames_from_file(filename: str):
     try:
@@ -57,7 +62,7 @@ class RemoteHostThreadPool:
             except queue.Empty:
                 continue
         try:
-            print(f"Starting experiment on host {host_id}")
+            print(f"start_zswap_experiment ({host_id}): config {config}")
             runner = RemoteZswapRunner(
                 remote_host=host_id,
                 ssh_key='~/.ssh/cloudlab'
@@ -70,34 +75,45 @@ class RemoteHostThreadPool:
                 self.available_hosts.put(host_id)
                 print(f"Done. Released host {host_id} back to the pool!")
 
-    # Spawn thread for zswap experiment
-    def spawn_thread(self, config):
-        t = threading.Thread(target=self.start_zswap_experiment, args=(config,), daemon=True)
-        with self.thread_lock:
-            self.running_threads.append(t)
-        t.start()
-        return t
-
-    def spawn_threads(self, configs):
-        threads = []
-        for config in configs:
-            thread = self.spawn_thread(config)
-            threads.append(thread)
-        return threads
-
-    def wait_for_all_threads(self):
-        for thread in self.running_threads:
-            thread.join()
-
-    def shutdown(self):
-        self.should_terminate = True
-        self.wait_for_all_threads()
-
-if __name__ == "__main__":
+def run_all_experiments():
     hosts = read_hostnames_from_file('hostnames.txt')
     pool = RemoteHostThreadPool(hosts)
-    for i in range(1,81):
-        config = f"run_{i}"
-        print(config)
-        t = pool.spawn_thread(config)
-    pool.wait_for_all_threads()
+    config_queue = queue.Queue()
+    for workloads in ['redis', 'mongodb']:
+        for compressor in ['lzo', 'deflate', '842', 'lz4', 'lz4hc', 'zstd']:
+            for zpool in ['zbud', 'z3fold', 'zsmalloc']:
+                for max_pool_percent in ['10', '20', '40']:
+                    for accept_threshold_percent in ['80', '90', '100']:
+                        for shrinker_enabled in ['Y','N']:
+                            for exclusive_loads in ['Y','N']:
+                                for same_filled_pages_enabled in ['Y','N']:
+                                    for non_same_filled_pages_enabled in ['Y','N']:
+                                        config = {name: value
+                                            for name,value in locals().items()
+                                            if name in ZSWAP_CONFIGS}
+                                        config_queue.put(config)
+    workers = []
+    for _ in range(len(hosts)):
+        worker = threading.Thread(
+            target=worker_function,
+            args=(pool, config_queue),
+            daemon=True
+        )
+        workers.append(worker)
+        worker.start()
+
+    config_queue.join()
+
+def worker_function(pool, config_queue):
+    while True:
+        try:
+            config = config_queue.get(block=False)
+            try:
+                pool.start_zswap_experiment(config)
+            finally:
+                config_queue.task_done()
+        except queue.Empty:
+            break
+
+if __name__ == "__main__":
+    run_all_experiments()

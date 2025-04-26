@@ -124,6 +124,11 @@ class RemoteZswapRunner:
         self.execute_remote_command(zswap_command)
         return 0
 
+    # Helper for configuring a bunch of zswap params at once
+    def config_zswap_params(self, param_dict: dict[str, str]):
+        for p,v in param_dict.items():
+            self.configure_zswap(p, v)
+
     def setup_kernmlops(self, verbose=False, owner='ldos-project', branch='main'):
         self.execute_remote_command(f"git clone -b {branch} https://github.com/{owner}/KernMLOps.git", verbose=verbose, ignore_errors=True)
         # skip activating the virtual environment at the end since we're remote
