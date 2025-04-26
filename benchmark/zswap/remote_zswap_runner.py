@@ -54,7 +54,8 @@ class RemoteZswapRunner:
     ):
         output_dir = 'benchmark/zswap/results'
         if self.ssh:
-            print(f"Executing remote command: {command}")
+            if verbose:
+                print(f"Executing remote command: {command}")
             stdin, stdout, stderr = self.ssh.exec_command(command, get_pty=get_pty)
             strerr = stderr.read().decode('utf-8').strip()
             if strerr and not ignore_errors:
@@ -63,7 +64,7 @@ class RemoteZswapRunner:
             if exit_code == 0:
                 stdout_str = stdout.read().decode('utf-8').strip()
                 if verbose:
-                    print('Remote command output:')
+                    print(f"Remote command ({command}) output:")
                     print(stdout_str)
                 if write_to_file:
                     os.makedirs(output_dir, exist_ok=True)
@@ -75,9 +76,10 @@ class RemoteZswapRunner:
                     print(f"Output saved to {output_path}")
                 return 0
             else:
-                stderr_str = stderr.read().decode('utf-8')
-                print('Command failed!')
-                print(f"STDERR: {stderr_str}")
+                if not ignore_errors:
+                    stderr_str = stderr.read().decode('utf-8')
+                    print('Command failed!')
+                    print(f"STDERR: {stderr_str}")
         else:
             print("SSH connection is not established!")
         return -1
@@ -169,7 +171,7 @@ class RemoteZswapRunner:
         return 0
 
     # Runs make collect inside memory-constrained container and saves benchmark output in results
-    def run_mem_constrained_ycsb_experiment(self, benchmark: str, mem=DEFAULT_MEM_SIZE):
+    def run_mem_constrained_ycsb_experiment(self, benchmark: str, mem=DEFAULT_MEM_SIZE, verbose=False):
         # Set user-level permissions on ycsb installation
         # XXX: This might be a bug
         self.execute_remote_command('sudo chown -R $(whoami):$(id -gn) kernmlops-benchmark/ycsb')
@@ -177,7 +179,8 @@ class RemoteZswapRunner:
         self.execute_remote_command(f"make -C KernMLOps CONTAINER_OPTS=\'--memory={mem} --memory-swap=-1\' collect | tee output.log",
             get_pty=True,
             write_to_file=True,
-            output_filename=f"{benchmark}_{int(time.time())}.txt"
+            output_filename=f"{benchmark}_{int(time.time())}.txt",
+            verbose=verbose
         )
 
     # Read a single ycsb benchmark log file and aggregate the runtimes into one
