@@ -86,7 +86,9 @@ class RemoteHostThreadPool:
             runner.setup_ycsb_experiment(benchmark=benchmark)
             runner.shrink_page_cache()
             print('Setup complete, running benchmark...')
-            runner.run_mem_constrained_ycsb_experiment(benchmark='_'.join(config.values()))
+            log_fname = '_'.join(config.values())
+            runner.run_mem_constrained_ycsb_experiment(benchmark=log_fname)
+            runner.find_and_parse_logfiles(log_fname + '*')
         # acquire lock to queue and return host to pool when done
         finally:
             with self.thread_lock:
@@ -139,7 +141,7 @@ def worker_function(pool, config_queue):
         try:
             config = config_queue.get(block=False)
             try:
-                for i in range(1,5):
+                for i in range(1, 6):
                     # Avoid dict being passed by reference
                     config_copy = copy.deepcopy(config)
                     pool.start_zswap_experiment(config_copy)
