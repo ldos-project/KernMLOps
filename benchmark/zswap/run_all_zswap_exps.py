@@ -87,7 +87,7 @@ class RemoteHostThreadPool:
             runner.shrink_page_cache()
             runner.clear_swap()
             print('Setup complete, running benchmark...')
-            log_fname = benchmark + '_'.join(config.values())
+            log_fname = benchmark + '_' + '_'.join(config.values())
             runner.run_mem_constrained_ycsb_experiment(benchmark=log_fname)
             runner.find_and_parse_logfiles(log_fname + '*')
         # acquire lock to queue and return host to pool when done
