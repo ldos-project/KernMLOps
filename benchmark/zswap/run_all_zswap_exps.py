@@ -81,8 +81,11 @@ class RemoteHostThreadPool:
             )
             runner.establish_connection()
             benchmark = config.pop('workloads')
-            runner.configure_zswap(parameter='enabled', value='Y')
-            runner.config_zswap_params(config)
+            if 'zswap_off' in config:
+                runner.configure_zswap(parameter='enabled', value='N')
+            else:
+                runner.configure_zswap(parameter='enabled', value='Y')
+                runner.config_zswap_params(config)
             runner.setup_kernmlops(owner='dariusgrassi', branch='zswap-runner')
             runner.setup_ycsb_experiment(benchmark=benchmark)
             runner.shrink_page_cache()
@@ -105,6 +108,8 @@ def run_all_experiments():
     pool = RemoteHostThreadPool(hosts)
     config_queue = queue.Queue()
     for workloads in ['redis', 'mongodb']:
+        # Run a normal swapping experiment per workload
+        config_queue.put({'workloads': workloads, 'zswap_off': 'zswap_off'})
         for compressor in ['lzo', 'deflate', '842', 'lz4', 'lz4hc', 'zstd']:
             for zpool in ['zbud', 'z3fold', 'zsmalloc']:
                 for max_pool_percent in ['10', '20', '40']:
