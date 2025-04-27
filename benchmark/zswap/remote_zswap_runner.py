@@ -78,6 +78,9 @@ class RemoteZswapRunner:
                     output_path = os.path.join(output_dir, output_filename)
                     with open(output_path, 'w') as f:
                         f.write(stdout_str)
+                    self.parse_ycsb_runtime(
+                        filename=output_path, verbose=True
+                    )
                     print(f"Output saved to {output_path}")
                 return 0
             else:
