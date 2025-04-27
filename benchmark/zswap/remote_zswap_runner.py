@@ -190,8 +190,7 @@ class RemoteZswapRunner:
         )
 
     # Read a single ycsb benchmark log file and aggregate the runtimes into one
-    def parse_ycsb_runtime(self, filename: str):
-        print(filename)
+    def parse_ycsb_runtime(self, filename: str, verbose=False):
         matching_lines = []
         with open(filename, 'r') as file:
             for line in file:
@@ -201,7 +200,8 @@ class RemoteZswapRunner:
         for line in matching_lines:
            rt = int(line.split(',')[2])
            cumulative_ms += rt
-        print(f"Runtime: {cumulative_ms / 1000.0:.2f} s")
+        if verbose:
+            print(f"Runtime: {cumulative_ms / 1000.0:.2f} s")
         return cumulative_ms
 
     def find_and_parse_logfiles(self, regex: str):
@@ -212,9 +212,11 @@ class RemoteZswapRunner:
         for fname in os.listdir(results_dir):
             if os.path.isfile(os.path.join(results_dir, fname)) and rgx.search(fname):
                 file_matches.append(fname)
+        all_run_ms = []
         for ycsb_log in file_matches:
             fpath = os.path.join(results_dir, ycsb_log)
-            self.parse_ycsb_runtime(fpath)
+            all_run_ms.append(self.parse_ycsb_runtime(fpath))
+        return all_run_ms
 
 
 # For testing RemoteZswapRunner functionality
