@@ -7,6 +7,9 @@ from pathlib import Path
 import random
 from uuid import uuid4
 import sys
+import numpy as np
+import math
+from numpy.typing import NDArray
 
 class HugeSetting(Enum):
     NEVER = "never"
@@ -72,6 +75,17 @@ collector_config:
         f.write(file_data)
     return output_file
 
+def generate_uniform_sum(n, total_sum) -> NDArray[np.float64]:
+    cuts = np.sort(np.random.uniform(0, total_sum, n-1))
+    parts = np.diff(np.concatenate(([0], cuts, [total_sum])))
+    return parts
+
+def generate_uniform_sum_int(n, total_sum) -> NDArray[np.int64]:
+    cuts = np.sort(np.random.randint(0, total_sum, n-1))
+    parts = np.diff(np.concatenate(([0], cuts, [total_sum])))
+    return parts
+
+
 parser = argparse.ArgumentParser(description="Runner script")
 
 parser.add_argument("--log", type=Path, required=True, help="Info for logs")
@@ -87,22 +101,21 @@ print("Output Dir", args.output_dir)
 yamls = []
 for i in range(args.number):
     remaining_prop = 100
-    remaining_size_log = 37 - 20
+    remaining_size_log = 38 - 20
 
-    remaining_size = 1 << remaining_size_log
-    record_count = random.randint(1, remaining_size)
-    op_count = random.randint(1, max(1, remaining_size//record_count))
-    repeat = random.randint(1, max(1, remaining_size//record_count//op_count))
+    iterations = generate_uniform_sum(3, remaining_size_log)
 
-    read = random.randint(0, remaining_prop)
-    remaining_prop -= read
-    update = random.randint(0, remaining_prop)
-    remaining_prop -= update
-    rmw = random.randint(0, remaining_prop)
-    remaining_prop -= rmw
-    scan = random.randint(0, remaining_prop)
-    remaining_prop -= scan
-    delete = remaining_prop
+    record_count = int(2 ** iterations[0])
+    op_count = int(2 ** iterations[1])
+    repeat = int(2 ** iterations[2])
+
+    proportions = generate_uniform_sum_int(5, remaining_prop)
+
+    read = proportions[4]
+    update = proportions[1]
+    rmw = proportions[2]
+    scan = proportions[3]
+    delete = proportions[0]
 
     ycsb_index = random.randint(0, 2)
     uuid_assign = i

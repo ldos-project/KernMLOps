@@ -25,4 +25,5 @@ dependencies = [
   "pexpect",
   "plotnine",
   "pyarrow",
+  "numpy>=2.2.5",
 ]

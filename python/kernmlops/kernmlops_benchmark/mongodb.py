@@ -101,7 +101,7 @@ class MongoDbBenchmark(Benchmark):
         start_mongod = [
             "mongod",
             "--config",
-            "/etc/mongod.conf",
+            "config/mongod.conf",
         ]
         self.server = subprocess.Popen(start_mongod)
 
