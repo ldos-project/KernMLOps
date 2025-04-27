@@ -73,6 +73,7 @@ class RemoteHostThreadPool:
                 self.available_hosts.put(host_id)
             return
         # Actually trigger the experiment on the remote host
+        runner = None
         try:
             runner = RemoteZswapRunner(
                 remote_host=host_id,
@@ -92,6 +93,8 @@ class RemoteHostThreadPool:
             runner.find_and_parse_logfiles(log_fname + '*')
         # acquire lock to queue and return host to pool when done
         finally:
+            if runner and runner.ssh:
+                runner.close_connection()
             with self.thread_lock:
                 if host_id is not None:  # Make sure we have a valid host_id
                     self.available_hosts.put(host_id)

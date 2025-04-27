@@ -43,6 +43,11 @@ class RemoteZswapRunner:
             self.ssh.close()
         return self.establish_connection()
 
+    def close_connection(self):
+        if self.ssh and self.ssh.get_transport() and self.ssh.get_transport().is_active():
+            self.ssh.close()
+            self.ssh = None
+
     def execute_remote_command(
         self,
         command: str,
