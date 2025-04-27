@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from remote_zswap_runner import RemoteZswapRunner
 from scipy import stats
@@ -50,13 +51,28 @@ runner = RemoteZswapRunner(
     ssh_key='~/.ssh/cloudlab'
 )
 
+conf_names = []
+conf_means = []
+conf_stds = []
 while zswap_configs:
     zswap_config = zswap_configs.pop()
     config_str = '_'.join(list(zswap_config.values()))
     runtimes = runner.find_and_parse_logfiles(config_str + '_*')
     if runtimes:
         print(config_str)
+        conf_names.append(config_str)
         conf_stats = calculate_statistics(runtimes)
         print(f"Mean: {conf_stats['mean']:.2f}")
+        conf_means.append(conf_stats['mean'])
         print(f"Standard Deviation: {conf_stats['std_dev']:.2f}")
+        conf_stds.append(conf_stats['std_dev'])
         print(f"95% Confidence Interval: {conf_stats['confidence_interval_95'][0]:.2f}, {conf_stats['confidence_interval_95'][0]:.2f}")
+
+fig, ax = plt.subplots(figsize=(10, 6))
+bars = ax.bar(conf_names, conf_means, yerr=conf_stds, capsize=1, error_kw={'elinewidth': 0.8, 'capthick': 0.8})
+ax.set_xticklabels([])
+ax.tick_params(axis='x', which='both', bottom=False)
+ax.set_ylabel('Conf Mean Runtimes')
+plt.tight_layout()
+# plt.show()
+plt.savefig('arg.png')
