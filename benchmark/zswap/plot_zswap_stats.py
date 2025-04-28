@@ -12,6 +12,7 @@ ZSWAP_CONFIGS = [
 def get_configs():
     configs = []
     for workloads in ['redis', 'mongodb']:
+        configs.append({'workloads': workloads, 'zswap_off': 'zswap_off'})
         for compressor in ['lzo', 'deflate', '842', 'lz4', 'lz4hc', 'zstd']:
             for zpool in ['zbud', 'z3fold', 'zsmalloc']:
                 for max_pool_percent in ['10', '20', '40']:
@@ -52,50 +53,194 @@ runner = RemoteZswapRunner(
     ssh_key='~/.ssh/cloudlab'
 )
 
-# TODO: only process for redis then make a separate graph for mongodb :p
+# Process data and track which configs are zswap_off
 redis_conf_names = []
 redis_conf_means = []
 redis_conf_stds = []
+redis_is_zswap_off = []
 mongodb_conf_names = []
 mongodb_conf_means = []
 mongodb_conf_stds = []
+mongodb_is_zswap_off = []
 while zswap_configs:
     zswap_config = list(zswap_configs.pop().values())
     config_str = '_'.join(zswap_config)
     runtimes = runner.find_and_parse_logfiles(config_str + '_*')
+    is_zswap_off = 'zswap_off' in config_str
     if runtimes:
-        print(config_str)
         conf_stats = calculate_statistics(runtimes)
-        print(f"Mean: {conf_stats['mean']:.2f}")
-        print(f"Standard Deviation: {conf_stats['std_dev']:.2f}")
-        print(f"95% Confidence Interval: {conf_stats['confidence_interval_95'][0]:.2f}, {conf_stats['confidence_interval_95'][0]:.2f}")
         if zswap_config[0] == 'redis':
             redis_conf_names.append(config_str)
             redis_conf_means.append(conf_stats['mean'])
             redis_conf_stds.append(conf_stats['std_dev'])
+            redis_is_zswap_off.append(is_zswap_off)
         elif zswap_config[0] == 'mongodb':
             mongodb_conf_names.append(config_str)
             mongodb_conf_means.append(conf_stats['mean'])
             mongodb_conf_stds.append(conf_stats['std_dev'])
+            mongodb_is_zswap_off.append(is_zswap_off)
 
 # Redis plot
 if redis_conf_means:
-    fig, ax = plt.subplots(figsize=(10, 6))
-    bars = ax.bar(redis_conf_names, redis_conf_means, yerr=redis_conf_stds, capsize=1, error_kw={'elinewidth': 0.8, 'capthick': 0.8})
+    fig, ax = plt.subplots(figsize=(12, 8))
+    normal_bars = [i for i, is_off in enumerate(redis_is_zswap_off) if not is_off]
+    off_bars = [i for i, is_off in enumerate(redis_is_zswap_off) if is_off]
+    # normal configs
+    ax.bar([redis_conf_names[i] for i in normal_bars],
+           [redis_conf_means[i] for i in normal_bars],
+           label='Normal Config')
+    # zswap_off configs
+    zswap_off_bars = ax.bar([redis_conf_names[i] for i in off_bars],
+                          [redis_conf_means[i] for i in off_bars],
+                          color='red',
+                          edgecolor='black',
+                          linewidth=2,
+                          hatch='///',
+                          alpha=1.0,
+                          label='zswap_off Config')
+    # zswap_off annotations
+    for i in off_bars:
+        runtime_value = redis_conf_means[i]
+        ax.annotate(f'ZSWAP OFF\n{runtime_value:.2f}s',
+                   xy=(i, redis_conf_means[i] + 0.1),
+                   xytext=(0, 10),
+                   textcoords='offset points',
+                   ha='center',
+                   va='bottom',
+                   fontsize=10,
+                   color='red',
+                   fontweight='bold',
+                   bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.7))
+    # minimum runtime annotation
+    min_index = redis_conf_means.index(min(redis_conf_means))
+    min_config_name = redis_conf_names[min_index]
+    min_runtime = redis_conf_means[min_index]
+    ax.bar(min_config_name, min_runtime,
+           color='green',
+           edgecolor='black',
+           linewidth=2,
+           alpha=0.7)
+    ax.annotate(f'{min_config_name}\n{min_runtime:.2f}s',
+                xy=(min_index, min_runtime),
+                xytext=(0, -35),
+                textcoords='offset points',
+                ha='center',
+                va='top',
+                fontsize=8,
+                color='green',
+                fontweight='bold',
+                bbox=dict(boxstyle='round,pad=0.3', fc='lightgreen', alpha=0.7),
+                arrowprops=dict(arrowstyle='->', color='green', lw=1.5))
+    # default config annotation: redis_lzo_zbud_20_90_Y_N_Y_Y
+    specific_config = 'redis_lzo_zbud_20_90_Y_N_Y_Y'
+    if specific_config in redis_conf_names:
+        specific_index = redis_conf_names.index(specific_config)
+        specific_runtime = redis_conf_means[specific_index]
+        ax.bar(specific_config, specific_runtime,
+               color='purple',
+               edgecolor='black',
+               linewidth=2,
+               alpha=0.7)
+        ax.annotate(f'{specific_config}\n{specific_runtime:.2f}s',
+                   xy=(specific_index, specific_runtime),
+                   xytext=(0, 35),
+                   textcoords='offset points',
+                   ha='center',
+                   va='bottom',
+                   fontsize=8,
+                   color='purple',
+                   fontweight='bold',
+                   bbox=dict(boxstyle='round,pad=0.3', fc='lavender', alpha=0.7),
+                   arrowprops=dict(arrowstyle='->', color='purple', lw=1.5))
+    else:
+        print(f"Config '{specific_config}' not found in the data")
+    ax.legend(fontsize=12, loc='upper right')
     ax.set_xticklabels([])
     ax.tick_params(axis='x', which='both', bottom=False)
-    ax.set_ylabel('Redis Mean Runtimes')
+    ax.set_ylabel('Redis Mean Runtimes (s)', fontsize=12)
+    ax.set_title('Redis Configuration Performance Comparison', fontsize=14)
     plt.tight_layout()
-    # plt.show()
-    plt.savefig('redis_conf.png')
+    plt.savefig('redis_conf_enhanced.png', dpi=300)
 
 # Mongodb plot
 if mongodb_conf_means:
-    fig, ax = plt.subplots(figsize=(10, 6))
-    bars = ax.bar(mongodb_conf_names, mongodb_conf_means, yerr=mongodb_conf_stds, capsize=1, error_kw={'elinewidth': 0.8, 'capthick': 0.8})
+    fig, ax = plt.subplots(figsize=(12, 8))
+    normal_bars = [i for i, is_off in enumerate(mongodb_is_zswap_off) if not is_off]
+    off_bars = [i for i, is_off in enumerate(mongodb_is_zswap_off) if is_off]
+    # normal configs
+    ax.bar([mongodb_conf_names[i] for i in normal_bars],
+           [mongodb_conf_means[i] for i in normal_bars],
+           label='Normal Config')
+    # zswap_off configs
+    zswap_off_bars = ax.bar([mongodb_conf_names[i] for i in off_bars],
+                            [mongodb_conf_means[i] for i in off_bars],
+                            color='red',
+                            edgecolor='black',
+                            linewidth=2,
+                            hatch='///',
+                            alpha=1.0,
+                            label='zswap_off Config')
+    # zswap_off annotations
+    for i in off_bars:
+        runtime_value = mongodb_conf_means[i]
+        ax.annotate(f'ZSWAP OFF\n{runtime_value:.2f}s',
+                   xy=(i, mongodb_conf_means[i] + 0.1),
+                   xytext=(0, 10),
+                   textcoords='offset points',
+                   ha='center',
+                   va='bottom',
+                   fontsize=10,
+                   color='red',
+                   fontweight='bold',
+                   bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.7))
+    # minimum runtime annotation
+    min_index = mongodb_conf_means.index(min(mongodb_conf_means))
+    min_config_name = mongodb_conf_names[min_index]
+    min_runtime = mongodb_conf_means[min_index]
+    ax.bar(min_config_name, min_runtime,
+           color='green',
+           edgecolor='black',
+           linewidth=2,
+           alpha=0.7)
+    ax.annotate(f'{min_config_name}\n{min_runtime:.2f}s',
+               xy=(min_index, min_runtime),
+               xytext=(0, -35),  # Position below the bar
+               textcoords='offset points',
+               ha='center',
+               va='top',
+               fontsize=8,
+               color='green',
+               fontweight='bold',
+               bbox=dict(boxstyle='round,pad=0.3', fc='lightgreen', alpha=0.7),
+               arrowprops=dict(arrowstyle='->', color='green', lw=1.5))
+    # default config annotation
+    specific_config = 'mongodb_lzo_zbud_20_90_Y_N_Y_Y'
+    if specific_config in mongodb_conf_names:
+        specific_index = mongodb_conf_names.index(specific_config)
+        specific_runtime = mongodb_conf_means[specific_index]
+        ax.bar(specific_config, specific_runtime,
+               color='purple',
+               edgecolor='black',
+               linewidth=2,
+               alpha=0.7)
+        ax.annotate(f'{specific_config}\n{specific_runtime:.2f}s',
+                   xy=(specific_index, specific_runtime),
+                   xytext=(0, 35),
+                   textcoords='offset points',
+                   ha='center',
+                   va='bottom',
+                   fontsize=8,
+                   color='purple',
+                   fontweight='bold',
+                   bbox=dict(boxstyle='round,pad=0.3', fc='lavender', alpha=0.7),
+                   arrowprops=dict(arrowstyle='->', color='purple', lw=1.5))
+    else:
+        print(f"Config '{specific_config}' not found in the data")
+
+    ax.legend(fontsize=12, loc='upper right')
     ax.set_xticklabels([])
     ax.tick_params(axis='x', which='both', bottom=False)
-    ax.set_ylabel('Mongodb Mean Runtimes')
+    ax.set_ylabel('MongoDB Mean Runtimes (s)', fontsize=12)
+    ax.set_title('MongoDB Configuration Performance Comparison', fontsize=14)
     plt.tight_layout()
-    # plt.show()
-    plt.savefig('mongodb_conf.png')
+    plt.savefig('mongodb_conf_enhanced.png', dpi=300)
