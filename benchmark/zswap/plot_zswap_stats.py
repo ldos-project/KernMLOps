@@ -108,7 +108,6 @@ def plot_filtered_bars(conf_names, conf_means, conf_stds, is_zswap_off, title, y
                    fontweight='bold',
                    bbox=dict(boxstyle='round,pad=0.3', fc='lavender', alpha=0.7),
                    arrowprops=dict(arrowstyle='->', color='purple', lw=1.5))
-    ax.legend(fontsize=12, loc='upper right')
     ax.set_xticklabels([])
     ax.tick_params(axis='x', which='both', bottom=False)
     ax.set_ylabel(ylabel, fontsize=12)
