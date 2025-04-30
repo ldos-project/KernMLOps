@@ -47,6 +47,75 @@ def calculate_statistics(data):
         "confidence_interval_95": (ci_lower, ci_upper)
     }
 
+def plot_filtered_bars(conf_names, conf_means, conf_stds, is_zswap_off, title, ylabel, filename, highlight_config=None):
+    fig, ax = plt.subplots(figsize=(12, 8))
+    normal_bars = [i for i, is_off in enumerate(is_zswap_off) if not is_off]
+    off_bars = [i for i, is_off in enumerate(is_zswap_off) if is_off]
+    ax.bar([conf_names[i] for i in normal_bars],
+           [conf_means[i] for i in normal_bars],
+           label='Normal Config')
+    ax.bar([conf_names[i] for i in off_bars],
+           [conf_means[i] for i in off_bars],
+           color='red',
+           edgecolor='black',
+           linewidth=2,
+           hatch='///',
+           alpha=1.0,
+           label='zswap_off Config')
+    for i in off_bars:
+        ax.annotate(f'ZSWAP OFF\n{conf_means[i]:.2f}s',
+                   xy=(i, conf_means[i] + 0.1),
+                   xytext=(0, 10),
+                   textcoords='offset points',
+                   ha='center',
+                   va='bottom',
+                   fontsize=10,
+                   color='red',
+                   fontweight='bold',
+                   bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.7))
+    min_index = conf_means.index(min(conf_means))
+    ax.bar(conf_names[min_index], conf_means[min_index],
+           color='green',
+           edgecolor='black',
+           linewidth=2,
+           alpha=0.7)
+    ax.annotate(f'{conf_names[min_index]}\n{conf_means[min_index]:.2f}s',
+               xy=(min_index, conf_means[min_index]),
+               xytext=(0, -35),
+               textcoords='offset points',
+               ha='center',
+               va='top',
+               fontsize=8,
+               color='green',
+               fontweight='bold',
+               bbox=dict(boxstyle='round,pad=0.3', fc='lightgreen', alpha=0.7),
+               arrowprops=dict(arrowstyle='->', color='green', lw=1.5))
+    if highlight_config and highlight_config in conf_names:
+        i = conf_names.index(highlight_config)
+        ax.bar(highlight_config, conf_means[i],
+               color='purple',
+               edgecolor='black',
+               linewidth=2,
+               alpha=0.7)
+        ax.annotate(f'{highlight_config}\n{conf_means[i]:.2f}s',
+                   xy=(i, conf_means[i]),
+                   xytext=(0, 35),
+                   textcoords='offset points',
+                   ha='center',
+                   va='bottom',
+                   fontsize=8,
+                   color='purple',
+                   fontweight='bold',
+                   bbox=dict(boxstyle='round,pad=0.3', fc='lavender', alpha=0.7),
+                   arrowprops=dict(arrowstyle='->', color='purple', lw=1.5))
+    ax.legend(fontsize=12, loc='upper right')
+    ax.set_xticklabels([])
+    ax.tick_params(axis='x', which='both', bottom=False)
+    ax.set_ylabel(ylabel, fontsize=12)
+    ax.set_title(title, fontsize=14)
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+
 zswap_configs = get_configs()
 runner = RemoteZswapRunner(
     remote_host='dwg@whatever',
@@ -244,3 +313,87 @@ if mongodb_conf_means:
     ax.set_title('MongoDB Configuration Performance Comparison', fontsize=14)
     plt.tight_layout()
     plt.savefig('mongodb_conf_enhanced.png', dpi=300)
+
+# Redis with compressor=lzo
+if redis_conf_means:
+    indices = [i for i, name in enumerate(redis_conf_names) if '_lzo_' in name]
+    if indices:
+        plot_filtered_bars(
+            [redis_conf_names[i] for i in indices],
+            [redis_conf_means[i] for i in indices],
+            [redis_conf_stds[i] for i in indices],
+            [redis_is_zswap_off[i] for i in indices],
+            title='Redis Configs with Compressor=LZO',
+            ylabel='Redis Mean Runtimes (s)',
+            filename='redis_lzo.png'
+        )
+
+# Redis with compressor=lz4hc
+if redis_conf_means:
+    indices = [i for i, name in enumerate(redis_conf_names) if '_lz4hc_' in name]
+    if indices:
+        plot_filtered_bars(
+            [redis_conf_names[i] for i in indices],
+            [redis_conf_means[i] for i in indices],
+            [redis_conf_stds[i] for i in indices],
+            [redis_is_zswap_off[i] for i in indices],
+            title='Redis Configs with Compressor=LZ4HC',
+            ylabel='Redis Mean Runtimes (s)',
+            filename='redis_lz4hc.png'
+        )
+
+# Redis with zpool=zbud
+if redis_conf_means:
+    indices = [i for i, name in enumerate(redis_conf_names) if '_zbud_' in name]
+    if indices:
+        plot_filtered_bars(
+            [redis_conf_names[i] for i in indices],
+            [redis_conf_means[i] for i in indices],
+            [redis_conf_stds[i] for i in indices],
+            [redis_is_zswap_off[i] for i in indices],
+            title='Redis Configs with Zpool=ZBUD',
+            ylabel='Redis Mean Runtimes (s)',
+            filename='redis_zbud.png'
+        )
+
+# MongoDB with compressor=lzo
+if mongodb_conf_means:
+    indices = [i for i, name in enumerate(mongodb_conf_names) if '_lzo_' in name]
+    if indices:
+        plot_filtered_bars(
+            [mongodb_conf_names[i] for i in indices],
+            [mongodb_conf_means[i] for i in indices],
+            [mongodb_conf_stds[i] for i in indices],
+            [mongodb_is_zswap_off[i] for i in indices],
+            title='MongoDB Configs with Compressor=LZO',
+            ylabel='MongoDB Mean Runtimes (s)',
+            filename='mongodb_lzo.png'
+        )
+
+# MongoDB with compressor=lz4hc
+if mongodb_conf_means:
+    indices = [i for i, name in enumerate(mongodb_conf_names) if '_lz4hc_' in name]
+    if indices:
+        plot_filtered_bars(
+            [mongodb_conf_names[i] for i in indices],
+            [mongodb_conf_means[i] for i in indices],
+            [mongodb_conf_stds[i] for i in indices],
+            [mongodb_is_zswap_off[i] for i in indices],
+            title='MongoDB Configs with Compressor=LZ4HC',
+            ylabel='MongoDB Mean Runtimes (s)',
+            filename='mongodb_lz4hc.png'
+        )
+
+# MongoDB with zpool=zbud
+if mongodb_conf_means:
+    indices = [i for i, name in enumerate(mongodb_conf_names) if '_zbud_' in name]
+    if indices:
+        plot_filtered_bars(
+            [mongodb_conf_names[i] for i in indices],
+            [mongodb_conf_means[i] for i in indices],
+            [mongodb_conf_stds[i] for i in indices],
+            [mongodb_is_zswap_off[i] for i in indices],
+            title='MongoDB Configs with Zpool=ZBUD',
+            ylabel='MongoDB Mean Runtimes (s)',
+            filename='mongodb_zbud.png'
+        )
