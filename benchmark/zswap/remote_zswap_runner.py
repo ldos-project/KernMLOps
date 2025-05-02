@@ -154,7 +154,7 @@ class RemoteZswapRunner:
 
     # provides option to setup either redis or mongodb benchmark
     # should run make install-yscb and copy over correct config
-    def setup_ycsb_experiment(self, benchmark: str, distribution="uniform", verbose=False):
+    def setup_ycsb_experiment(self, benchmark: str, distribution="uniform", collector=None, verbose=False):
         if benchmark not in ['redis', 'mongodb']:
             print("Error! YCSB benchmark must be Redis or MongoDB")
             return -1
@@ -164,6 +164,11 @@ class RemoteZswapRunner:
             f"""sed -i 's/request_distribution: ".*"/request_distribution: "{distribution}"/' KernMLOps/overrides.yaml""",
             verbose=verbose
         )
+        if collector:
+            self.execute_remote_command(
+                f"""sed -i 's/None/{collector}/' KernMLOps/overrides.yaml""",
+                verbose=verbose
+            )
         return 0
 
     # runs a bunch of sysctl commands to aggressively shrink the Linux page
@@ -242,7 +247,7 @@ def main():
     runner.configure_zswap(parameter='enabled', value='0')
     runner.setup_kernmlops(owner='dariusgrassi', branch='zswap-runner', verbose=True)
     runner.reset_connection()
-    runner.setup_ycsb_experiment(benchmark='redis', distribution='zipfian', verbose=True)
+    runner.setup_ycsb_experiment(benchmark='redis', distribution='zipfian', collector='mm_rss_stat', verbose=True)
     runner.shrink_page_cache()
     runner.run_mem_constrained_ycsb_experiment(benchmark='redis_uniform_nozswap')
     runner.find_and_parse_logfiles('redis_uniform*')
