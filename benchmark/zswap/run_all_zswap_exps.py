@@ -87,6 +87,7 @@ class RemoteHostThreadPool:
                 runner.configure_zswap(parameter='enabled', value='Y')
                 runner.config_zswap_params(config)
             runner.setup_kernmlops(owner='dariusgrassi', branch='zswap-runner')
+            runner.reset_connection()
             runner.setup_ycsb_experiment(benchmark=benchmark)
             runner.shrink_page_cache()
             runner.clear_swap()
