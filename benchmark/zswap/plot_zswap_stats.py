@@ -115,6 +115,43 @@ def plot_filtered_bars(conf_names, conf_means, conf_stds, is_zswap_off, title, y
     plt.tight_layout()
     plt.savefig(filename, dpi=300)
 
+def plot_selected_configs(conf_names, conf_means, conf_stds, is_zswap_off, default_config, title, ylabel, filename, alt_config=None, alt_config_name="alt config"):
+    selected = []
+    labels = []
+    colors = []
+    min_index = conf_means.index(min(conf_means))
+    print("Optimal config:", conf_names[min_index])
+    if default_config in conf_names:
+        default_index = conf_names.index(default_config)
+        selected.append(default_index)
+        labels.append("default")
+        colors.append("#9e9ac8")  # soft purple
+    selected.append(min_index)
+    labels.append("optimal")
+    colors.append("#74c476")  # soft green
+    if alt_config and alt_config in conf_names:
+        alt_index = conf_names.index(alt_config)
+        selected.append(alt_index)
+        labels.append(alt_config_name)
+        colors.append("#6baed6")  # soft blue
+    for i, name in enumerate(conf_names):
+        if is_zswap_off[i]:
+            selected.append(i)
+            labels.append("zswap off")
+            colors.append("#fc9272")  # soft red
+    selected_means = [conf_means[i] for i in selected]
+    selected_stds = [conf_stds[i] for i in selected]
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(labels, selected_means, yerr=selected_stds, capsize=5, color=colors, edgecolor='black', linewidth=0.8)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.grid(axis='y', linestyle='--', linewidth=0.5, alpha=0.7)
+    ax.set_axisbelow(True)
+    for i, val in enumerate(selected_means):
+        ax.text(i, val + 0.05, f"{val:.2f}s", ha='center', va='bottom', fontsize=9)
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+
 zswap_configs = get_configs()
 runner = RemoteZswapRunner(
     remote_host='dwg@whatever',
@@ -147,6 +184,19 @@ while zswap_configs:
             mongodb_conf_means.append(conf_stats['mean'])
             mongodb_conf_stds.append(conf_stats['std_dev'])
             mongodb_is_zswap_off.append(is_zswap_off)
+
+plot_selected_configs(
+    redis_conf_names,
+    redis_conf_means,
+    redis_conf_stds,
+    redis_is_zswap_off,
+    default_config='redis_lzo_zbud_20_90_Y_N_Y_Y',
+    alt_config='redis_lz4hc_zbud_40_100_Y_N_Y_N',
+    alt_config_name='uniform optimal',
+    title='YCSB Redis Benchmark (Zipfian Distribution) Zswap Default Config vs. Optimal vs. Uniform Optimal vs. OFF',
+    ylabel='Runtime (s)',
+    filename='zipfian_redis_selected.png'
+)
 
 # Redis plot
 if redis_conf_means:
