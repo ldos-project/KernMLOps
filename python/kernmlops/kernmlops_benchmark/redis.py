@@ -21,6 +21,8 @@ class RedisConfig(ConfigBase):
     repeat: int = 1
     outer_repeat: int = 1
     tcmalloc: bool = False
+    mem_cgroup_name: str | None = None
+    mem_cgroup_size: str | None = None
     # Core operation parameters
     field_count: int = 256
     field_length: int = 16
@@ -95,8 +97,18 @@ class RedisBenchmark(Benchmark):
         if self.server is not None:
             raise BenchmarkRunningError()
 
+        start_redis = []
+
+        # setup cgroup if enabled
+        if self.config.mem_cgroup_name and self.config.mem_cgroup_size:
+            subprocess.run(["sudo", "apt-get", "update"])
+            subprocess.run(["sudo", "apt-get", "install", "-y", "cgroup-tools"], check=True)
+            subprocess.run(["sudo", "cgcreate", "-g", f"memory:{self.config.mem_cgroup_name}"], check=True)
+            subprocess.run(["sudo", "cgset", "-r", f"memory.max={self.config.mem_cgroup_size}", self.config.mem_cgroup_name], check=True)
+            start_redis += ["sudo", "cgexec", "-g", f"memory:{self.config.mem_cgroup_name}"]
+
         # start the redis server
-        start_redis = [
+        start_redis += [
             self.redis_server_name(),
             "./config/redis.conf",
         ]
