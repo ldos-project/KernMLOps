@@ -101,11 +101,11 @@ class RedisBenchmark(Benchmark):
 
         # setup cgroup if enabled
         if self.config.mem_cgroup_name and self.config.mem_cgroup_size:
-            subprocess.run(["sudo", "apt-get", "update"])
-            subprocess.run(["sudo", "apt-get", "install", "-y", "cgroup-tools"], check=True)
-            subprocess.run(["sudo", "cgcreate", "-g", f"memory:{self.config.mem_cgroup_name}"], check=True)
-            subprocess.run(["sudo", "cgset", "-r", f"memory.max={self.config.mem_cgroup_size}", self.config.mem_cgroup_name], check=True)
-            start_redis += ["sudo", "cgexec", "-g", f"memory:{self.config.mem_cgroup_name}"]
+            subprocess.run(["apt-get", "update"])
+            subprocess.run(["apt-get", "install", "-y", "cgroup-tools"], check=True)
+            subprocess.run(["cgcreate", "-g", f"memory:{self.config.mem_cgroup_name}"], check=True)
+            subprocess.run(["cgset", "-r", f"memory.max={self.config.mem_cgroup_size}", self.config.mem_cgroup_name], check=True)
+            start_redis += ["cgexec", "-g", f"memory:{self.config.mem_cgroup_name}"]
 
         # start the redis server
         start_redis += [
