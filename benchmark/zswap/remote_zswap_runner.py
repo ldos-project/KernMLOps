@@ -199,7 +199,7 @@ class RemoteZswapRunner:
         # XXX: This might be a bug
         self.execute_remote_command('sudo chown -R $(whoami):$(id -gn) kernmlops-benchmark/ycsb')
         # Run benchmark with memory constraints and unlimited swap
-        self.execute_remote_command(f"make -C KernMLOps CONTAINER_OPTS=\'--memory={mem} --memory-swap=-1\' collect | tee output.log",
+        self.execute_remote_command("make -C KernMLOps collect | tee output.log",
             get_pty=True,
             write_to_file=True,
             output_filename=f"{benchmark}_{int(time.time())}.txt",
