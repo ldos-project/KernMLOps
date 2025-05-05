@@ -25,4 +25,13 @@ collector_config:
     output_dir: data
     output_graphs: false
     hooks:
-      - None
+      - file_data
+      - memory_usage
+      - process_metadata
+      - quanta_runtime
+      - block_io
+      - perf
+      - collapse_huge_pages
+      - mm_rss_stat
+      - process_trace
+      - zswap_runtime
