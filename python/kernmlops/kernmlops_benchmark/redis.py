@@ -97,8 +97,6 @@ class RedisBenchmark(Benchmark):
         if self.server is not None:
             raise BenchmarkRunningError()
 
-        start_redis = []
-
         if self.config.mem_cgroup_size:
             cgroup_path = "/sys/fs/cgroup/redis_mem"
             subprocess.run(["mkdir", "-p", cgroup_path], check=True)
@@ -108,6 +106,7 @@ class RedisBenchmark(Benchmark):
             with open(f"{cgroup_path}/cgroup.procs", "w") as f:
                 f.write(str(os.getpid()))
 
+        # start the redis server
         start_redis = [
             self.redis_server_name(),
             "./config/redis.conf",
