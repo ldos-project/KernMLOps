@@ -285,23 +285,21 @@ if mongodb_conf_means:
     fig, ax = plt.subplots(figsize=(12, 8))
     normal_bars = [i for i, is_off in enumerate(mongodb_is_zswap_off) if not is_off]
     off_bars = [i for i, is_off in enumerate(mongodb_is_zswap_off) if is_off]
-    # normal configs
+
     ax.bar([mongodb_conf_names[i] for i in normal_bars],
            [mongodb_conf_means[i] for i in normal_bars],
            label='Normal Config')
-    # zswap_off configs
-    zswap_off_bars = ax.bar([mongodb_conf_names[i] for i in off_bars],
-                            [mongodb_conf_means[i] for i in off_bars],
-                            color='red',
-                            edgecolor='black',
-                            linewidth=2,
-                            hatch='///',
-                            alpha=1.0,
-                            label='zswap_off Config')
-    # zswap_off annotations
+    ax.bar([mongodb_conf_names[i] for i in off_bars],
+           [mongodb_conf_means[i] for i in off_bars],
+           color='red',
+           edgecolor='black',
+           linewidth=2,
+           hatch='///',
+           alpha=1.0,
+           label='zswap_off Config')
+
     for i in off_bars:
-        runtime_value = mongodb_conf_means[i]
-        ax.annotate(f'ZSWAP OFF\n{runtime_value:.2f}s',
+        ax.annotate(f'ZSWAP OFF\n{mongodb_conf_means[i]:.2f}s',
                    xy=(i, mongodb_conf_means[i] + 0.1),
                    xytext=(0, 10),
                    textcoords='offset points',
@@ -311,7 +309,7 @@ if mongodb_conf_means:
                    color='red',
                    fontweight='bold',
                    bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.7))
-    # minimum runtime annotation
+
     min_index = mongodb_conf_means.index(min(mongodb_conf_means))
     min_config_name = mongodb_conf_names[min_index]
     min_runtime = mongodb_conf_means[min_index]
@@ -320,9 +318,9 @@ if mongodb_conf_means:
            edgecolor='black',
            linewidth=2,
            alpha=0.7)
-    ax.annotate(f'{min_config_name}\n{min_runtime:.2f}s',
+    ax.annotate(f'optimal\n{min_config_name}\n{min_runtime:.2f}s',
                xy=(min_index, min_runtime),
-               xytext=(0, -35),  # Position below the bar
+               xytext=(0, -45),
                textcoords='offset points',
                ha='center',
                va='top',
@@ -331,19 +329,19 @@ if mongodb_conf_means:
                fontweight='bold',
                bbox=dict(boxstyle='round,pad=0.3', fc='lightgreen', alpha=0.7),
                arrowprops=dict(arrowstyle='->', color='green', lw=1.5))
-    # default config annotation
-    specific_config = 'mongodb_lzo_zbud_20_90_Y_N_Y_Y'
-    if specific_config in mongodb_conf_names:
-        specific_index = mongodb_conf_names.index(specific_config)
-        specific_runtime = mongodb_conf_means[specific_index]
-        ax.bar(specific_config, specific_runtime,
+
+    default_config = 'mongodb_lzo_zbud_20_90_Y_N_Y_Y'
+    if default_config in mongodb_conf_names:
+        i = mongodb_conf_names.index(default_config)
+        rt = mongodb_conf_means[i]
+        ax.bar(default_config, rt,
                color='purple',
                edgecolor='black',
                linewidth=2,
                alpha=0.7)
-        ax.annotate(f'{specific_config}\n{specific_runtime:.2f}s',
-                   xy=(specific_index, specific_runtime),
-                   xytext=(0, 35),
+        ax.annotate(f'default config\n{rt:.2f}s',
+                   xy=(i, rt),
+                   xytext=(0, 65),
                    textcoords='offset points',
                    ha='center',
                    va='bottom',
@@ -353,7 +351,30 @@ if mongodb_conf_means:
                    bbox=dict(boxstyle='round,pad=0.3', fc='lavender', alpha=0.7),
                    arrowprops=dict(arrowstyle='->', color='purple', lw=1.5))
     else:
-        print(f"Config '{specific_config}' not found in the data")
+        print(f"Default config '{default_config}' not found")
+
+    uniform_optimal = 'mongodb_lzo_zbud_10_90_N_N_Y_N'
+    if uniform_optimal in mongodb_conf_names:
+        i = mongodb_conf_names.index(uniform_optimal)
+        rt = mongodb_conf_means[i]
+        ax.bar(uniform_optimal, rt,
+               color='#6baed6',
+               edgecolor='black',
+               linewidth=2,
+               alpha=0.7)
+        ax.annotate(f'uniform optimal\n{rt:.2f}s',
+                   xy=(i, rt),
+                   xytext=(0, 25),
+                   textcoords='offset points',
+                   ha='center',
+                   va='bottom',
+                   fontsize=8,
+                   color='blue',
+                   fontweight='bold',
+                   bbox=dict(boxstyle='round,pad=0.3', fc='lightblue', alpha=0.7),
+                   arrowprops=dict(arrowstyle='->', color='blue', lw=1.5))
+    else:
+        print(f"Uniform optimal config '{uniform_optimal}' not found")
 
     ax.legend(fontsize=12, loc='upper right')
     ax.set_xticklabels([])
