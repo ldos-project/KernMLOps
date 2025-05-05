@@ -21,6 +21,7 @@ class RedisConfig(ConfigBase):
     repeat: int = 1
     outer_repeat: int = 1
     tcmalloc: bool = False
+    mem_cgroup_size: str | None = None
     # Core operation parameters
     field_count: int = 256
     field_length: int = 16
@@ -95,6 +96,13 @@ class RedisBenchmark(Benchmark):
         if self.server is not None:
             raise BenchmarkRunningError()
 
+        cgroup_path = ""
+        if self.config.mem_cgroup_size:
+            cgroup_path = "/sys/fs/cgroup/redis_mem"
+            subprocess.run(["mkdir", "-p", cgroup_path], check=True)
+            with open(f"{cgroup_path}/memory.max", "w") as f:
+                f.write(str(self.config.mem_cgroup_size))
+
         # start the redis server
         start_redis = [
             self.redis_server_name(),
@@ -112,6 +120,16 @@ class RedisBenchmark(Benchmark):
 
         if ping_redis.returncode != 0:
             raise BenchmarkError("Redis Failed To Start")
+
+        # Add the Redis process to the cgroup if set
+        if self.config.mem_cgroup_size:
+            ps_output = subprocess.check_output(["pgrep", "-f", "redis-server"])
+            redis_pid = ps_output.decode().strip()
+            try:
+                with open(f"{cgroup_path}/cgroup.procs", "w") as f:
+                    f.write(redis_pid)
+            except Exception as e:
+                print(f"WARNING: Failed to set Redis cgroup: {e}")
 
         server_space : int | float | None = None if self.config.server_sleep is None else timeparse(self.config.server_sleep)
         if server_space is not None :
