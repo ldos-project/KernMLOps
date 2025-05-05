@@ -21,6 +21,7 @@ from pytimeparse.timeparse import timeparse
 @dataclass(frozen=True)
 class MongoDbConfig(ConfigBase):
     repeat: int = 1
+    mem_cgroup_size: str | None = None
     # Core operation parameters
     field_count: int = 256
     field_length: int = 16
@@ -97,6 +98,13 @@ class MongoDbBenchmark(Benchmark):
         if self.server is not None:
             raise BenchmarkRunningError()
 
+        cgroup_path = ""
+        if self.config.mem_cgroup_size:
+            cgroup_path = "/sys/fs/cgroup/mongodb_mem"
+            subprocess.run(["mkdir", "-p", cgroup_path], check=True)
+            with open(f"{cgroup_path}/memory.max", "w") as f:
+                f.write(str(self.config.mem_cgroup_size))
+
         # start the MongoDB server
         start_mongod = [
             "mongod",
@@ -115,6 +123,16 @@ class MongoDbBenchmark(Benchmark):
 
         if ping_mongod is None:
             raise BenchmarkError("MongoDB Failed To Start")
+
+        # Add the Redis process to the cgroup if set
+        if self.config.mem_cgroup_size:
+            ps_output = subprocess.check_output(["pgrep", "-f", "mongod"])
+            mongod_pid = ps_output.decode().strip()
+            try:
+                with open(f"{cgroup_path}/cgroup.procs", "w") as f:
+                    f.write(mongod_pid)
+            except Exception as e:
+                print(f"WARNING: Failed to set MongoDB cgroup: {e}")
 
         server_space : int | float | None = None if self.config.server_sleep is None else timeparse(self.config.server_sleep)
         if server_space is not None :
