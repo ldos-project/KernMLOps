@@ -1,3 +1,4 @@
+import os
 import signal
 import subprocess
 import time
@@ -21,7 +22,6 @@ class RedisConfig(ConfigBase):
     repeat: int = 1
     outer_repeat: int = 1
     tcmalloc: bool = False
-    mem_cgroup_name: str | None = None
     mem_cgroup_size: str | None = None
     # Core operation parameters
     field_count: int = 256
@@ -99,16 +99,16 @@ class RedisBenchmark(Benchmark):
 
         start_redis = []
 
-        # setup cgroup if enabled
-        if self.config.mem_cgroup_name and self.config.mem_cgroup_size:
-            subprocess.run(["apt-get", "update"])
-            subprocess.run(["apt-get", "install", "-y", "cgroup-tools"], check=True)
-            subprocess.run(["cgcreate", "-g", f"memory:{self.config.mem_cgroup_name}"], check=True)
-            subprocess.run(["cgset", "-r", f"memory.max={self.config.mem_cgroup_size}", self.config.mem_cgroup_name], check=True)
-            start_redis += ["cgexec", "-g", f"memory:{self.config.mem_cgroup_name}"]
+        if self.config.mem_cgroup_size:
+            cgroup_path = "/sys/fs/cgroup/redis_mem"
+            subprocess.run(["mkdir", "-p", cgroup_path], check=True)
+            with open(f"{cgroup_path}/memory.max", "w") as f:
+                f.write(str(self.config.mem_cgroup_size))
+            # redis inherits cgroup from current process
+            with open(f"{cgroup_path}/cgroup.procs", "w") as f:
+                f.write(str(os.getpid()))
 
-        # start the redis server
-        start_redis += [
+        start_redis = [
             self.redis_server_name(),
             "./config/redis.conf",
         ]
