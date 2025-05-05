@@ -1,3 +1,4 @@
+import os
 import signal
 import subprocess
 import time
@@ -21,6 +22,7 @@ class RedisConfig(ConfigBase):
     repeat: int = 1
     outer_repeat: int = 1
     tcmalloc: bool = False
+    mem_cgroup_size: str | None = None
     # Core operation parameters
     field_count: int = 256
     field_length: int = 16
@@ -94,6 +96,15 @@ class RedisBenchmark(Benchmark):
             raise BenchmarkRunningError()
         if self.server is not None:
             raise BenchmarkRunningError()
+
+        if self.config.mem_cgroup_size:
+            cgroup_path = "/sys/fs/cgroup/redis_mem"
+            subprocess.run(["mkdir", "-p", cgroup_path], check=True)
+            with open(f"{cgroup_path}/memory.max", "w") as f:
+                f.write(str(self.config.mem_cgroup_size))
+            # redis inherits cgroup from current process
+            with open(f"{cgroup_path}/cgroup.procs", "w") as f:
+                f.write(str(os.getpid()))
 
         # start the redis server
         start_redis = [
