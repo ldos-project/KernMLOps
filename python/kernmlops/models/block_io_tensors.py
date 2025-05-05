@@ -13,6 +13,7 @@ class Mode(Enum):
     WHIZ = "whiz"
     MINT = "mint"
     INVE = "investigate"
+    LINN = "linnos"
 
 def mode_type(value: str) -> Mode:
     try:
@@ -537,7 +538,36 @@ if args.mode is Mode.MINT:
     BlockIOTransformer().convert_and_save_parquet(train_df, tensor_type="train", tensor_dir=tensor_dir)
     BlockIOTransformer().convert_and_save_parquet(test_df, tensor_type="test", tensor_dir=tensor_dir)
 
+
+def linnos_prep(df : pl.DataFrame, history_size: int) -> pl.DataFrame:
+    # first make it lazy
+    df = df.select(['ts_uptime_us',
+                    'queue_length_4k_ios',
+                    'finish_ts_uptime_us',
+                    'measured_latency_us'])
+    lazy_df = df.lazy()
+    df_right = lazy_df.clone()
+    lazy_df = lazy_df.with_row_index()
+    print(lazy_df.collect_schema())
+    # get top history_size
+
+    lazy_df = (lazy_df.join_where(df_right,
+                       pl.col("finish_ts_uptime_us_right") < pl.col("ts_uptime_us"))
+               .group_by("index")
+               .agg(pl.all().top_k_by("finish_ts_uptime_us_right", history_size)))
+    df = lazy_df.collect(engine="streaming")
+    return df
+
+
+if args.mode is Mode.LINN:
+    print(pl.__version__)
+    print(train_df.columns)
+    df = linnos_prep(train_df, 4)
+    print(df.columns)
+
+
 if args.mode is Mode.INVE:
+    print(train_df.select(pl.col("device").unique()))
     train_df = convert_df(train_df)
     print(train_df.filter((pl.col("op") == "Read") & (pl.col("idle_flag"))))
     for i in ["sync_flag", "metadata_flag", "fua_flag", "priority_flag", "nomerge_flag",
