@@ -1,7 +1,5 @@
 """
-# TODO: run tests with zswap off, no swapping
-# TODO: run tests with zswap off, swapping
-- workloads: [redis, mongodb]
+- workloads: [redis, mongodb, memcached]
 - compressor: [lzo, deflate, 842, lz4, lz4hc, zstd]
 - zpool: [zbud, z3fold, zsmalloc]
 - max_pool_percent: [10, 20, 40]
