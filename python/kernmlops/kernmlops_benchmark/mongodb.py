@@ -124,7 +124,7 @@ class MongoDbBenchmark(Benchmark):
         if ping_mongod is None:
             raise BenchmarkError("MongoDB Failed To Start")
 
-        # Add the Redis process to the cgroup if set
+        # Add the MongoDB process to the cgroup if set
         if self.config.mem_cgroup_size:
             ps_output = subprocess.check_output(["pgrep", "-f", "mongod"])
             mongod_pid = ps_output.decode().strip()
