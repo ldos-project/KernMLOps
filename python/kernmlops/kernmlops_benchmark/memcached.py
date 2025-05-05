@@ -19,6 +19,7 @@ from pytimeparse.timeparse import timeparse
 @dataclass(frozen=True)
 class MemcachedConfig(ConfigBase):
     repeat: int = 1
+    mem_cgroup_size: str | None = None
     # Core operation parameters
     field_count: int = 256
     field_length: int = 16
@@ -78,6 +79,13 @@ class MemcachedBenchmark(Benchmark):
         if self.server is not None:
             raise BenchmarkRunningError()
 
+        cgroup_path = ""
+        if self.config.mem_cgroup_size:
+            cgroup_path = "/sys/fs/cgroup/memcached_mem"
+            subprocess.run(["mkdir", "-p", cgroup_path], check=True)
+            with open(f"{cgroup_path}/memory.max", "w") as f:
+                f.write(str(self.config.mem_cgroup_size))
+
         start_memcached = [
             "memcached",
         ]
@@ -126,6 +134,16 @@ class MemcachedBenchmark(Benchmark):
         server_space : int | float | None = None if self.config.server_sleep is None else timeparse(self.config.server_sleep)
         if server_space is not None :
             time.sleep(server_space)
+
+        # Add the Memcached process to the cgroup if set
+        if self.config.mem_cgroup_size:
+            ps_output = subprocess.check_output(["pgrep", "-f", "memcached"])
+            memcached_pid = ps_output.decode().strip()
+            try:
+                with open(f"{cgroup_path}/cgroup.procs", "w") as f:
+                    f.write(memcached_pid)
+            except Exception as e:
+                print(f"WARNING: Failed to set Memcached cgroup: {e}")
 
         space : int | float | None = None if self.config.sleep is None else timeparse(self.config.sleep)
 
