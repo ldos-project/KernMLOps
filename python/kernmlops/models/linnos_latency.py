@@ -32,11 +32,9 @@ class NeuralNetwork(nn.Module):
     def __init__(self, input_dim: int):
         super().__init__()
         #self.flatten = nn.Flatten()
-        hidden_dim = 8
+        hidden_dim = 256
         self.linear_relu_stack = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
-            nn.RReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
             nn.RReLU(),
             nn.Linear(hidden_dim, 2),
         )
@@ -119,8 +117,8 @@ def test_loop(dataloader, model, loss_fn, test_content, *, classification: bool)
 
 tensors_path = "data/tensors"
 rows = 1
-cols = 5
-features_subdirectory = f"block_io/{cols}_{rows}_segment_spartan_fwhiz"
+cols = 9
+features_subdirectory = f"block_io/{cols}_{rows}_segment_spartan_linnos"
 train_dataset = "reads_only" # "all" # "even_reads_only" # "reads_only"
 latency_cutoff = "p95_1460us"
 classification = latency_cutoff != "latency_us"

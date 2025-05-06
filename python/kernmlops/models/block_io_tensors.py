@@ -7,6 +7,7 @@ import torch
 
 import argparse
 from enum import Enum
+from functools import lru_cache
 
 # Setup operation
 class Mode(Enum):
@@ -267,6 +268,31 @@ class SegmentSpartanFwhizTransformer(RowTransformer):
         data.append(row["block_latency_us"] if row["ts_uptime_us"] + row["block_latency_us"] < present_ts_us else 0)
         return data
 
+class SegmentSpartanLinnOSTransformer(RowTransformer):
+    @classmethod
+    def name(cls) -> str:
+        return "segment_spartan_linnos"
+
+    @classmethod
+    def feature_length(cls) -> int:
+        return 9
+
+    @classmethod
+    def convert_row(cls, row: Mapping[str, Any], present_ts_us: int) -> list[float]:
+        data = list[float]()
+        data.append(row["queue_length_4k_ios"])
+        data.append(row["queue_length_4k_ios_lag_0"])
+        data.append(row["queue_length_4k_ios_lag_1"])
+        data.append(row["queue_length_4k_ios_lag_2"])
+        data.append(row["queue_length_4k_ios_lag_3"])
+        data.append(row["block_latency_us_lag_0"])
+        data.append(row["block_latency_us_lag_1"])
+        data.append(row["block_latency_us_lag_2"])
+        data.append(row["block_latency_us_lag_3"])
+        data.append(row["block_latency_us"] if row["ts_uptime_us"] + row["block_latency_us"] < present_ts_us else 0)
+        return data
+
+
 class P95Prediction(RowPrediction):
 
     @classmethod
@@ -428,9 +454,9 @@ class BlockIOTransformer(DatasetTransformer):
     def num_rows(cls) -> int:
         return 1
 
-    def convert_and_save_parquet(self, data_df: pl.DataFrame, *, tensor_type: str, tensor_dir: str) -> str:
-        root_out_dir = Path(tensor_dir)
-        raw_data = data_df.sort(["device", "ts_uptime_us"]).select([
+    @classmethod
+    def filter_rows(cls) -> list[str]:
+        return [
             "cpu",
             "device",
             "sector",
@@ -443,7 +469,11 @@ class BlockIOTransformer(DatasetTransformer):
             "block_io_latency_us",
             "block_latency_us",
             "collection_id",
-        ]).rows(named=True)
+            ]
+
+    def convert_and_save_parquet(self, data_df: pl.DataFrame, *, tensor_type: str, tensor_dir: str) -> str:
+        root_out_dir = Path(tensor_dir)
+        raw_data = data_df.sort(["device", "ts_uptime_us"]).select(self.filter_rows()).rows(named=True)
 
         for row_filter in self.row_filters():
             row_transformer_dir = f"{self.row_transformer().feature_length()}_{self.num_rows()}_{self.row_transformer().name()}"
@@ -498,6 +528,38 @@ class BlockIOTransformer(DatasetTransformer):
                 torch.save(latencies, out_dir / f"{tensor_type}_predictions_{prediction_name}.tensor")
             print(f"Generated: {str(features_out_file)}")
 
+class BlockIOTransformerLinnOS(BlockIOTransformer):
+    @classmethod
+    def row_transformer(cls) -> RowTransformer:
+        return SegmentSpartanLinnOSTransformer()
+
+    @classmethod
+    def filter_rows(cls) -> list[str]:
+        return [
+            "cpu",
+            "device",
+            "sector",
+            "segments",
+            "block_io_bytes",
+            "ts_uptime_us",
+            "block_io_flags",
+            "queue_length_segment_ios",
+            "queue_length_4k_ios",
+            "block_io_latency_us",
+            "block_latency_us",
+            "collection_id",
+            "queue_length_4k_ios_lag_0",
+            "block_latency_us_lag_0",
+            "queue_length_4k_ios_lag_1",
+            "block_latency_us_lag_1",
+            "queue_length_4k_ios_lag_2",
+            "block_latency_us_lag_2",
+            "queue_length_4k_ios_lag_3",
+            "block_latency_us_lag_3",
+            ]
+
+
+print("hello")
 
 tensor_dir = "data/tensors"
 
@@ -538,41 +600,60 @@ if args.mode is Mode.MINT:
     BlockIOTransformer().convert_and_save_parquet(train_df, tensor_type="train", tensor_dir=tensor_dir)
     BlockIOTransformer().convert_and_save_parquet(test_df, tensor_type="test", tensor_dir=tensor_dir)
 
+def map_k_linnos_elements(df : pl.DataFrame, history_size: int, ts: int) -> pl.DataFrame:
+    df = (df.filter(pl.col("finish_ts_uptime_us") < ts)
+          .top_k(history_size, by='finish_ts_uptime_us')
+          .sort('finish_ts_uptime_us')
+          .select(['block_latency_us', 'queue_length_4k_ios'])
+        )
+    return df
+
 
 def linnos_prep(df : pl.DataFrame, history_size: int) -> pl.DataFrame:
     # first make it lazy
-    df = df.select(['ts_uptime_us',
-                    'queue_length_4k_ios',
-                    'finish_ts_uptime_us',
-                    'measured_latency_us'])
-    lazy_df = df.lazy()
-    df_right = lazy_df.clone()
-    lazy_df = lazy_df.with_row_index()
-    print(lazy_df.collect_schema())
-    # get top history_size
+    df.sort("finish_ts_uptime_us")
+    dfc = df.clone()
 
-    lazy_df = (lazy_df.join_where(df_right,
-                       pl.col("finish_ts_uptime_us_right") < pl.col("ts_uptime_us"))
-               .group_by("index")
-               .agg(pl.all().top_k_by("finish_ts_uptime_us_right", history_size)))
-    df = lazy_df.collect(engine="streaming")
+    for i in range(0, history_size):
+        df = df.with_columns(
+                pl.col("ts_uptime_us")
+                .map_elements(lambda x: map_k_linnos_elements(dfc, history_size, x).select("queue_length_4k_ios").row(i)[0], return_dtype=pl.UInt64)
+                .alias(f"queue_length_4k_ios_lag_{i}"),
+                pl.col("ts_uptime_us")
+                .map_elements(lambda x: map_k_linnos_elements(dfc, history_size, x).select("block_latency_us").row(i)[0], return_dtype=pl.UInt64)
+                .alias(f"block_latency_us_lag_{i}")
+                )
     return df
 
 
 if args.mode is Mode.LINN:
-    print(pl.__version__)
-    print(train_df.columns)
-    df = linnos_prep(train_df, 4)
-    print(df.columns)
+    test_df = linnos_prep(test_df, 4).drop_nulls()
+    print(test_df.shape)
+    train_df = linnos_prep(train_df, 4).drop_nulls()
+    print(train_df.shape)
+    BlockIOTransformerLinnOS().convert_and_save_parquet(train_df, tensor_type="train", tensor_dir=tensor_dir)
+    BlockIOTransformerLinnOS().convert_and_save_parquet(test_df, tensor_type="test", tensor_dir=tensor_dir)
 
 
 if args.mode is Mode.INVE:
     print(train_df.select(pl.col("device").unique()))
-    train_df = convert_df(train_df)
-    print(train_df.filter((pl.col("op") == "Read") & (pl.col("idle_flag"))))
-    for i in ["sync_flag", "metadata_flag", "fua_flag", "priority_flag", "nomerge_flag",
-              "idle_flag", "readahead_flag", "background_flag", "nowait_flag"]:
-        new_df = train_df.filter(pl.col(i))
-        if new_df.height != 0:
-            print(f"{i}: {new_df.height}")
-            print(new_df.select(pl.col("op").unique()))
+    #train_df = convert_df(train_df)
+    print(train_df.select(pl.max("queue_length_4k_ios")))
+    print(train_df.select(pl.max("block_latency_us")))
+    print(train_df.select(pl.min("block_latency_us")))
+    print(train_df.select(pl.max("ts_uptime_us")))
+    print(train_df.select(pl.min("ts_uptime_us")))
+    print(train_df.select(pl.max("finish_ts_uptime_us")))
+    print(train_df.select(pl.min("finish_ts_uptime_us")))
+    val = int(train_df.select(pl.median("ts_uptime_us")).row(0)[0])
+    print(val)
+    df = map_k_linnos_elements(train_df, 4, val)
+    print(df)
+
+    #print(train_df.filter((pl.col("op") == "Read") & (pl.col("idle_flag"))))
+    #for i in ["sync_flag", "metadata_flag", "fua_flag", "priority_flag", "nomerge_flag",
+    #          "idle_flag", "readahead_flag", "background_flag", "nowait_flag"]:
+    #    new_df = train_df.filter(pl.col(i))
+    #    if new_df.height != 0:
+    #        print(f"{i}: {new_df.height}")
+    #        print(new_df.select(pl.col("op").unique()))
