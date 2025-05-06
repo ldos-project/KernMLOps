@@ -82,7 +82,16 @@ vi python/kernmlops/data_schema/perf/resource_stalls.py
 ```
 
 Copy in the following and change anything in angled brackets
-to what you want it to be in your code:
+to what you want it to be in your code
+
+Please be aware that there are multiple different types of perf events, with
+the example below being for a hardware cache event. The full list of different
+types can be found in the [bcc Python source code](https://github.com/iovisor/bcc/blob/master/src/python/bcc/__init__.py#L110)
+and more details on those event types and some of the different perf counters
+being available in the [perf_event_open documentation](https://man7.org/linux/man-pages/man2/perf_event_open.2.html).
+These are good resources to consult if you find that certain perf counters
+are not being loaded. For an example of a different type of perf event being
+collected, please view `python/kernmlops/data_schema/perf/cpu_cycles.py`.
 
 ```python3
 import polars as pl
@@ -170,6 +179,9 @@ perf_table_types: Mapping[str, type[PerfCollectionTable]] = {
     <New Class Prefix>PerfTable.name(): <New Class Prefix>PerfTable,
 }
 ```
+
+Be aware that there is a maximum number of counters for which data can be
+collected at a time.
 
 ## Check to see if it worked
 
