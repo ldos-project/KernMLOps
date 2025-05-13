@@ -101,13 +101,17 @@ u32* target_tgid;
 static int is_blocked;
 
 static void block_page_fault_special(void) {
-  if (*target_tgid != 0)
+  if (*target_tgid != 0) {
     is_blocked = 1;
+    pr_info("Block\n");
+  }
 }
 
 static void unblock_page_fault_special(void) {
-  if (target_tgid != 0)
+  if (target_tgid != 0) {
     is_blocked = 0;
+    pr_info("Unblock\n");
+  }
 }
 
 typedef struct data {
@@ -185,9 +189,9 @@ static int infer(struct mm_struct* mm, int unmapped, int referenced) {
   return unmapped && (!referenced || referenced < HPAGE_PMD_NR / 2);
 }
 
-int (*ml_throttle_hugepage_faults)(struct vm_fault* vmf);
+extern int (*ml_throttle_hugepage_faults)(struct vm_fault* vmf);
 
-int (*ml_referenced_page_limit_collapse)(struct mm_struct* mm, int unmapped, int referenced);
+extern int (*ml_referenced_page_limit_collapse)(struct mm_struct* mm, int unmapped, int referenced);
 
 static int should_throttle_fault(struct vm_fault* vmf) {
   pr_info("Throttling\n");
