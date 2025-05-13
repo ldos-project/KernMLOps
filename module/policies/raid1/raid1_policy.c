@@ -29,7 +29,7 @@ static u32 select(u32 device) {
   return 3;
 }
 
-int (*ml_choose_best_rdev_raid1)(struct r1conf* conf, struct r1bio* r1_bio);
+extern int (*ml_choose_best_rdev_raid1)(struct r1conf* conf, struct r1bio* r1_bio);
 
 bool rdev_readable(struct md_rdev* rdev, struct r1bio* r1_bio);
 
@@ -131,6 +131,7 @@ typedef struct lengths {
 queue_lengths* qs;
 
 static int infer(struct r1conf* conf, struct r1bio* r1_bio) {
+  printk("INFERENCE\n");
   unsigned int raid_disks = conf->raid_disks;
   unsigned int start = ((unsigned int)atomic_inc_return(&start_loc)) % raid_disks;
 

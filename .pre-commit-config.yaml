@@ -31,7 +31,7 @@ repos:
     rev: v2.2.6
     hooks:
       - id: codespell
-        exclude: config/|\.*\.ipynb$
+        exclude: config/|\.*\.ipynb$|module/policies/vmlinux.h$
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.26.3
     hooks:

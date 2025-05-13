@@ -1,19 +1,10 @@
-obj-m += linnos_policy.o
+obj-m += raid1_policy.o
 KBUILD_EXTRA_SYMBOLS := $(realpath ../../fstore/Module.symvers)
 KBUILD ?= $(PWD)/../../kbuild
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 ccflags-y += -msse
 
-HEADERS := linnos_policy.h
-BPF_SRC := linnos_icollect.bpf.c
-BPF_OBJ := linnos_icollect.o
-MOD_SRC := linnos_policy.c
-MOD_DST := linnos_policy.ko
-DEP_SRC := linnos_deployer.cpp
-DEP_BIN := linnos_deployer
-BINS := ${BPF_OBJ} ${MOD_DST} ${DEP_BIN}
-
-default: ${BPF_OBJ} ${DEP_BIN} ${MOD_DST}
+default: linnos-inference-capture
 
 echo:
 	@echo obj-m ${obj-m}
@@ -22,28 +13,26 @@ echo:
 	@echo ROOT_DIR ${ROOT_DIR}
 	@echo ccflags-y ${ccflags-y}
 
-${BPF_OBJ}: ${BPF_SRC} ${HEADERS}
-	clang -O2 -g -target bpf -c $< -o $@ \
+linnos-inference-capture.o: linnos-inference-capture.bpf.c
+	clang -O2 -g -target bpf -c $^ -o $@ \
 		-D__TARGET_ARCH_x86_64 \
 		-I/usr/include/ \
   	-I/usr/src/linux-headers-$(shell uname -r)/include \
   	-I/usr/src/linux-headers-$(shell uname -r)/arch/x86/include \
   	-I/usr/src/linux-headers-$(shell uname -r)/arch/x86/include/generated/
 
-${DEP_BIN}: ${DEP_SRC} ${HEADERS}
-	g++ -std=gnu++2b -o $@ $< -lbpf -I../../fstore/ \
-		-DPROBES_OUT="${BPF_OBJ}" \
-		-DKMODULE="${MOD_DST}" \
-	  -DKMODNAME="linnos_policy"
+linnos-inference-capture: linnos-inference-capture.cpp
+	g++ -std=gnu++2b -o $@ $< -lbpf -I../../fstore/
 
-${MOD_DST}: ${MOD_SRC} ${HEADERS}
+raid1_policy.ko: raid1_policy.c
 	+${MAKE} KBUILD_EXTRA_SYMBOLS=${KBUILD_EXTRA_SYMBOLS} -C ${KBUILD} M=${ROOT_DIR} modules
 
-run: linnos_deployer ${BINS}
+run: linnos-inference-capture raid1_policy.ko linnos-inference-capture.o
 	sudo ./$<
 
 clean:
-	-rm ${BINS}
+	-rm linnos-inference-capture
+	-rm linnos-inference-capture.o
 	-rm *module*
 	-rm *.mod*
 	-rm *.o*
