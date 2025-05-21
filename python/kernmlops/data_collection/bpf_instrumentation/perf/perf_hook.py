@@ -163,7 +163,8 @@ class PerfBPFHook(BPFProgram):
     ]
 
   def clear(self):
-    self._perf_data.clear()
+    for key in self._perf_data.keys():
+      self._perf_data[key].clear()
 
   def pop_data(self) -> list[CollectionTable]:
     miss_tables = self.data()
