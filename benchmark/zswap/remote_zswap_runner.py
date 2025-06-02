@@ -12,8 +12,11 @@ DEFAULT_MEM_SIZE='1G' # the default memory constraint for experiments
 
 class RemoteZswapRunner:
     def __init__(self, remote_host, ssh_key, port=22, ssh_timeout=600):
-        self.remote_host = remote_host
-        self.username, self.hostname = remote_host.split('@')
+        if '@' in remote_host:
+            self.username, self.hostname = remote_host.split('@')
+        else:
+            self.username = 'dwg'
+            self.hostname = remote_host
         self.ssh = None
         self.ssh_key = os.path.expanduser(ssh_key)
         if not os.path.exists(self.ssh_key):

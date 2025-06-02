@@ -1,3 +1,5 @@
+import re
+
 import matplotlib.pyplot as plt
 import numpy as np
 from remote_zswap_runner import RemoteZswapRunner
@@ -152,6 +154,55 @@ def plot_selected_configs(conf_names, conf_means, conf_stds, is_zswap_off, defau
     plt.tight_layout()
     plt.savefig(filename, dpi=300)
 
+def plot_predicted_configs(conf_names, conf_means, conf_stds, is_zswap_off, default_config, alt_config, alt_config_name, title, ylabel, filename):
+    selected = []
+    labels = []
+    colors = []
+
+    # Default config
+    if default_config in conf_names:
+        idx = conf_names.index(default_config)
+        selected.append(idx)
+        labels.append("default")
+        colors.append("#9e9ac8")
+
+    # Optimal (overall best)
+    min_idx = conf_means.index(min(conf_means))
+    selected.append(min_idx)
+    labels.append("optimal")
+    colors.append("#74c476")
+
+    # Regex match for alt_config and pick the best among them
+    regex = re.compile('^' + alt_config.replace('*', '.*') + '$')
+    matching_idxs = [i for i, name in enumerate(conf_names) if regex.match(name)]
+    print(matching_idxs)
+    if matching_idxs:
+        best_alt_idx = min(matching_idxs, key=lambda i: conf_means[i])
+        selected.append(best_alt_idx)
+        labels.append(alt_config_name)
+        colors.append("#6baed6")
+
+    # Zswap off configs
+    for i, is_off in enumerate(is_zswap_off):
+        if is_off:
+            selected.append(i)
+            labels.append("zswap off")
+            colors.append("#fc9272")
+
+    # Plot
+    selected_means = [conf_means[i] for i in selected]
+    selected_stds = [conf_stds[i] for i in selected]
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(labels, selected_means, yerr=selected_stds, capsize=5, color=colors, edgecolor='black', linewidth=0.8)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.grid(axis='y', linestyle='--', linewidth=0.5, alpha=0.7)
+    ax.set_axisbelow(True)
+    for i, val in enumerate(selected_means):
+        ax.text(i, val + 0.05, f"{val:.2f}s", ha='center', va='bottom', fontsize=9)
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+
 zswap_configs = get_configs()
 runner = RemoteZswapRunner(
     remote_host='dwg@whatever',
@@ -185,6 +236,7 @@ while zswap_configs:
             mongodb_conf_stds.append(conf_stats['std_dev'])
             mongodb_is_zswap_off.append(is_zswap_off)
 
+'''
 plot_selected_configs(
     redis_conf_names,
     redis_conf_means,
@@ -197,7 +249,23 @@ plot_selected_configs(
     ylabel='Runtime (s)',
     filename='zipfian_redis_selected.png'
 )
+'''
 
+# TODO: plot wildcarded predicted outcomes
+plot_predicted_configs(
+    redis_conf_names,
+    redis_conf_means,
+    redis_conf_stds,
+    redis_is_zswap_off,
+    default_config='redis_lzo_zbud_20_90_Y_N_Y_Y',
+    alt_config='redis_deflate_zsmalloc_40_80_Y_N_N_Y',
+    alt_config_name='predicted optimal',
+    title='YCSB Redis (Uniform) Zswap Config Default vs. Optimal vs. Predicted Optimal vs. OFF',
+    ylabel='Runtime (s)',
+    filename='redis_uniform_predicted_selected2.png'
+)
+
+'''
 # Redis plot
 if redis_conf_means:
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -467,3 +535,4 @@ if mongodb_conf_means:
             ylabel='MongoDB Mean Runtimes (s)',
             filename='mongodb_zbud.png'
         )
+'''
