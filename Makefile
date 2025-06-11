@@ -193,9 +193,9 @@ provision-development:
 # Docker commands
 docker-image:
 	# Check if image already exists.
-	@docker image inspect ${DEV_IMAGE_NAME}:${VERSION} 2>&1 > /dev/null || \
-		(docker pull ${DEV_IMAGE_NAME}:${VERSION} ||\
-		${MAKE} docker-image-dependencies)
+	@docker image inspect ${DEV_IMAGE_NAME}:${VERSION} 2>&1 > /dev/null #|| \
+		#(docker pull ${DEV_IMAGE_NAME}:${VERSION} ||\
+		${MAKE} docker-image-dependencies #)
 	docker --context ${CONTAINER_CONTEXT} build \
 	--build-arg BUILD_IMAGE=${DEV_IMAGE_NAME}:${VERSION} \
 	--build-arg SRC_DIR=${CONTAINER_SRC_DIR} \
