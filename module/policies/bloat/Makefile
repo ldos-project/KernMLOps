@@ -2,7 +2,7 @@ obj-m += bloat_policy.o
 KBUILD_EXTRA_SYMBOLS := $(realpath ../../fstore/Module.symvers)
 KBUILD ?= $(PWD)/../../kbuild
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-ccflags-y += -msse -mhard-float
+ccflags-y += -msse -mhard-float -mfpmath=sse
 
 default: build
 

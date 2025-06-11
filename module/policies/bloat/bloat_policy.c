@@ -101,15 +101,15 @@ u32* target_tgid;
 static int is_blocked;
 
 static void block_page_fault_special(void) {
-  if (*target_tgid != 0) {
-    is_blocked = 1;
+  if (*target_tgid != 0 && is_blocked < 100) {
+    is_blocked += 1;
     pr_info("Block\n");
   }
 }
 
 static void unblock_page_fault_special(void) {
-  if (target_tgid != 0) {
-    is_blocked = 0;
+  if (target_tgid != 0 && is_blocked > -100) {
+    is_blocked--;
     pr_info("Unblock\n");
   }
 }
@@ -132,15 +132,16 @@ typedef struct to_sort {
 
 static void read_data(data_t* data_buffer, u64* head_ptr, sortable_t* buffer, int len) {
   __u64 start = READ_ONCE(*head_ptr);
-  __u64 trials = BUFFER_ENTRIES >> 1;
-  for (int c = len - 1; c >= 0 && trials >= 0; trials--) {
-    start = (start - 1) % BUFFER_ENTRIES;
+  __u64 trials = MIN(len * 3, BUFFER_SIZE >> 1);
+  int c = 0;
+  for (; c < len && trials > 0; trials--) {
+    start = (start - 1) % BUFFER_SIZE;
     data_t* point = data_buffer + start;
-    cmpxchg_acquire(&point->valid, 1, 2);
+    cmpxchg64_acquire(&point->valid, 1, 2);
     buffer[c].count = point->count;
     buffer[c].ts = point->ts;
-    if (cmpxchg_release(&point->valid, 2, 1) == 1) {
-      c--;
+    if (cmpxchg64_release(&point->valid, 2, 1) == 2) {
+      c++;
     }
   }
 }
@@ -165,27 +166,25 @@ static void get_data_into_float(float* input) {
 }
 
 static int infer(struct mm_struct* mm, int unmapped, int referenced) {
-  pr_info("Got this tgid %lu\n", mm->owner->tgid);
   if (mm->owner->tgid != *target_tgid) {
     return unmapped && (!referenced || referenced < HPAGE_PMD_NR / 2);
   }
-  pr_info("Found you\n");
   float input[20];
   float temp1[MAX_LAYER_SIZE];
   float temp2[MAX_LAYER_SIZE];
   float output[2];
-  get_data_into_float(input);
   kernel_fpu_begin();
+  get_data_into_float(input);
   forward(input, output, temp1, temp2);
   // First output is now, second output is 5 timesteps forwards
-  if (output[1] >= 0.8)
-    block_page_fault_special();
   int cmp = (output[0] >= 0.8) || (output[1] >= 0.8);
-  if (output[1] < 0.5 && output[2] < 0.5)
+  if (output[0] < 0.5 && output[1] < 0.5)
     unblock_page_fault_special();
   kernel_fpu_end();
-  if (cmp)
+  if (cmp) {
+    block_page_fault_special();
     return unmapped && (!referenced || referenced < HPAGE_PMD_NR - 2);
+  }
   return unmapped && (!referenced || referenced < HPAGE_PMD_NR / 2);
 }
 
@@ -194,11 +193,10 @@ extern int (*ml_throttle_hugepage_faults)(struct vm_fault* vmf);
 extern int (*ml_referenced_page_limit_collapse)(struct mm_struct* mm, int unmapped, int referenced);
 
 static int should_throttle_fault(struct vm_fault* vmf) {
-  pr_info("Throttling\n");
   if (*target_tgid == 0)
     return 0;
   if (vmf->vma && vmf->vma->vm_mm && vmf->vma->vm_mm->owner &&
-      vmf->vma->vm_mm->owner->tgid == *target_tgid && is_blocked) {
+      vmf->vma->vm_mm->owner->tgid == *target_tgid && is_blocked > 0) {
     return 1;
   }
   return 0;
@@ -230,7 +228,7 @@ int __init init_module(void) {
 
   if (convert8byteStringHash(RDATA, &map_id[2]))
     return -EINVAL;
-  err = fstore_get_map_array_start(map_id[2], 4, 24, BUFFER_ENTRIES, (void**)&rss_data);
+  err = fstore_get_map_array_start(map_id[2], 4, 24, BUFFER_SIZE, (void**)&rss_data);
   if (err != 0) {
     pr_info("RDATA error\n");
     return err;
@@ -246,13 +244,13 @@ int __init init_module(void) {
 
   if (convert8byteStringHash(TDATA, &map_id[4]))
     return -EINVAL;
-  err = fstore_get_map_array_start(map_id[4], 4, 24, BUFFER_ENTRIES, (void**)&dtlb_data);
+  err = fstore_get_map_array_start(map_id[4], 4, 24, BUFFER_SIZE, (void**)&dtlb_data);
   if (err != 0) {
     pr_info("TDATA error\n");
     return err;
   }
 
-  is_blocked = 1;
+  is_blocked = -100;
   ml_referenced_page_limit_collapse = infer;
   ml_throttle_hugepage_faults = should_throttle_fault;
   return 0;
@@ -262,6 +260,8 @@ void __exit cleanup_module(void) {
   pr_info("Goodbye \n");
   ml_referenced_page_limit_collapse = NULL;
   ml_throttle_hugepage_faults = NULL;
+  pr_info("dtlb_head: %llu\n", *dtlb_head);
+  pr_info("rss_head: %llu\n", *rss_head);
   for (int i = 0; i < 5; i++) {
     fstore_put_map_array(map_id[i]);
   }

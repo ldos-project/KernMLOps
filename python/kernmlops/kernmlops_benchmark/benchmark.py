@@ -25,6 +25,7 @@ class GenericBenchmarkConfig(ConfigBase):
   skip_clear_page_cache: bool = False
   transparent_hugepages: Literal["no_change", "always", "madvise", "never"] = "always"
   overcommit_memory: Literal["no_change", "heuristic", "never_check", "always_check"] = "heuristic"
+  khugepaged_scan_sleep_millis: None | int = None,
 
   def get_benchmark_dir(self) -> Path:
     if self.benchmark_dir:
@@ -60,6 +61,16 @@ class GenericBenchmarkConfig(ConfigBase):
             ],
             stdout=subprocess.DEVNULL,
         )
+    if self.khugepaged_scan_sleep_millis is not None:
+        subprocess.check_call(
+            [
+              "bash",
+              "-c",
+              f"echo {self.khugepaged_scan_sleep_millis} > /sys/kernel/mm/transparent_hugepage/khugepaged/scan_sleep_millisecs",
+            ],
+            stdout=subprocess.DEVNULL,
+        )
+
 
 
 

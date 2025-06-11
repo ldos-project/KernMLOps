@@ -58,13 +58,13 @@ int main(int argc, char** argv) {
   struct bpf_program* prog = bpf_object__find_program_by_name(obj, "raw_trace_rss_stat");
   int prog_fd = bpf_program__fd(prog);
 
-  int rss_headers_fd = bpf_object__find_map_fd_by_name(obj, "rss_head_idx");
+  int rss_headers_fd = bpf_object__find_map_fd_by_name(obj, "mpmo_head_rss");
   RETURN_ERRNO(rss_headers_fd >= 0);
-  int rss_data_fd = bpf_object__find_map_fd_by_name(obj, "rss_buffer");
+  int rss_data_fd = bpf_object__find_map_fd_by_name(obj, "mpmo_buff_rss");
   RETURN_ERRNO(rss_data_fd >= 0);
-  int dtlb_header_fd = bpf_object__find_map_fd_by_name(obj, "dtlb_header");
+  int dtlb_header_fd = bpf_object__find_map_fd_by_name(obj, "mpmo_head_dtlb");
   RETURN_ERRNO(dtlb_header_fd >= 0);
-  int dtlb_data_fd = bpf_object__find_map_fd_by_name(obj, "dtlb_buffer");
+  int dtlb_data_fd = bpf_object__find_map_fd_by_name(obj, "mpmo_buff_dtlb");
   RETURN_ERRNO(dtlb_data_fd >= 0);
 
   // Attach to tracepoint
@@ -72,14 +72,18 @@ int main(int argc, char** argv) {
   RETURN_ERRNO(link);
 
   prog = bpf_object__find_program_by_name(obj, "trace_rss_stat");
+  RETURN_ERRNO(prog);
   prog_fd = bpf_program__fd(prog);
+  RETURN_ERRNO(prog_fd >= 0)
 
   // Attach to tracepoint
   link = bpf_program__attach_tracepoint(prog, "kmem", "rss_stat");
   RETURN_ERRNO(link);
 
   prog = bpf_object__find_program_by_name(obj, "dtlb_miss_rate");
+  RETURN_ERRNO(prog);
   prog_fd = bpf_program__fd(prog);
+  RETURN_ERRNO(prog_fd >= 0)
 
   // Create perf setup
   struct perf_event_attr attr = {};
@@ -88,9 +92,20 @@ int main(int argc, char** argv) {
                 (PERF_COUNT_HW_CACHE_RESULT_MISS << 16);
   attr.size = sizeof(attr);
   attr.disabled = 1;
-  attr.sample_freq = 1000;
+  attr.sample_freq = 100;
+  attr.pinned = 1;
+
+  for (__u32 i = 0; i < BUFFER_SIZE; i++) {
+    char blah[24] = {0};
+    if (i == 0) {
+      __u64 val64 = 0;
+      RETURN_ERRNO(bpf_map_lookup_elem(dtlb_header_fd, &i, &val64) == 0);
+    }
+    RETURN_ERRNO(bpf_map_lookup_elem(dtlb_data_fd, &i, blah) == 0);
+  }
 
   int perf_fd = perf_event_open(&attr, pid, -1, -1, 0);
+  RETURN_ERRNO(perf_fd >= 0)
 
   RETURN_ERRNO(ioctl(perf_fd, PERF_EVENT_IOC_SET_BPF, prog_fd) >= 0);
   RETURN_ERRNO(ioctl(perf_fd, PERF_EVENT_IOC_ENABLE, 0) >= 0);
