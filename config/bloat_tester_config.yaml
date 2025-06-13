@@ -1,0 +1,21 @@
+---
+benchmark_config:
+  generic:
+    benchmark: faux
+    cpus: 0
+    skip_clear_page_cache: false
+    transparent_hugepages: never
+    overcommit_memory: never_check
+    khugepaged_scan_sleep_millis: 500
+collector_config:
+  generic:
+    poll_rate: 0.1
+    output_dir: data
+    output_graphs: false
+    hooks:
+      - collapse_huge_pages
+      - mm_rss_stat
+      - process_trace
+      - madvise
+      - perf
+      - unmap_range
