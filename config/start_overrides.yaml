@@ -20,3 +20,4 @@ collector_config:
       - quanta_runtime
       - block_io
       - perf
+      - collapse_huge_pages
