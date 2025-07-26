@@ -27,3 +27,4 @@ collector_config:
       - madvise
       - perf
       - unmap_range
+      - collapse_huge_pages
