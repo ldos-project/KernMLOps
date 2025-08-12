@@ -40,7 +40,7 @@ ADVICE_ASSIGN_DICT = {
 class MadviseStat:
   tgid: int
   ts_ns: int
-  address: int
+  address: str
   length: int
   advice: str
 
@@ -97,7 +97,7 @@ class MadviseBPFHook(BPFProgram):
         MadviseStat(
           tgid=event.tgid,
           ts_ns=event.ts_ns,
-          address=event.address,
+          address=hex(event.address),
           length=event.length,
           advice=advice,
         )
