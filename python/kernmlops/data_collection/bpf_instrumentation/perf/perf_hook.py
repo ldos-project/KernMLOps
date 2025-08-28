@@ -159,11 +159,12 @@ class PerfBPFHook(BPFProgram):
         collection_id=self.collection_id,
       )
       for event_name in self._perf_data.keys()
-      if event_name in perf_table_types
+      if event_name in perf_table_types and len(self._perf_data[event_name]) > 0
     ]
 
   def clear(self):
-    self._perf_data.clear()
+    for key in self._perf_data.keys():
+      self._perf_data[key].clear()
 
   def pop_data(self) -> list[CollectionTable]:
     miss_tables = self.data()

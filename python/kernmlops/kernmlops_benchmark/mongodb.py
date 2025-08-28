@@ -15,11 +15,16 @@ from kernmlops_benchmark.errors import (
 from kernmlops_config import ConfigBase
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
+from pytimeparse.timeparse import timeparse
 
 
 @dataclass(frozen=True)
 class MongoDbConfig(ConfigBase):
+    repeat: int = 1
     # Core operation parameters
+    field_count: int = 256
+    field_length: int = 16
+    min_field_length: int = 16
     operation_count: int = 1000000
     record_count: int = 1000000
     read_proportion: float = 0.5
@@ -31,9 +36,12 @@ class MongoDbConfig(ConfigBase):
     delete_proportion: float = 0.00
 
     # Distribution and performance parameters
+    field_length_distribution: str = "uniform"
     request_distribution: str = "uniform"
     thread_count: int = 1
     target: int = 10000
+    sleep: str | None = None
+    server_sleep: str | None = None
     url: str = "mongodb://localhost:27017/"
 
 kill_mongod = [
@@ -81,6 +89,7 @@ class MongoDbBenchmark(Benchmark):
             return client
         except ConnectionFailure:
             return None
+        subprocess.run(kill_mongod)
 
     def run(self) -> None:
         if self.process is not None:
@@ -88,7 +97,7 @@ class MongoDbBenchmark(Benchmark):
         if self.server is not None:
             raise BenchmarkRunningError()
 
-        # start the redis server
+        # start the MongoDB server
         start_mongod = [
             "mongod",
             "--config",
@@ -96,7 +105,7 @@ class MongoDbBenchmark(Benchmark):
         ]
         self.server = subprocess.Popen(start_mongod)
 
-        # Wait for redis
+        # Wait for MongoDB
         ping_mongod = self.ping_mongodb(self.config.url)
         i = 0
         while i < 10 and ping_mongod is None:
@@ -107,67 +116,106 @@ class MongoDbBenchmark(Benchmark):
         if ping_mongod is None:
             raise BenchmarkError("MongoDB Failed To Start")
 
-        # Load Server
-        load_mongod = [
-                "python",
-                f"{self.benchmark_dir}/YCSB/bin/ycsb",
-                "load",
-                "mongodb",
-                "-s",
-                "-P",
-                f"{self.benchmark_dir}/YCSB/workloads/workloada",
-                "-p",
-                f"mongodb.url={self.config.url}",
-                "-p",
-                f"recordcount={self.config.record_count}",
-        ]
+        server_space : int | float | None = None if self.config.server_sleep is None else timeparse(self.config.server_sleep)
+        if server_space is not None :
+            time.sleep(server_space)
 
-        load_mongod = subprocess.Popen(load_mongod, preexec_fn=demote())
+        space : int | float | None = None if self.config.sleep is None else timeparse(self.config.sleep)
 
-        load_mongod.wait()
-        if load_mongod.returncode != 0:
-            raise BenchmarkError("Loading Redis Failing")
+        process: subprocess.Popen | None = None
+        for i in range(self.config.repeat):
+            if process is not None:
+                process.wait()
+                if space is not None :
+                    time.sleep(space)
+                if process.returncode != 0:
+                    self.process = process
+                    raise BenchmarkError(f"MongoDB Run {i} Failed")
 
-        # Run Benchmark
-        run_mongodb = [
-                f"{self.benchmark_dir}/YCSB/bin/ycsb",
-                "run",
-                "mongodb",
-                "-s",
-                "-P",
-                f"{self.benchmark_dir}/YCSB/workloads/workloada",
-                "-p",
-                f"operationcount={self.config.operation_count}",
-                "-p",
-                f"recordcount={self.config.record_count}",
-                "-p",
-                "workload=site.ycsb.workloads.CoreWorkload",
-                "-p",
-                f"readproportion={self.config.read_proportion}",
-                "-p",
-                f"updateproportion={self.config.update_proportion}",
-                "-p",
-                f"scanproportion={self.config.scan_proportion}",
-                "-p",
-                f"insertproportion={self.config.insert_proportion}",
-                "-p",
-                f"readmodifywriteproportion={self.config.rmw_proportion}",
-                "-p",
-                f"scanproportion={self.config.scan_proportion}",
-                "-p",
-                f"deleteproportion={self.config.delete_proportion}",
-                "-p",
-                f"mongodb.url={self.config.url}",
-                "-p",
-                f"requestdistribution={self.config.request_distribution}",
-                "-p",
-                f"threadcount={self.config.thread_count}",
-                "-p",
-                f"target={self.config.target}",
-                "-p",
-                "mongodb.writeConcern=acknowledged"
-        ]
-        self.process = subprocess.Popen(run_mongodb, preexec_fn=demote())
+            insert_start = i * self.config.record_count
+            # Load Server
+            load_mongod = [
+                    "python",
+                    f"{self.benchmark_dir}/YCSB/bin/ycsb",
+                    "load",
+                    "mongodb",
+                    "-s",
+                    "-P",
+                    f"{self.benchmark_dir}/YCSB/workloads/workloada",
+                    "-p",
+                    f"mongodb.url={self.config.url}",
+                    "-p",
+                    f"recordcount={self.config.record_count}",
+                    "-p",
+                    f"fieldcount={self.config.field_count}",
+                    "-p",
+                    f"fieldlength={self.config.field_length}",
+                    "-p",
+                    f"minfieldlength={self.config.min_field_length}",
+                    "-p",
+                    f"insertstart={insert_start}",
+                    "-p",
+                    f"fieldlengthdistribution={self.config.field_length_distribution}",
+            ]
+
+            load_mongod = subprocess.Popen(load_mongod, preexec_fn=demote())
+
+            load_mongod.wait()
+            if load_mongod.returncode != 0:
+                raise BenchmarkError("Loading MongoDB Failed")
+
+            record_count = (i + 1) * self.config.record_count
+
+            # Run first benchmark cycle
+            run_mongodb = [
+                    f"{self.benchmark_dir}/YCSB/bin/ycsb",
+                    "run",
+                    "mongodb",
+                    "-s",
+                    "-P",
+                    f"{self.benchmark_dir}/YCSB/workloads/workloada",
+                    "-p",
+                    f"operationcount={self.config.operation_count}",
+                    "-p",
+                    f"recordcount={record_count}",
+                    "-p",
+                    "workload=site.ycsb.workloads.CoreWorkload",
+                    "-p",
+                    f"readproportion={self.config.read_proportion}",
+                    "-p",
+                    f"updateproportion={self.config.update_proportion}",
+                    "-p",
+                    f"scanproportion={self.config.scan_proportion}",
+                    "-p",
+                    f"insertproportion={self.config.insert_proportion}",
+                    "-p",
+                    f"readmodifywriteproportion={self.config.rmw_proportion}",
+                    "-p",
+                    f"scanproportion={self.config.scan_proportion}",
+                    "-p",
+                    f"deleteproportion={self.config.delete_proportion}",
+                    "-p",
+                    f"mongodb.url={self.config.url}",
+                    "-p",
+                    f"requestdistribution={self.config.request_distribution}",
+                    "-p",
+                    f"threadcount={self.config.thread_count}",
+                    "-p",
+                    f"target={self.config.target}",
+                    "-p",
+                    f"fieldcount={self.config.field_count}",
+                    "-p",
+                    f"fieldlength={self.config.field_length}",
+                    "-p",
+                    f"minfieldlength={self.config.min_field_length}",
+                    "-p",
+                    f"fieldlengthdistribution={self.config.field_length_distribution}",
+                    "-p",
+                    "mongodb.writeConcern=acknowledged"
+            ]
+            process = subprocess.Popen(run_mongodb, preexec_fn=demote())
+
+        self.process = process
 
     def poll(self) -> int | None:
         if self.process is None:
@@ -186,23 +234,27 @@ class MongoDbBenchmark(Benchmark):
     def kill(self) -> None:
         if self.process is None:
             raise BenchmarkNotRunningError()
-        self.process.terminate()
+
+        if self.server is not None:
+            self.server.send_signal(signal.SIGINT)
+            if self.server.wait(10) is None:
+                self.server.terminate()
+
         self.end_server()
 
     def end_server(self) -> None:
         if self.server is None:
             return
+
+        # Drop databases
         client = MongoClient(self.config.url)
         for db in client.list_databases():
-            for name in db.keys():
-                print(name)
-                client.drop_database(name)
+            if db['name'] != 'admin':
+                client.drop_database(db['name'])
 
-        self.server.send_signal(signal.SIGINT)
-        if self.server.wait(10) is None:
-            self.server.terminate()
+        # Terminate server
+        self.server.terminate()
         self.server = None
-        subprocess.run(kill_mongod)
 
     @classmethod
     def plot_events(cls, graph_engine: GraphEngine) -> None:

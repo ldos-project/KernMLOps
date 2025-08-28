@@ -82,6 +82,8 @@ class CollapseHugePageBPFHook(BPFProgram):
     self.bpf.cleanup()
 
   def data(self) -> list[CollectionTable]:
+    if len(self.collapse_huge_pages) == 0 or len(self.trace_mm_collapse_huge_pages) == 0 or len(self.trace_mm_khugepaged_scan_pmds) == 0:
+        return []
     return [
             CollapseHugePageDataTable.from_tables(
               collapse_table=cast(
@@ -146,7 +148,6 @@ class CollapseHugePageBPFHook(BPFProgram):
     )
 
   def _collapse_huge_pages_eh(self, cpu, collapse_huge_page_struct, size):
-    print("Collapse")
     event = self.bpf["collapse_huge_pages"].event(collapse_huge_page_struct)
     self.collapse_huge_pages.append(
       CollapseHugePageRuntimeData(

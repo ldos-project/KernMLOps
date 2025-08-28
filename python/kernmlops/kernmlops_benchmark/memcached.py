@@ -13,11 +13,16 @@ from kernmlops_benchmark.errors import (
     BenchmarkRunningError,
 )
 from kernmlops_config import ConfigBase
+from pytimeparse.timeparse import timeparse
 
 
 @dataclass(frozen=True)
 class MemcachedConfig(ConfigBase):
+    repeat: int = 1
     # Core operation parameters
+    field_count: int = 256
+    field_length: int = 16
+    min_field_length: int = 16
     operation_count: int = 1000000
     record_count: int = 1000000
     read_proportion: float = 0.5
@@ -29,10 +34,12 @@ class MemcachedConfig(ConfigBase):
     delete_proportion: float = 0.00
 
     # Distribution and performance parameters
+    field_length_distribution: str = "uniform"
     request_distribution: str = "uniform"
     thread_count: int = 1
     target: int = 10000
-
+    sleep: str | None = None
+    server_sleep: str | None = None
 
 class MemcachedBenchmark(Benchmark):
 
@@ -78,7 +85,6 @@ class MemcachedBenchmark(Benchmark):
         # Start memcached
         self.server = subprocess.Popen(start_memcached, preexec_fn=demote())
 
-
         # Ping Memcached
         set_foo_memcached = [
             "echo",
@@ -112,66 +118,106 @@ class MemcachedBenchmark(Benchmark):
             "localhost",
             "11211",
         ]
+
         delete_foo = subprocess.run(delete_foo_memcached, shell=True)
         if delete_foo.returncode != 0:
             raise BenchmarkError("Delete Single Memcached Record Failing")
 
-        # Run loads
-        load_memcached = [
-                "python",
+        server_space : int | float | None = None if self.config.server_sleep is None else timeparse(self.config.server_sleep)
+        if server_space is not None :
+            time.sleep(server_space)
+
+        space : int | float | None = None if self.config.sleep is None else timeparse(self.config.sleep)
+
+        process: subprocess.Popen | None = None
+        for i in range(self.config.repeat):
+            if process is not None:
+                process.wait()
+                if space is not None :
+                    time.sleep(space)
+                if process.returncode != 0:
+                    self.process = process
+                    raise BenchmarkError("Memcached Run {i} Failed")
+
+            insert_start = i * self.config.record_count
+            # Run loads
+            load_memcached = [
+                    "python",
+                    f"{self.benchmark_dir}/YCSB/bin/ycsb",
+                    "load",
+                    "memcached",
+                    "-s",
+                    "-P",
+                    f"{self.benchmark_dir}/YCSB/workloads/workloada",
+                    "-p",
+                    "memcached.hosts=localhost:11211",
+                    "-p",
+                    f"recordcount={self.config.record_count}",
+                    "-p",
+                    f"fieldcount={self.config.field_count}",
+                    "-p",
+                    f"fieldlength={self.config.field_length}",
+                    "-p",
+                    f"minfieldlength={self.config.min_field_length}",
+                    "-p",
+                    f"insertstart={insert_start}",
+                    "-p",
+                    f"fieldlengthdistribution={self.config.field_length_distribution}",
+            ]
+            load_memcached = subprocess.run(load_memcached, preexec_fn=demote())
+
+            # load_memcached.wait()
+            if load_memcached.returncode != 0:
+                raise BenchmarkError("Load Memcached Failing")
+
+            record_count = (i + 1) * self.config.record_count
+
+            run_memcached = [
                 f"{self.benchmark_dir}/YCSB/bin/ycsb",
-                "load",
+                "run",
                 "memcached",
                 "-s",
                 "-P",
                 f"{self.benchmark_dir}/YCSB/workloads/workloada",
                 "-p",
+                f"operationcount={self.config.operation_count}",
+                "-p",
+                f"recordcount={record_count}",
+                "-p",
+                "workload=site.ycsb.workloads.CoreWorkload",
+                "-p",
+                f"readproportion={self.config.read_proportion}",
+                "-p",
+                f"updateproportion={self.config.update_proportion}",
+                "-p",
+                f"scanproportion={self.config.scan_proportion}",
+                "-p",
+                f"insertproportion={self.config.insert_proportion}",
+                "-p",
+                f"readmodifywriteproportion={self.config.rmw_proportion}",
+                "-p",
+                f"scanproportion={self.config.scan_proportion}",
+                "-p",
+                f"deleteproportion={self.config.delete_proportion}",
+                "-p",
                 "memcached.hosts=localhost:11211",
                 "-p",
-                f"recordcount={self.config.record_count}",
-        ]
-        load_memcached = subprocess.run(load_memcached, preexec_fn=demote())
-
-        if load_memcached.returncode != 0:
-            raise BenchmarkError("Load Memcached Failing")
-
-        run_memcached = [
-            f"{self.benchmark_dir}/YCSB/bin/ycsb",
-            "run",
-            "memcached",
-            "-s",
-            "-P",
-            f"{self.benchmark_dir}/YCSB/workloads/workloada",
-            "-p",
-            f"operationcount={self.config.operation_count}",
-            "-p",
-            f"recordcount={self.config.record_count}",
-            "-p",
-            "workload=site.ycsb.workloads.CoreWorkload",
-            "-p",
-            f"readproportion={self.config.read_proportion}",
-            "-p",
-            f"updateproportion={self.config.update_proportion}",
-            "-p",
-            f"scanproportion={self.config.scan_proportion}",
-            "-p",
-            f"insertproportion={self.config.insert_proportion}",
-            "-p",
-            f"readmodifywriteproportion={self.config.rmw_proportion}",
-            "-p",
-            f"scanproportion={self.config.scan_proportion}",
-            "-p",
-            f"deleteproportion={self.config.delete_proportion}",
-            "-p",
-            "memcached.hosts=localhost:11211",
-            "-p",
-            f"requestdistribution={self.config.request_distribution}",
-            "-p",
-            f"threadcount={self.config.thread_count}",
-            "-p",
-            f"target={self.config.target}"
-        ]
-        self.process = subprocess.Popen(run_memcached, preexec_fn=demote())
+                f"requestdistribution={self.config.request_distribution}",
+                "-p",
+                f"threadcount={self.config.thread_count}",
+                "-p",
+                f"target={self.config.target}",
+                "-p",
+                f"fieldcount={self.config.field_count}",
+                "-p",
+                f"fieldlength={self.config.field_length}",
+                "-p",
+                f"minfieldlength={self.config.min_field_length}",
+                "-p",
+                f"fieldlengthdistribution={self.config.field_length_distribution}",
+            ]
+            process = subprocess.Popen(run_memcached, preexec_fn=demote())
+        self.process = process
 
     def poll(self) -> int | None:
         if self.process is None:

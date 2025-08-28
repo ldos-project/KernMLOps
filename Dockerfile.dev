@@ -7,8 +7,8 @@ WORKDIR /dependencies
 
 # bcc dependencies
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update -y \
-    && apt install -y \
+RUN apt-get update -y \
+    && apt-get install -y \
     zip \
     curl \
     build-essential \
@@ -19,17 +19,17 @@ RUN apt update -y \
     python3-setuptools \
     bpfcc-tools \
     kmod \
-    && apt clean
+    && apt-get clean
 
 # Install OSQuery
 RUN mkdir -p /etc/apt/keyrings
 RUN curl -fsSL  https://pkg.osquery.io/deb/pubkey.gpg | gpg --dearmor -o /etc/apt/keyrings/osquery.gpg
 RUN echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/osquery.gpg] https://pkg.osquery.io/deb deb main" \
   | tee /etc/apt/sources.list.d/osquery.list > /dev/null
-RUN apt update -y \
-    && apt install -y \
+RUN apt-get update -y \
+    && apt-get install -y \
     osquery \
-    && apt clean
+    && apt-get clean
 RUN cp /opt/osquery/share/osquery/osquery.example.conf /etc/osquery/osquery.conf
 
 # Install libpfm4
@@ -37,8 +37,8 @@ RUN git clone --branch v4.13.0 https://github.com/wcohen/libpfm4.git /dependenci
 RUN make -C /dependencies/libpfm4
 
 # benchmark dependencies
-RUN apt update -y \
-    && apt install -y \
+RUN apt-get update -y \
+    && apt-get install -y \
     git \
     fakeroot \
     build-essential \
@@ -53,7 +53,14 @@ RUN apt update -y \
     nmap \
     maven \
     libgoogle-perftools-dev \
-    && apt clean
+    && apt-get clean
+
+# lib_pfm4
+RUN echo "export LIB_PFM4_DIR=/dependencies/libpfm4" >> /root/.profile
+RUN apt-get update && \
+    apt-get install -y openjdk-11-jdk && \
+    echo 'export PATH=$PATH:/usr/lib/jvm/java-11-openjdk-amd64/bin' >> /root/.profile
+
 
 # Install MongoDB
 RUN apt-get update && \
@@ -75,52 +82,45 @@ RUN git clone https://github.com/redis/redis.git -b 7.4.2 --depth 1 \
   && cd ../ \
   && rm -rf redis
 
-
 # Install memcached
 RUN apt-get update && \
     apt-get install -y \
         memcached && \
     apt-get clean
 
-COPY scripts/settings.xml /etc/maven/settings.xml
-
 # Base development image
 FROM ${BUILD_IMAGE} AS dev
 
-ARG IS_CI=true
-
-RUN apt update -y \
-  &&  apt install -y \
+RUN apt-get update -y \
+  &&  apt-get install -y \
   vim \
   pkg-config \
   bpftrace \
   zsh \
   psmisc \
-  && apt clean
+  && apt-get clean
 
-RUN curl https://sh.rustup.rs -sSf | bash -s -- -y \
-  && echo . "$HOME/.cargo/env" > $HOME/.bashrc \
-  && . $HOME/.cargo/env \
-  && cargo install watchexec-cli
-
-COPY --chown=root requirements.txt /root/requirements.txt
-RUN pip install \
-  --break-system-packages \
-  --no-warn-script-location \
-  -r /root/requirements.txt
 RUN ln -s /usr/bin/python3.12 /usr/bin/python
-
-RUN echo "export LIB_PFM4_DIR=/dependencies/libpfm4" >> /root/.profile
-RUN apt-get update && \
-    apt-get install -y openjdk-11-jdk && \
-    echo 'export PATH=$PATH:/usr/lib/jvm/java-11-openjdk-amd64/bin' >> /root/.profile
-
 # May be required for Ubuntu:24.04 images that come with uid 1000
 RUN deluser --remove-home ubuntu
+
+COPY --chown=root pyproject.toml /root/pyproject.toml
+RUN pip install uv --break-system-packages && \
+  uv pip compile /root/pyproject.toml -o requirements.txt && \
+  uv pip install \
+  --system \
+  --break-system-packages \
+  -r requirements.txt
+
+FROM ${BUILD_IMAGE} AS user
+
+ARG IS_CI=true
 
 ARG UNAME
 ARG UID
 ARG GID
+
+COPY scripts/settings.xml /etc/maven/settings.xml
 
 RUN if [ "${UNAME}" != "root" ] ; then groupadd -g ${GID} ${UNAME} \
       ;  useradd -ms /bin/bash  -u "${UID}" -g "${GID}" ${UNAME}; fi
