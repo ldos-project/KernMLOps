@@ -1,6 +1,6 @@
 
 PY_FILE := userspace_model.py
-TRITON_KERNELS := triton_poi_fused_addmm_2 triton_poi_fused_relu_0 triton_poi_fused_relu_1
+TRITON_KERNELS := triton_poi_fused_0.asm triton_poi_fused_max_pool2d_with_indices_5.asm triton_poi_fused_relu_4.asm triton_poi_fused_1.asm triton_poi_fused_max_pool2d_with_indices_7.asm triton_poi_fused_relu_6.asm triton_poi_fused_2.asm triton_poi_fused_max_pool2d_with_indices_9.asm triton_poi_fused_relu_8.asm triton_poi_fused_3.asm triton_poi_fused_relu_10.asm
 KERNEL_MODULE_SRC := main
 USER_SRC := user
 
@@ -18,7 +18,7 @@ PWD := $(CURDIR)
 all: my_module.ko
 
 $(TRITON_KERNELS_ASM): %.asm: $(PY_FILE)
-	TORCH_LOGS=output_code TORCHINDUCTOR_CACHE_DIR=dump python3 $<
+	TRITON_LOG_LEVEL=debug TORCH_LOGS=output_code TORCHINDUCTOR_CACHE_DIR=dump python3 $<
 	mv $(PWD)/dump/triton/*/*/*.asm .
 	# rm -rf dump
 

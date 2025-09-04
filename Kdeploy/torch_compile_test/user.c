@@ -68,32 +68,32 @@ int main(void) {
   out:
   tensor([0.5190, 0.5110], grad_fn=<CompiledFunctionBackward>)
   */
-  primals[0][0] = -0.2609;
-  primals[0][1] = 0.3745;
-  primals[0][2] = -0.0779;
-  primals[0][3] = 0.4720;
-  primals[1][0] = -0.0760;
-  primals[1][1] = 0.2335;
+  primals[0][0] = 0.3503;
+  primals[0][1] = -0.0641;
+  primals[0][2] = 0.2934;
+  primals[0][3] = 0.5054;
+  primals[1][0] = 0.3834;
+  primals[1][1] = -0.1714;
   primals[2][0] = 1.0000;
   primals[2][1] = 1.0000;
-  primals[3][0] = -0.5081;
-  primals[3][1] = -0.0108;
-  primals[3][2] = -0.4129;
-  primals[3][3] = 0.3129;
-  primals[4][0] = 0.2924;
-  primals[4][1] = -0.0366;
-  primals[5][0] = 0.2120;
-  primals[5][1] = 0.2538;
-  primals[5][2] = -0.4555;
-  primals[5][3] = -0.4630;
-  primals[6][0] = 0.5233;
-  primals[6][1] = -0.3107;
-  primals[7][0] = 0.5437;
-  primals[7][1] = 0.6694;
-  primals[7][2] = 0.0324;
-  primals[7][3] = -0.2079;
-  primals[8][0] = -0.1707;
-  primals[8][1] = 0.0361;
+  primals[3][0] = -0.6706;
+  primals[3][1] = -0.6848;
+  primals[3][2] = -0.2188;
+  primals[3][3] = 0.3605;
+  primals[4][0] = -0.2688;
+  primals[4][1] = 0.0752;
+  primals[5][0] = -0.2369;
+  primals[5][1] = -0.4756;
+  primals[5][2] = -0.1670;
+  primals[5][3] = -0.4017;
+  primals[6][0] = 0.0226;
+  primals[6][1] = 0.6461;
+  primals[7][0] = -0.5888;
+  primals[7][1] = 0.5532;
+  primals[7][2] = 0.0531;
+  primals[7][3] = -0.5681;
+  primals[8][0] = 0.2527;
+  primals[8][1] = -0.4569;
 
   float* out = call(primals);
   printf("%.4f %.4f\n", out[0], out[1]);

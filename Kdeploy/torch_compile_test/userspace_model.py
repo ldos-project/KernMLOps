@@ -45,6 +45,7 @@ def get_primals(model, x):
 if __name__ == "__main__":
     torch._inductor.config.cpu_backend = "triton"
     model = SimpleNet(2)
+    model.eval()
 
     compiled = torch.compile(model, fullgraph=True, backend="inductor")
     data = torch.ones((2,), dtype=torch.float32)
@@ -52,11 +53,3 @@ if __name__ == "__main__":
     input()
 
     print(compiled(data))
-
-    print("\n\n================")
-    print(compiled(data))
-    '''
-    sample_input = (torch.ones((2,), dtype=torch.float32),);
-    exported = torch.export.export(model, sample_input)
-    print(exported)
-    '''
