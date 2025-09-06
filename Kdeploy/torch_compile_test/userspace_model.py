@@ -1,6 +1,7 @@
 
 import torch
 import torch.nn as nn
+from gen_kernel_module import build
 
 
 class SimpleNet(nn.Module):
@@ -23,33 +24,16 @@ class SimpleNet(nn.Module):
 
         return x
 
-def get_primals(model, x):
-    primals = []
-
-    children = list(model.children())
-    for i, layer in enumerate(children):
-        if hasattr(layer, "weight"):
-            primals.append(layer.weight)
-        if hasattr(layer, "bias"):
-            primals.append(layer.bias)
-        # Insert input after first layer (matches most Inductor wrappers)
-        if i == 0:
-            primals.append(x)
-
-    for i in range(len(primals)):
-        p = torch.flatten(primals[i]).tolist()
-        for j in range(len(p)):
-            print("primals[%d][%d] = %.4f;" % (i, j, p[j]))
-
-
 if __name__ == "__main__":
-    torch._inductor.config.cpu_backend = "triton"
     model = SimpleNet(2)
     model.eval()
 
-    compiled = torch.compile(model, fullgraph=True, backend="inductor")
+    #compiled = torch.compile(model, fullgraph=True, backend="inductor")
     data = torch.ones((2,), dtype=torch.float32)
-    get_primals(model, data)
-    input()
+    print(data, model(data))
+    print(100 * data, model(100 * data))
+    print([-1, 1], model(torch.tensor([-1, 1], dtype=torch.float32)))
+    #get_primals(model, data)
 
-    print(compiled(data))
+    #print(compiled(data))
+    build(model, data, 'main.c')
