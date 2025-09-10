@@ -1,4 +1,3 @@
-
 import os
 
 import torch
@@ -33,10 +32,10 @@ primals_t allocate_primals(void) {
     s += "\tprimals_t p;\n"
     s += f"\tp.input_idx = {insert_pos};\n"
     s += f"\tp.input_size = {len(primals[insert_pos])};\n"
-    s += "\tp.primals = malloc(%d * sizeof(float*));\n" % len(primals)
+    s += "\tp.primals = heap_alloc(%d * sizeof(float*));\n" % len(primals)
     for i in range(len(primals)):
         p = torch.flatten(primals[i]).tolist()
-        s += "\tp.primals[%d] = malloc(%d * sizeof(float));\n" % (i, len(p))
+        s += "\tp.primals[%d] = heap_alloc(%d * sizeof(float));\n" % (i, len(p))
         for j in range(len(p)):
             s += "\tp.primals[%d][%d] = %.4f;\n" % (i, j, p[j])
 
@@ -49,13 +48,12 @@ def dump_torch_files(model, sample_input):
     os.environ["TORCH_LOGS"] = "output_code"
     os.environ["TORCHINDUCTOR_CACHE_DIR"] = "dump"
     config.cpu_backend = "triton"
-    # config.trace.enabled = True
-    # config.trace.debug_log = True
 
     compiled = torch.compile(model, fullgraph=True, backend="inductor")
     print("Output:", compiled(sample_input))
 
-def save_triton_kernels(target_dir="."):
+def save_triton_kernels(target_dir="build"):
+    os.system(f"mkdir -p {target_dir}")
     os.system(f"mv dump/triton/*/*/*.asm {target_dir}")
 
 def get_python_triton_wrapper():
@@ -141,7 +139,7 @@ def gen_c_triton_wrapper(python_wrapper):
             for x in nums:
                 size *= x
             size *= get_torch_type_size(tokens[-1][:-1])
-            c_wrapper.append(f"\tvoid* {tokens[0]} = malloc({size});\n")
+            c_wrapper.append(f"\tvoid* {tokens[0]} = heap_alloc({size});\n")
         elif ".run" in tokens[0]:
             #[kernel_name].run(arg1, arg2, ..., stream=streamNone)
             kernel_name = tokens[0].split(".")[0]
@@ -165,10 +163,42 @@ def gen_c_triton_wrapper(python_wrapper):
     c_wrapper.append("}\n")
     return c_wrapper
 
+def create_makefile(dir='build'):
+    with open(dir + '/Makefile', 'w') as f:
+        f.write("""
+KERNEL_MODULE_SRC := main
+USER_SRC := user
 
-def build(model, x, output_file="module.c"):
+TRITON_KERNELS_ASM := $(wildcard *.asm)
+O_FILES := $(TRITON_KERNELS_ASM:.asm=.o)
+
+PWD := $(CURDIR)
+
+obj-m += my_module.o
+my_module-objs := $(KERNEL_MODULE_SRC).o $(O_FILES)
+CFLAGS_main.o += -mhard-float
+
+all: my_module.ko
+
+$(O_FILES): %.o: %.asm
+\tclang -o $@ -c $<
+\ttouch .$@.cmd
+
+my_module.ko: $(O_FILES) $(KERNEL_MODULE_SRC).c
+\t$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+user: $(O_FILES) $(USER_SRC).c
+\tgcc $(USER_SRC).c $(O_FILES) -o user -g
+
+clean:
+\t$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+\trm -f $(O_FILES) $(TRITON_KERNELS_ASM) .*.cmd user""")
+
+
+def build(model, x, output_file="build/main.c"):
     dump_torch_files(model, x)
     save_triton_kernels()
+    create_makefile()
     with open(output_file, 'w') as f:
         f.write("""#include <linux/kernel.h>
 #include <linux/module.h>
@@ -179,8 +209,8 @@ def build(model, x, output_file="module.c"):
 
 MODULE_LICENSE("GPL");
 
-#define malloc(x) kmalloc(x, GFP_KERNEL)
-#define free(x) kfree(x)
+#define heap_alloc(x) kmalloc(x, GFP_ATOMIC)
+#define heap_free(x) kfree(x)
 
 """)
         f.writelines(gen_c_triton_signature_declarations())
@@ -196,14 +226,10 @@ int init(void) {
     pr_info("Hello!\\n");
     kernel_fpu_begin();
     primals_t primals = allocate_primals();
-    // float input[2] = {1, 1};
     float* out = call(primals.primals);
     pr_info("%d/10000 %d/10000\\n", (int)(out[0] * 10000), (int)(out[1] * 10000));
-    free(out);
-    for (int i = 0; i < 9; i++) {
-        free(primals.primals[i]);
-    }
-    free(primals.primals);
+    heap_free(out);
+    heap_free(primals.primals);
     kernel_fpu_end();
     return 0;
 }
@@ -214,4 +240,4 @@ void cleanup(void) {
 module_init(init);
 module_exit(cleanup);""")
 
-    # os.system("rm -rf dump")
+    os.system("rm -rf dump")

@@ -36,4 +36,4 @@ if __name__ == "__main__":
     #get_primals(model, data)
 
     #print(compiled(data))
-    build(model, data, 'main.c')
+    build(model, data, 'build/main.c')
