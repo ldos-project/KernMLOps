@@ -5,6 +5,7 @@ import torch._inductor.config as config
 
 
 def collect_parameters(module):
+    '''Returns model weights in the order that the triton kernels expect them to be in'''
     params = []
     for name, p in module._parameters.items():
         if p is not None:
@@ -14,6 +15,11 @@ def collect_parameters(module):
     return params
 
 def gen_primals_init_code(model, *inputs):
+    '''
+    Generate C code to initialize primals from a pytorch model
+        model: Pytorch model to read primals from
+        *inputs: Sample inputs to the model (may have multiple parameters)
+    '''
     primals = []
     s = """
 typedef struct {
@@ -25,8 +31,9 @@ typedef struct {
 primals_t allocate_primals(void) {
 """
     primals = collect_parameters(model)
-    insert_pos = 2 if len(primals) >= 2 else len(primals)
+    insert_pos = 2 if len(primals) >= 2 else len(primals) # TODO hardcoded at 2 for now, not sure if this always works
     for i, inp in enumerate(inputs):
+        # TODO currently assuming that multiple inputs are just inserted one after another, not sure if this is really the case
         primals.insert(insert_pos + i, inp)
 
     s += "\tprimals_t p;\n"
@@ -41,9 +48,19 @@ primals_t allocate_primals(void) {
 
     s += "\treturn p;\n}\n"
 
+    s += f"""
+void free_primals(primals_t p) {{
+    for (int i = 0; i < {len(primals)}; i++) {{
+        heap_free(p.primals[i]);
+    }}
+    heap_free(p.primals);
+}}
+"""
+
     return s
 
 def dump_torch_files(model, sample_input):
+    '''Tell pytorch to compile the model and dump triton kernels/python glue into a "dump" folder'''
     os.environ["CUDA_VISIBLE_DEVICES"] = ""
     os.environ["TORCH_LOGS"] = "output_code"
     os.environ["TORCHINDUCTOR_CACHE_DIR"] = "dump"
@@ -53,10 +70,12 @@ def dump_torch_files(model, sample_input):
     print("Output:", compiled(sample_input))
 
 def save_triton_kernels(target_dir="build"):
+    '''Move triton kernels (asm) from the dump folder to some target folder'''
     os.system(f"mkdir -p {target_dir}")
     os.system(f"mv dump/triton/*/*/*.asm {target_dir}")
 
 def get_python_triton_wrapper():
+    '''Return the python wrapper that launches the triton kernels'''
     file_name = os.popen('grep -r "def call(args):" dump').read().split(":")[0]
     with open(file_name) as file:
         contents = file.readlines()
@@ -69,9 +88,19 @@ def get_python_triton_wrapper():
         return [contents[i][4:] for i in range(start + 1, end)]
 
 def get_torch_type_size(s):
+    '''
+    Get the size in bytes of a torch type
+
+    Ex: get_torch_type_size("torch.float32") -> 32
+    '''
     return eval(s).itemsize
 
 def get_c_type(triton_type):
+    '''
+    Get the C type for a given triton type
+
+    Ex: get_c_type("f32") -> "float"
+    '''
     if triton_type[0] == "*":
         return "void*"
     elif triton_type[0] == "f":
@@ -82,6 +111,11 @@ def get_c_type(triton_type):
         return "int"
 
 def gen_c_triton_signature_declarations():
+    '''
+    Generate the C declarations for all of the triton kernels
+
+    Ex: extern void [kernel_name](...);
+    '''
     triton_src_files = os.popen('grep -rl "@triton.jit" . | xargs grep -L "def call(args):"').read().split()
     declarations = []
     for file_name in triton_src_files:
@@ -114,6 +148,7 @@ def gen_c_triton_signature_declarations():
 
 
 def gen_c_triton_wrapper(python_wrapper):
+    '''Convert the python wrapper that launches triton kernels into equivalent C code'''
     c_wrapper = []
     c_wrapper.append("void* call(float** primals) {\n")
     for line in python_wrapper:
@@ -224,13 +259,13 @@ void* forward(primals_t p, void* input) {
 
 int init(void) {
     pr_info("Hello!\\n");
-    kernel_fpu_begin();
     primals_t primals = allocate_primals();
+    kernel_fpu_begin();
     float* out = call(primals.primals);
     pr_info("%d/10000 %d/10000\\n", (int)(out[0] * 10000), (int)(out[1] * 10000));
-    heap_free(out);
-    heap_free(primals.primals);
     kernel_fpu_end();
+    heap_free(out);
+    free_primals(primals);
     return 0;
 }
 
