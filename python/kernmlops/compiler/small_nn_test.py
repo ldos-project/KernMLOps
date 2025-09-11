@@ -1,7 +1,7 @@
 
 import torch
 import torch.nn as nn
-from gen_kernel_module import build
+from compile_test import test
 
 
 class SimpleNet(nn.Module):
@@ -27,13 +27,4 @@ class SimpleNet(nn.Module):
 if __name__ == "__main__":
     model = SimpleNet(2)
     model.eval()
-
-    #compiled = torch.compile(model, fullgraph=True, backend="inductor")
-    data = torch.ones((2,), dtype=torch.float32)
-    print(data, model(data))
-    print(100 * data, model(100 * data))
-    print([-1, 1], model(torch.tensor([-1, 1], dtype=torch.float32)))
-    #get_primals(model, data)
-
-    #print(compiled(data))
-    build(model, data, 'build/main.c')
+    test(model, [torch.randn((2,), dtype=torch.float32) for i in range(50)])

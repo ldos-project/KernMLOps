@@ -67,7 +67,7 @@ def dump_torch_files(model, sample_input):
     config.cpu_backend = "triton"
 
     compiled = torch.compile(model, fullgraph=True, backend="inductor")
-    print("Output:", compiled(sample_input))
+    compiled(sample_input)
 
 def save_triton_kernels(target_dir="build"):
     '''Move triton kernels (asm) from the dump folder to some target folder'''
@@ -199,38 +199,9 @@ def gen_c_triton_wrapper(python_wrapper):
     return c_wrapper
 
 def create_makefile(dir='build'):
-    with open(dir + '/Makefile', 'w') as f:
-        f.write("""
-KERNEL_MODULE_SRC := main
-USER_SRC := user
+    os.system(f'cp Makefile {dir}/Makefile')
 
-TRITON_KERNELS_ASM := $(wildcard *.asm)
-O_FILES := $(TRITON_KERNELS_ASM:.asm=.o)
-
-PWD := $(CURDIR)
-
-obj-m += my_module.o
-my_module-objs := $(KERNEL_MODULE_SRC).o $(O_FILES)
-CFLAGS_main.o += -mhard-float
-
-all: my_module.ko
-
-$(O_FILES): %.o: %.asm
-\tclang -o $@ -c $<
-\ttouch .$@.cmd
-
-my_module.ko: $(O_FILES) $(KERNEL_MODULE_SRC).c
-\t$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-
-user: $(O_FILES) $(USER_SRC).c
-\tgcc $(USER_SRC).c $(O_FILES) -o user -g
-
-clean:
-\t$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-\trm -f $(O_FILES) $(TRITON_KERNELS_ASM) .*.cmd user""")
-
-
-def build(model, x, output_file="build/main.c"):
+def build(model, x, output_file="build/main.c", debug=False):
     dump_torch_files(model, x)
     save_triton_kernels()
     create_makefile()
@@ -241,6 +212,8 @@ def build(model, x, output_file="build/main.c"):
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/string.h>
+#include <linux/cdev.h>
+#include <linux/uaccess.h>
 
 MODULE_LICENSE("GPL");
 
@@ -252,27 +225,101 @@ MODULE_LICENSE("GPL");
         f.writelines(gen_c_triton_wrapper(get_python_triton_wrapper()))
         f.write(gen_primals_init_code(model, x))
         f.write("""
+
+#define DEVICE_NAME "model_run"
+#define CLASS_NAME  "model_class"
+
+#define IOCTL_PROC _IOWR('m', 1, struct model_data *)
+
+struct model_data {
+    float __user *in;   // pointer to user input buffer
+    float __user *out;  // pointer to user output buffer
+    int n;              // number of floats
+};
+
+static dev_t dev_num;
+static struct cdev my_cdev;
+static struct class *my_class;
+
+primals_t primals;
+
 void* forward(primals_t p, void* input) {
     memcpy(p.primals[p.input_idx], input, p.input_size * sizeof(void*));
     return call(p.primals);
 }
 
+static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+    struct model_data data;
+    float kbuf_in[256];
+    int i;
+
+    if (cmd != IOCTL_PROC)
+        return -EINVAL;
+
+    if (copy_from_user(&data, (void __user *)arg, sizeof(data)))
+        return -EFAULT;
+
+    if (data.n > 256)
+        return -EINVAL;
+
+    // copy input floats from user
+    if (copy_from_user(kbuf_in, data.in, sizeof(float) * data.n))
+        return -EFAULT;
+
+    kernel_fpu_begin();
+    float* kbuf_out = forward(primals, kbuf_in);
+    kernel_fpu_end();
+
+    // copy results back to user buffer
+    if (copy_to_user(data.out, kbuf_out, sizeof(float) * data.n)) {
+        heap_free(kbuf_out);
+        return -EFAULT;
+    }
+
+    heap_free(kbuf_out);
+    return 0;
+}
+
+static struct file_operations fops = {
+    .owner          = THIS_MODULE,
+    .unlocked_ioctl = my_ioctl,
+};
+
+
+
 int init(void) {
-    pr_info("Hello!\\n");
-    primals_t primals = allocate_primals();
+    pr_info("Hello %x!\\n", IOCTL_PROC);
+
+    alloc_chrdev_region(&dev_num, 0, 1, DEVICE_NAME);
+    cdev_init(&my_cdev, &fops);
+    cdev_add(&my_cdev, dev_num, 1);
+    my_class = class_create(CLASS_NAME);
+    device_create(my_class, NULL, dev_num, NULL, DEVICE_NAME);
+
+    primals = allocate_primals();
+    /*
     kernel_fpu_begin();
     float* out = call(primals.primals);
     pr_info("%d/10000 %d/10000\\n", (int)(out[0] * 10000), (int)(out[1] * 10000));
     kernel_fpu_end();
     heap_free(out);
-    free_primals(primals);
+    */
     return 0;
 }
 
 void cleanup(void) {
+    free_primals(primals);
+
+    device_destroy(my_class, dev_num);
+    class_destroy(my_class);
+    cdev_del(&my_cdev);
+    unregister_chrdev_region(dev_num, 1);
+
     pr_info("kernel module goodbye\\n");
 }
 module_init(init);
-module_exit(cleanup);""")
+module_exit(cleanup);
+""")
 
     os.system("rm -rf dump")
