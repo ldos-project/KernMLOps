@@ -109,6 +109,7 @@ def get_c_type(triton_type):
     elif triton_type[0] == "i":
         # TODO handle different sized ints
         return "int"
+    raise ValueError(f"Bad Triton Type: {triton_type}")
 
 def gen_c_triton_signature_declarations():
     '''
@@ -122,7 +123,7 @@ def gen_c_triton_signature_declarations():
         with open(file_name) as f:
             contents = f.readlines()
         signature = ""
-        sig_types = None
+        sig_types = {}
         for line in contents:
             if line.startswith("def"):
                 signature = line
