@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 import torch
-from gen_kernel_module import build
+from gen_kernel_module import TorchKernelDeployer
 
 
 def query_kernel_module(inp, out_size):
@@ -17,14 +17,12 @@ def query_kernel_module(inp, out_size):
     #   float *in;
     #   float *out;
     #   int input_size;
-    #   int output_size;
     # };
     class ModelData(ctypes.Structure):
         _fields_ = [
             ("in", ctypes.POINTER(ctypes.c_float)),
             ("out", ctypes.POINTER(ctypes.c_float)),
             ("input_size", ctypes.c_int),
-            ("output_size", ctypes.c_int),
         ]
 
     n = len(inp)
@@ -34,7 +32,7 @@ def query_kernel_module(inp, out_size):
     out_arr = (ctypes.c_float * out_size)()
 
     # build ioctl struct
-    data = ModelData(in_arr, out_arr, n, out_size) # TODO fix output size
+    data = ModelData(in_arr, out_arr, n)
 
     # open device and call ioctl
     with open(DEVICE, "wb", buffering=0) as fd:
@@ -43,7 +41,8 @@ def query_kernel_module(inp, out_size):
     return torch.from_numpy(np.ctypeslib.as_array(out_arr))
 
 def test(model, inputs):
-    build(model, inputs[0])
+    compiler = TorchKernelDeployer(model, inputs[0].shape)
+    compiler.build()
     os.system("cd build; make; sudo insmod my_module.ko")
 
     torch.set_printoptions(precision=5)  # number of decimal places

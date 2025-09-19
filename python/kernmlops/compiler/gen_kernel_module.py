@@ -4,24 +4,38 @@ import torch
 import torch._inductor.config as config
 
 
-def collect_parameters(module):
-    '''Returns model weights in the order that the triton kernels expect them to be in'''
-    params = []
-    for name, p in module._parameters.items():
-        if p is not None:
-            params.append(p)
-    for child in module.children():
-        params.extend(collect_parameters(child))
-    return params
+class TorchKernelDeployer:
+    def __init__(self, model, input_shape):
+        # TODO handle models with multiple inputs
+        self.model = model
 
-def gen_primals_init_code(model, *inputs):
-    '''
-    Generate C code to initialize primals from a pytorch model
-        model: Pytorch model to read primals from
-        *inputs: Sample inputs to the model (may have multiple parameters)
-    '''
-    primals = []
-    s = """
+        self.input_shape = input_shape
+        self.input_size_flat = 1
+        for dim in self.input_shape:
+            self.input_size_flat *= dim
+
+        self.output_shape = None # will be updated when we compile the model
+        self.output_size_flat = None
+
+    @staticmethod
+    def collect_parameters(module):
+        '''Returns model weights in the order that the triton kernels expect them to be in'''
+        params = []
+        for name, p in module._parameters.items():
+            if p is not None:
+                params.append(p)
+        for child in module.children():
+            params.extend(TorchKernelDeployer.collect_parameters(child))
+        return params
+
+    def gen_primals_init_code(self, *inputs):
+        '''
+        Generate C code to initialize primals from a pytorch model
+            model: Pytorch model to read primals from
+            *inputs: Sample inputs to the model (need to explore multiple parameters)
+        '''
+        primals = []
+        s = """
 typedef struct {
     float** primals;
     int input_idx;
@@ -30,25 +44,25 @@ typedef struct {
 
 primals_t allocate_primals(void) {
 """
-    primals = collect_parameters(model)
-    insert_pos = 2 if len(primals) >= 2 else len(primals) # TODO hardcoded at 2 for now, not sure if this always works
-    for i, inp in enumerate(inputs):
-        # TODO currently assuming that multiple inputs are just inserted one after another, not sure if this is really the case
-        primals.insert(insert_pos + i, inp)
+        primals = self.collect_parameters(self.model)
+        insert_pos = 2 if len(primals) >= 2 else len(primals) # TODO hardcoded at 2 for now, not sure if this always works
+        for i, inp in enumerate(inputs):
+            # TODO currently assuming that multiple inputs are just inserted one after another, not sure if this is really the case
+            primals.insert(insert_pos + i, inp)
 
-    s += "\tprimals_t p;\n"
-    s += f"\tp.input_idx = {insert_pos};\n"
-    s += f"\tp.input_size = {len(primals[insert_pos])};\n"
-    s += "\tp.primals = heap_alloc(%d * sizeof(float*));\n" % len(primals)
-    for i in range(len(primals)):
-        p = torch.flatten(primals[i]).tolist()
-        s += "\tp.primals[%d] = heap_alloc(%d * sizeof(float));\n" % (i, len(p))
-        for j in range(len(p)):
-            s += "\tp.primals[%d][%d] = %.20f;\n" % (i, j, p[j])
+        s += "\tprimals_t p;\n"
+        s += f"\tp.input_idx = {insert_pos};\n"
+        s += f"\tp.input_size = {len(primals[insert_pos])};\n"
+        s += "\tp.primals = heap_alloc(%d * sizeof(float*));\n" % len(primals)
+        for i in range(len(primals)):
+            p = torch.flatten(primals[i]).tolist()
+            s += "\tp.primals[%d] = heap_alloc(%d * sizeof(float));\n" % (i, len(p))
+            for j in range(len(p)):
+                s += "\tp.primals[%d][%d] = %.20f;\n" % (i, j, p[j])
 
-    s += "\treturn p;\n}\n"
+        s += "\treturn p;\n}\n"
 
-    s += f"""
+        s += f"""
 void free_primals(primals_t p) {{
     for (int i = 0; i < {len(primals)}; i++) {{
         heap_free(p.primals[i]);
@@ -57,165 +71,169 @@ void free_primals(primals_t p) {{
 }}
 """
 
-    return s
+        return s
 
-def dump_torch_files(model, sample_input):
-    '''Tell pytorch to compile the model and dump triton kernels/python glue into a "dump" folder'''
-    os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    os.environ["TORCH_LOGS"] = "output_code"
-    os.environ["TORCHINDUCTOR_CACHE_DIR"] = "dump"
-    config.cpu_backend = "triton"
+    def dump_torch_files(self):
+        '''Tell pytorch to compile the model and dump triton kernels/python glue into a "dump" folder'''
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        os.environ["TORCH_LOGS"] = "output_code"
+        os.environ["TORCHINDUCTOR_CACHE_DIR"] = "dump"
+        config.cpu_backend = "triton"
 
-    compiled = torch.compile(model, fullgraph=True, backend="inductor")
-    compiled(sample_input)
+        compiled = torch.compile(self.model, fullgraph=True, backend="inductor")
+        out = compiled(torch.randn(self.input_shape, dtype=torch.float32))
+        self.output_shape = out.shape
+        self.output_size_flat = 1
+        for dim in self.output_shape:
+            self.output_size_flat *= dim
 
-def save_triton_kernels(target_dir="build"):
-    '''Move triton kernels (asm) from the dump folder to some target folder'''
-    os.system(f"mkdir -p {target_dir}")
-    os.system(f"mv dump/triton/*/*/*.asm {target_dir}")
+    def save_triton_kernels(self, target_dir="build"):
+        '''Move triton kernels (asm) from the dump folder to some target folder'''
+        os.system(f"mkdir -p {target_dir}")
+        os.system(f"mv dump/triton/*/*/*.asm {target_dir}")
 
-def get_python_triton_wrapper():
-    '''Return the python wrapper that launches the triton kernels'''
-    file_name = os.popen('grep -r "def call(args):" dump').read().split(":")[0]
-    with open(file_name) as file:
-        contents = file.readlines()
-        start = contents.index("def call(args):\n")
-        end = start
-        while contents[end] != "\n":
-            end += 1
+    def get_python_triton_wrapper(self):
+        '''Return the python wrapper that launches the triton kernels'''
+        file_name = os.popen('grep -r "def call(args):" dump').read().split(":")[0]
+        with open(file_name) as file:
+            contents = file.readlines()
+            start = contents.index("def call(args):\n")
+            end = start
+            while contents[end] != "\n":
+                end += 1
 
-        # dont include the indentation
-        return [contents[i][4:] for i in range(start + 1, end)]
+            # dont include the indentation
+            return [contents[i][4:] for i in range(start + 1, end)]
 
-def get_torch_type_size(s):
-    '''
-    Get the size in bytes of a torch type
+    @staticmethod
+    def get_torch_type_size(s):
+        '''
+        Get the size in bytes of a torch type
 
-    Ex: get_torch_type_size("torch.float32") -> 32
-    '''
-    return eval(s).itemsize
+        Ex: get_torch_type_size("torch.float32") -> 32
+        '''
+        return eval(s).itemsize
 
-def get_c_type(triton_type):
-    '''
-    Get the C type for a given triton type
+    @staticmethod
+    def get_c_type(triton_type):
+        '''
+        Get the C type for a given triton type
 
-    Ex: get_c_type("f32") -> "float"
-    '''
-    if triton_type[0] == "*":
-        return "void*"
-    elif triton_type[0] == "f":
-        # TODO handle different sized floats
-        return "float"
-    elif triton_type[0] == "i":
-        # TODO handle different sized ints
-        return "int"
-    raise ValueError(f"Bad Triton Type: {triton_type}")
+        Ex: get_c_type("f32") -> "float"
+        '''
+        if triton_type[0] == "*":
+            return "void*"
+        elif triton_type[0] == "f":
+            # TODO handle different sized floats
+            return "float"
+        elif triton_type[0] == "i":
+            # TODO handle different sized ints
+            return "int"
+        raise ValueError(f"Bad Triton Type: {triton_type}")
 
-def gen_c_triton_signature_declarations():
-    '''
-    Generate the C declarations for all of the triton kernels
+    def gen_c_triton_signature_declarations(self):
+        '''
+        Generate the C declarations for all of the triton kernels
 
-    Ex: extern void [kernel_name](...);
-    '''
-    triton_src_files = os.popen('grep -rl "@triton.jit" . | xargs grep -L "def call(args):"').read().split()
-    declarations = []
-    for file_name in triton_src_files:
-        with open(file_name) as f:
-            contents = f.readlines()
-        signature = ""
-        sig_types = {}
-        for line in contents:
-            if line.startswith("def"):
-                signature = line
-            elif "triton_meta" in line:
-                start = line.find("'signature': ") + len("'signature': ")
-                end = line.find("}", start)
-                sig_types = eval(line[start:end + 1])
-        open_paren = signature.find("(")
-        close_paren = signature.find(")")
-        kernel_name = signature[4:open_paren]
-        arg_names = signature[open_paren + 1:close_paren].split(", ")
-        # remove type annotations if present
-        arg_names = [i.split(" : ")[0] for i in arg_names]
-        triton_types = [sig_types[arg_name] for arg_name in arg_names]
-        tmp = []
-        for t in triton_types:
-            if t != "constexpr":
-                tmp.append(t)
-        triton_types = tmp
-        c_types = [get_c_type(triton_type) for triton_type in triton_types]
-        declarations.append(f"extern void {kernel_name}({', '.join(c_types)}, int, int, int, int, int, int);\n")
-    return declarations
+        Ex: extern void [kernel_name](...);
+        '''
+        triton_src_files = os.popen('grep -rl "@triton.jit" . | xargs grep -L "def call(args):"').read().split()
+        declarations = []
+        for file_name in triton_src_files:
+            with open(file_name) as f:
+                contents = f.readlines()
+            signature = ""
+            sig_types = {}
+            for line in contents:
+                if line.startswith("def"):
+                    signature = line
+                elif "triton_meta" in line:
+                    start = line.find("'signature': ") + len("'signature': ")
+                    end = line.find("}", start)
+                    sig_types = eval(line[start:end + 1])
+            open_paren = signature.find("(")
+            close_paren = signature.find(")")
+            kernel_name = signature[4:open_paren]
+            arg_names = signature[open_paren + 1:close_paren].split(", ")
+            # remove type annotations if present
+            arg_names = [i.split(" : ")[0] for i in arg_names]
+            triton_types = [sig_types[arg_name] for arg_name in arg_names]
+            tmp = []
+            for t in triton_types:
+                if t != "constexpr":
+                    tmp.append(t)
+            triton_types = tmp
+            c_types = [self.get_c_type(triton_type) for triton_type in triton_types]
+            declarations.append(f"extern void {kernel_name}({', '.join(c_types)}, int, int, int, int, int, int);\n")
+        return declarations
 
 
-def gen_c_triton_wrapper(python_wrapper):
-    '''Convert the python wrapper that launches triton kernels into equivalent C code'''
-    c_wrapper = []
-    c_wrapper.append("void call(float** primals, float* out, int output_size) {\n")
-    buffers_to_free = []
-    for line in python_wrapper:
-        tokens = line.split()
-        if len(tokens) >= 2 and tokens[-1] == "args" and tokens[-2] == "=":
-            # primals_1, primals_2, ... = args
-            continue
-        elif tokens[0] == "args.clear()":
-            continue
-        elif tokens[0].startswith("assert_size_stride"):
-            continue
-        elif tokens[0] == "streamNone":
-            continue
-        elif len(tokens) >= 3 and tokens[2].startswith("reinterpret_tensor"):
-            # bufx = reinterpret_tensor(bufy, ...); del bufx  # reuse
-            c_wrapper.append(f"\tvoid* {tokens[0]} = {tokens[2][19:][:-1]};\n")
-        elif len(tokens) >= 3 and tokens[2].startswith("empty_strided_cpu"):
-            # bufx = empty_strided_cpu((a, b, c, ...), [stride], torch.float32)
-            start_size_tuple = line.find("(") + 2
-            end_size_tuple = line.find(")")
-            nums = [int(i) if i != '' else 1 for i in line[start_size_tuple:end_size_tuple].split(", ")]
-            size = 1
-            for x in nums:
-                size *= x
-            size *= get_torch_type_size(tokens[-1][:-1])
-            c_wrapper.append(f"\tvoid* {tokens[0]} = heap_alloc({size});\n")
-            buffers_to_free.append(tokens[0])
-        elif ".run" in tokens[0]:
-            #[kernel_name].run(arg1, arg2, ..., stream=streamNone)
-            kernel_name = tokens[0].split(".")[0]
-            start_args = line.find("(") + 1
-            end_args = line.find(")")
-            args = line[start_args:end_args].split(", ")[:-1]
-            # map primals_n -> primals[n - 1]
-            args = [arg if not arg.startswith("primals") else f"primals[{int(arg[8:]) - 1}]" for arg in args]
-            c_wrapper.append(f"\t{kernel_name}({", ".join(args)}, 0, 0, 0, 1, 1, 1);\n")
-        elif tokens[0].startswith("buf") and tokens[2].startswith("buf"):
-            c_wrapper.append(f"\tvoid* {tokens[0]} = {tokens[2].replace(';', '')};\n")
-        elif tokens[0] == "return":
-            buf = ""
-            # return (reinterpret_tensor(bufx, ...), ...)
-            if "reinterpret_tensor" in tokens[1]:
-                buf = tokens[1][20:][:-1]
-            # return (bufx, ...)
-            else:
-                buf = tokens[1][1:-1]
+    def gen_c_triton_wrapper(self, python_wrapper):
+        '''Convert the python wrapper that launches triton kernels into equivalent C code'''
+        c_wrapper = []
+        c_wrapper.append("void call(float** primals, float* out) {\n")
+        buffers_to_free = []
+        for line in python_wrapper:
+            tokens = line.split()
+            if len(tokens) >= 2 and tokens[-1] == "args" and tokens[-2] == "=":
+                # primals_1, primals_2, ... = args
+                continue
+            elif tokens[0] == "args.clear()":
+                continue
+            elif tokens[0].startswith("assert_size_stride"):
+                continue
+            elif tokens[0] == "streamNone":
+                continue
+            elif len(tokens) >= 3 and tokens[2].startswith("reinterpret_tensor"):
+                # bufx = reinterpret_tensor(bufy, ...); del bufx  # reuse
+                c_wrapper.append(f"\tvoid* {tokens[0]} = {tokens[2][19:][:-1]};\n")
+            elif len(tokens) >= 3 and tokens[2].startswith("empty_strided_cpu"):
+                # bufx = empty_strided_cpu((a, b, c, ...), [stride], torch.float32)
+                start_size_tuple = line.find("(") + 2
+                end_size_tuple = line.find(")")
+                nums = [int(i) if i != '' else 1 for i in line[start_size_tuple:end_size_tuple].split(", ")]
+                size = 1
+                for x in nums:
+                    size *= x
+                size *= self.get_torch_type_size(tokens[-1][:-1])
+                c_wrapper.append(f"\tvoid* {tokens[0]} = heap_alloc({size});\n")
+                buffers_to_free.append(tokens[0])
+            elif ".run" in tokens[0]:
+                #[kernel_name].run(arg1, arg2, ..., stream=streamNone)
+                kernel_name = tokens[0].split(".")[0]
+                start_args = line.find("(") + 1
+                end_args = line.find(")")
+                args = line[start_args:end_args].split(", ")[:-1]
+                # map primals_n -> primals[n - 1]
+                args = [arg if not arg.startswith("primals") else f"primals[{int(arg[8:]) - 1}]" for arg in args]
+                c_wrapper.append(f"\t{kernel_name}({", ".join(args)}, 0, 0, 0, 1, 1, 1);\n")
+            elif tokens[0].startswith("buf") and tokens[2].startswith("buf"):
+                c_wrapper.append(f"\tvoid* {tokens[0]} = {tokens[2].replace(';', '')};\n")
+            elif tokens[0] == "return":
+                buf = ""
+                # return (reinterpret_tensor(bufx, ...), ...)
+                if "reinterpret_tensor" in tokens[1]:
+                    buf = tokens[1][20:][:-1]
+                # return (bufx, ...)
+                else:
+                    buf = tokens[1][1:-1]
 
-            c_wrapper.append(f"\tmemcpy(out, {buf}, output_size * sizeof (float));\n")
-            c_wrapper.append('\tpr_info("out size: %d", output_size);\n')
-            c_wrapper.append(f'\tpr_info("out[0] %d/1000", (int)(((float*){buf})[0] * 1000));\n')
-            for b in buffers_to_free:
-                c_wrapper.append(f"\theap_free({b});\n")
-            c_wrapper.append("\treturn;\n")
-    c_wrapper.append("}\n")
-    return c_wrapper
+                c_wrapper.append(f"\tmemcpy(out, {buf}, {self.output_size_flat} * sizeof (float));\n")
+                for b in buffers_to_free:
+                    c_wrapper.append(f"\theap_free({b});\n")
+                c_wrapper.append("\treturn;\n")
+        c_wrapper.append("}\n")
+        return c_wrapper
 
-def copy_build_files(dir='build'):
-    os.system(f'cp build_template/* {dir}')
+    def copy_build_files(self, dir='build'):
+        os.system(f'cp build_template/* {dir}')
 
-def build(model, x, output_file="build/main.c", debug=False):
-    dump_torch_files(model, x)
-    save_triton_kernels()
-    copy_build_files()
-    with open(output_file, 'w') as f:
-        f.write("""#include <linux/kernel.h>
+    def build(self, output_file="build/main.c", debug=False):
+        self.dump_torch_files()
+        self.save_triton_kernels()
+        self.copy_build_files()
+        with open(output_file, 'w') as f:
+            f.write("""#include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
@@ -230,22 +248,21 @@ MODULE_LICENSE("GPL");
 #define heap_free(x) kfree(x)
 
 """)
-        f.writelines(gen_c_triton_signature_declarations())
-        f.writelines(gen_c_triton_wrapper(get_python_triton_wrapper()))
-        f.write(gen_primals_init_code(model, x))
-        f.write("""
+            f.writelines(self.gen_c_triton_signature_declarations())
+            f.writelines(self.gen_c_triton_wrapper(self.get_python_triton_wrapper()))
+            f.write(self.gen_primals_init_code(torch.zeros(self.input_shape, dtype=torch.float32)))
+            f.write(f"""
 
 #define DEVICE_NAME "model_run"
 #define CLASS_NAME  "model_class"
 
 #define IOCTL_PROC _IOWR('m', 1, struct model_data *)
 
-struct model_data {
+struct model_data {{
     float __user *in;   // pointer to user input buffer
     float __user *out;  // pointer to user output buffer
     int input_size;     // number of floats
-    int output_size;    // number of floats
-};
+}};
 
 static dev_t dev_num;
 static struct cdev my_cdev;
@@ -253,13 +270,13 @@ static struct class *my_class;
 
 primals_t primals;
 
-void forward(primals_t p, void* input, void* output, int output_size) {
+void forward(primals_t p, void* input, void* output) {{
     memcpy(p.primals[p.input_idx], input, p.input_size * sizeof(void*));
-    call(p.primals, output, output_size);
-}
+    call(p.primals, output);
+}}
 
 static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
+{{
     struct model_data data;
     float kbuf_in[256];
     int i;
@@ -277,30 +294,29 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
     if (copy_from_user(kbuf_in, data.in, sizeof(float) * data.input_size))
         return -EFAULT;
 
-    pr_info("about to forward(), creating out buf of size %d", data.output_size * sizeof (float));
-    float* kbuf_out = heap_alloc(data.output_size * sizeof (float));
+    float* kbuf_out = heap_alloc({self.output_size_flat} * sizeof (float));
     kernel_fpu_begin();
-    forward(primals, kbuf_in, kbuf_out, data.output_size);
+    forward(primals, kbuf_in, kbuf_out);
     kernel_fpu_end();
 
     // copy results back to user buffer
-    if (copy_to_user(data.out, kbuf_out, sizeof(float) * data.output_size)) {
+    if (copy_to_user(data.out, kbuf_out, {self.output_size_flat} * sizeof(float))) {{
         heap_free(kbuf_out);
         return -EFAULT;
-    }
+    }}
 
     heap_free(kbuf_out);
     return 0;
-}
+}}
 
-static struct file_operations fops = {
+static struct file_operations fops = {{
     .owner          = THIS_MODULE,
     .unlocked_ioctl = my_ioctl,
-};
+}};
 
 
 
-int init(void) {
+int init(void) {{
     pr_info("Hello %x!\\n", IOCTL_PROC);
 
     alloc_chrdev_region(&dev_num, 0, 1, DEVICE_NAME);
@@ -318,9 +334,9 @@ int init(void) {
     heap_free(out);
     */
     return 0;
-}
+}}
 
-void cleanup(void) {
+void cleanup(void) {{
     free_primals(primals);
 
     device_destroy(my_class, dev_num);
@@ -329,9 +345,9 @@ void cleanup(void) {
     unregister_chrdev_region(dev_num, 1);
 
     pr_info("kernel module goodbye\\n");
-}
+}}
 module_init(init);
 module_exit(cleanup);
 """)
 
-    # os.system("rm -rf dump")
+        # os.system("rm -rf dump")
