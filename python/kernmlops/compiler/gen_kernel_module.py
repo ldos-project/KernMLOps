@@ -44,7 +44,7 @@ primals_t allocate_primals(void) {
         p = torch.flatten(primals[i]).tolist()
         s += "\tp.primals[%d] = heap_alloc(%d * sizeof(float));\n" % (i, len(p))
         for j in range(len(p)):
-            s += "\tp.primals[%d][%d] = %.4f;\n" % (i, j, p[j])
+            s += "\tp.primals[%d][%d] = %.20f;\n" % (i, j, p[j])
 
     s += "\treturn p;\n}\n"
 

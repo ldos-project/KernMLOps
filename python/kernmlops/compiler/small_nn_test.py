@@ -27,4 +27,4 @@ class SimpleNet(nn.Module):
 if __name__ == "__main__":
     model = SimpleNet(2)
     model.eval()
-    test(model, [torch.randn((2,), dtype=torch.float32) for i in range(50)])
+    test(model, [1000 * torch.randn((2,), dtype=torch.float32) for i in range(50)])
