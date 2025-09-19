@@ -5,3 +5,9 @@
 [submodule "external/triton-cpu"]
 	path = external/triton-cpu
 	url = git@github.com:triton-lang/triton-cpu.git
+[submodule "external/external/sleef"]
+	path = external/external/sleef
+	url = https://github.com/shibatch/sleef
+[submodule "external/sleef"]
+	path = external/sleef
+	url = https://github.com/shibatch/sleef

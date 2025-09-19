@@ -8,7 +8,7 @@ import torch
 from gen_kernel_module import build
 
 
-def query_kernel_module(inp):
+def query_kernel_module(inp, out_size):
     DEVICE = "/dev/model_run"
 
     IOCTL_PROC = 0xc0086d01
@@ -16,23 +16,25 @@ def query_kernel_module(inp):
     # struct model_data {
     #   float *in;
     #   float *out;
-    #   int n;
+    #   int input_size;
+    #   int output_size;
     # };
     class ModelData(ctypes.Structure):
         _fields_ = [
             ("in", ctypes.POINTER(ctypes.c_float)),
             ("out", ctypes.POINTER(ctypes.c_float)),
-            ("n", ctypes.c_int),
+            ("input_size", ctypes.c_int),
+            ("output_size", ctypes.c_int),
         ]
 
     n = len(inp)
 
     # create ctypes arrays
     in_arr = (ctypes.c_float * n)(*inp)
-    out_arr = (ctypes.c_float * n)()
+    out_arr = (ctypes.c_float * out_size)()
 
     # build ioctl struct
-    data = ModelData(in_arr, out_arr, n)
+    data = ModelData(in_arr, out_arr, n, out_size) # TODO fix output size
 
     # open device and call ioctl
     with open(DEVICE, "wb", buffering=0) as fd:
@@ -49,7 +51,10 @@ def test(model, inputs):
     try:
         for input in inputs:
             expected = model(input)
-            result = query_kernel_module(input)
+            output_size = 1
+            for n in expected.shape:
+                output_size *= n
+            result = query_kernel_module(input, output_size)
             if not torch.allclose(expected, result, atol=1e-4, rtol=1e-4):
                 print(f"FAILED with input {input}")
                 print(f"\tExpected: {expected}")

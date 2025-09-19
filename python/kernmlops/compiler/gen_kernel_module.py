@@ -151,7 +151,8 @@ def gen_c_triton_signature_declarations():
 def gen_c_triton_wrapper(python_wrapper):
     '''Convert the python wrapper that launches triton kernels into equivalent C code'''
     c_wrapper = []
-    c_wrapper.append("void* call(float** primals) {\n")
+    c_wrapper.append("void call(float** primals, float* out, int output_size) {\n")
+    buffers_to_free = []
     for line in python_wrapper:
         tokens = line.split()
         if len(tokens) >= 2 and tokens[-1] == "args" and tokens[-2] == "=":
@@ -176,6 +177,7 @@ def gen_c_triton_wrapper(python_wrapper):
                 size *= x
             size *= get_torch_type_size(tokens[-1][:-1])
             c_wrapper.append(f"\tvoid* {tokens[0]} = heap_alloc({size});\n")
+            buffers_to_free.append(tokens[0])
         elif ".run" in tokens[0]:
             #[kernel_name].run(arg1, arg2, ..., stream=streamNone)
             kernel_name = tokens[0].split(".")[0]
@@ -195,17 +197,23 @@ def gen_c_triton_wrapper(python_wrapper):
             # return (bufx, ...)
             else:
                 buf = tokens[1][1:-1]
-            c_wrapper.append(f"\treturn {buf};\n")
+
+            c_wrapper.append(f"\tmemcpy(out, {buf}, output_size * sizeof (float));\n")
+            c_wrapper.append('\tpr_info("out size: %d", output_size);\n')
+            c_wrapper.append(f'\tpr_info("out[0] %d/1000", (int)(((float*){buf})[0] * 1000));\n')
+            for b in buffers_to_free:
+                c_wrapper.append(f"\theap_free({b});\n")
+            c_wrapper.append("\treturn;\n")
     c_wrapper.append("}\n")
     return c_wrapper
 
-def create_makefile(dir='build'):
-    os.system(f'cp Makefile {dir}/Makefile')
+def copy_build_files(dir='build'):
+    os.system(f'cp build_template/* {dir}')
 
 def build(model, x, output_file="build/main.c", debug=False):
     dump_torch_files(model, x)
     save_triton_kernels()
-    create_makefile()
+    copy_build_files()
     with open(output_file, 'w') as f:
         f.write("""#include <linux/kernel.h>
 #include <linux/module.h>
@@ -235,7 +243,8 @@ MODULE_LICENSE("GPL");
 struct model_data {
     float __user *in;   // pointer to user input buffer
     float __user *out;  // pointer to user output buffer
-    int n;              // number of floats
+    int input_size;     // number of floats
+    int output_size;    // number of floats
 };
 
 static dev_t dev_num;
@@ -244,9 +253,9 @@ static struct class *my_class;
 
 primals_t primals;
 
-void* forward(primals_t p, void* input) {
+void forward(primals_t p, void* input, void* output, int output_size) {
     memcpy(p.primals[p.input_idx], input, p.input_size * sizeof(void*));
-    return call(p.primals);
+    call(p.primals, output, output_size);
 }
 
 static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
@@ -261,19 +270,21 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
     if (copy_from_user(&data, (void __user *)arg, sizeof(data)))
         return -EFAULT;
 
-    if (data.n > 256)
+    if (data.input_size > 256)
         return -EINVAL;
 
     // copy input floats from user
-    if (copy_from_user(kbuf_in, data.in, sizeof(float) * data.n))
+    if (copy_from_user(kbuf_in, data.in, sizeof(float) * data.input_size))
         return -EFAULT;
 
+    pr_info("about to forward(), creating out buf of size %d", data.output_size * sizeof (float));
+    float* kbuf_out = heap_alloc(data.output_size * sizeof (float));
     kernel_fpu_begin();
-    float* kbuf_out = forward(primals, kbuf_in);
+    forward(primals, kbuf_in, kbuf_out, data.output_size);
     kernel_fpu_end();
 
     // copy results back to user buffer
-    if (copy_to_user(data.out, kbuf_out, sizeof(float) * data.n)) {
+    if (copy_to_user(data.out, kbuf_out, sizeof(float) * data.output_size)) {
         heap_free(kbuf_out);
         return -EFAULT;
     }
@@ -323,4 +334,4 @@ module_init(init);
 module_exit(cleanup);
 """)
 
-    os.system("rm -rf dump")
+    # os.system("rm -rf dump")
