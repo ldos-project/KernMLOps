@@ -14,7 +14,7 @@ class SimpleNet(nn.Module):
         self.relu1 = nn.ReLU()
         self.fc3 = nn.Linear(n, n)
         self.relu2 = nn.ReLU()
-        self.fc4 = nn.Linear(n, 2)
+        self.fc4 = nn.Linear(n, 3)
 
     def forward(self, x):
         x = self.relu(self.fc1(x))
@@ -25,6 +25,6 @@ class SimpleNet(nn.Module):
         return x
 
 if __name__ == "__main__":
-    model = SimpleNet(2)
+    model = SimpleNet(5)
     model.eval()
     test(model, [1000 * torch.randn((2,), dtype=torch.float32) for i in range(50)])

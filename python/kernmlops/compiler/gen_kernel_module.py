@@ -4,6 +4,21 @@ import torch
 import torch._inductor.config as config
 
 
+class Buffer:
+    def __init__(self, name, shadow=True, shape=(), stride=()):
+        self.name = name
+        self.shadow = shadow
+        self.shape = shape
+        self.stride = stride
+    def getShape(self, dim):
+        if dim >= len(self.shape):
+            return 1
+        return self.shape[dim]
+    def getStride(self, dim):
+        if dim >= len(self.stride):
+            return 1
+        return self.stride[dim]
+
 class TorchKernelDeployer:
     def __init__(self, model, input_shape):
         # TODO handle models with multiple inputs
@@ -16,6 +31,8 @@ class TorchKernelDeployer:
 
         self.output_shape = None # will be updated when we compile the model
         self.output_size_flat = None
+
+        self.buffers = {}
 
     @staticmethod
     def collect_parameters(module):
@@ -137,7 +154,7 @@ void free_primals(primals_t p) {{
 
         Ex: extern void [kernel_name](...);
         '''
-        triton_src_files = os.popen('grep -rl "@triton.jit" . | xargs grep -L "def call(args):"').read().split()
+        triton_src_files = os.popen('grep -rl "@triton.jit" dump | xargs grep -L "def call(args):"').read().split()
         declarations = []
         for file_name in triton_src_files:
             with open(file_name) as f:
@@ -165,65 +182,134 @@ void free_primals(primals_t p) {{
             triton_types = tmp
             c_types = [self.get_c_type(triton_type) for triton_type in triton_types]
             declarations.append(f"extern void {kernel_name}({', '.join(c_types)}, int, int, int, int, int, int);\n")
+        declarations.append("extern void addmm(int, int, int, void*, void*, void*, void*, int, int, int, int, int, int, int, int, float, float, int, int, int, int, int, int);\n")
         return declarations
 
+    def consume_buffer(self, string, start=0):
+        '''Return the name of the next buffer in string the index of the end of the buffer name. Handles both plain buffer names and reinterpret_tensor calls'''
+
+        string = string[start:]
+        if string.startswith("reinterpret_tensor"):
+            # reinterpret_tensor(bufx, (...shape), (...strides), y)
+            func_name_len = len("reinterpret_tensor(")
+            name = string[func_name_len:].split(", ")[0]
+            # there are three close parens in the expression, find the last one
+            idx = string.find(")")
+            idx = string.find(")", idx + 1)
+            idx = string.find(")", idx + 1)
+
+            # i hate string parsing
+            remaining_args = eval(string[func_name_len + len(name) + 2:idx])
+            size = remaining_args[0]
+            stride = remaining_args[1]
+            offset = remaining_args[2]
+            assert(offset == 0)
+            return Buffer(name, shape=size, stride=stride, shadow=True), idx + start + 1
+        else:
+            # just the plain buffer name
+            tokens = string.split(", ")
+            if len(tokens) > 0 and ")" not in tokens[0]:
+                # bufx, ...
+                buf = tokens[0]
+            else:
+                # bufx)
+                buf = string.split(")")[0]
+            return self.buffers[buf], start + len(buf)
 
     def gen_c_triton_wrapper(self, python_wrapper):
         '''Convert the python wrapper that launches triton kernels into equivalent C code'''
+
+        # map primals_n -> primals[n - 1]
+        num_primals = len(self.collect_parameters(self.model)) + 1
+        for i in range(num_primals):
+            for j in range(len(python_wrapper)):
+                python_wrapper[j] = python_wrapper[j].replace(f"primals_{i + 1}", f"primals[{i}]")
+
         c_wrapper = []
         c_wrapper.append("void call(float** primals, float* out) {\n")
-        buffers_to_free = []
         for line in python_wrapper:
             tokens = line.split()
             if len(tokens) >= 2 and tokens[-1] == "args" and tokens[-2] == "=":
                 # primals_1, primals_2, ... = args
-                continue
+                for i in range(num_primals):
+                    self.buffers[f"primals[{i}]"] = Buffer(f"primals[{i}]", shadow=True) # don't want to free
             elif tokens[0] == "args.clear()":
                 continue
             elif tokens[0].startswith("assert_size_stride"):
-                continue
+                # assert_size_stride(primals_x, (size), (stride))
+                name = tokens[0].split("(")[1][:-1]
+                size, stride = eval(line[len(tokens[0] + " "):-2])
+                self.buffers[name].shape = size
+                self.buffers[name].stride = stride
             elif tokens[0] == "streamNone":
                 continue
             elif len(tokens) >= 3 and tokens[2].startswith("reinterpret_tensor"):
                 # bufx = reinterpret_tensor(bufy, ...); del bufx  # reuse
+                self.buffers[tokens[0]], _ = self.consume_buffer(line, len(tokens[0] + " = "))
                 c_wrapper.append(f"\tvoid* {tokens[0]} = {tokens[2][19:][:-1]};\n")
             elif len(tokens) >= 3 and tokens[2].startswith("empty_strided_cpu"):
-                # bufx = empty_strided_cpu((a, b, c, ...), [stride], torch.float32)
-                start_size_tuple = line.find("(") + 2
+                # bufx = empty_strided_cpu((a, b, c, ...), (stride), torch.float32)
+                start_size_tuple = line.find("(") + 1
                 end_size_tuple = line.find(")")
-                nums = [int(i) if i != '' else 1 for i in line[start_size_tuple:end_size_tuple].split(", ")]
+                end_stride_tuple = line.find(")", end_size_tuple + 1) + 1
+                shape, stride = eval(line[start_size_tuple:end_stride_tuple])
+                # shape = [int(i) if i != '' else 1 for i in line[start_size_tuple:end_size_tuple].split(", ")]
                 size = 1
-                for x in nums:
+                for x in shape:
                     size *= x
                 size *= self.get_torch_type_size(tokens[-1][:-1])
                 c_wrapper.append(f"\tvoid* {tokens[0]} = heap_alloc({size});\n")
-                buffers_to_free.append(tokens[0])
+                self.buffers[tokens[0]] = Buffer(tokens[0], shape=shape, stride=stride, shadow=False)
             elif ".run" in tokens[0]:
                 #[kernel_name].run(arg1, arg2, ..., stream=streamNone)
                 kernel_name = tokens[0].split(".")[0]
                 start_args = line.find("(") + 1
                 end_args = line.find(")")
                 args = line[start_args:end_args].split(", ")[:-1]
-                # map primals_n -> primals[n - 1]
-                args = [arg if not arg.startswith("primals") else f"primals[{int(arg[8:]) - 1}]" for arg in args]
+                # args = [arg if not arg.startswith("primals") else f"primals[{int(arg[8:]) - 1}]" for arg in args]
                 c_wrapper.append(f"\t{kernel_name}({", ".join(args)}, 0, 0, 0, 1, 1, 1);\n")
+
+            elif tokens[0].startswith("extern_kernels"):
+                #extern_kernels.[kernel_name](...)
+                c_wrapper.append(self.gen_extern_kernel_call(line))
+
             elif tokens[0].startswith("buf") and tokens[2].startswith("buf"):
                 c_wrapper.append(f"\tvoid* {tokens[0]} = {tokens[2].replace(';', '')};\n")
             elif tokens[0] == "return":
-                buf = ""
                 # return (reinterpret_tensor(bufx, ...), ...)
-                if "reinterpret_tensor" in tokens[1]:
-                    buf = tokens[1][20:][:-1]
                 # return (bufx, ...)
-                else:
-                    buf = tokens[1][1:-1]
-
-                c_wrapper.append(f"\tmemcpy(out, {buf}, {self.output_size_flat} * sizeof (float));\n")
-                for b in buffers_to_free:
-                    c_wrapper.append(f"\theap_free({b});\n")
+                buf, idx = self.consume_buffer(line[len("return ("):])
+                c_wrapper.append(f"\tmemcpy(out, {buf.name}, {self.output_size_flat} * sizeof (float));\n")
+                for name, buf in self.buffers.items():
+                    if not buf.shadow:
+                        c_wrapper.append(f"\theap_free({name});\n")
                 c_wrapper.append("\treturn;\n")
         c_wrapper.append("}\n")
         return c_wrapper
+
+    def gen_extern_kernel_call(self, line):
+        '''Convert python code of the form extern_kernels.[kernel](...) to equivalent C call'''
+
+        kernel_name = line.split(".")[1].split("(")[0]
+        idx = line.find("(") + 1
+        if kernel_name == "addmm":
+            # extern_kernels.addmm(input, mat1, mat2, alpha=1.2, beta=0.7, out=out)
+            input, idx = self.consume_buffer(line, idx)
+            mat1, idx = self.consume_buffer(line, idx + len(", "))
+            mat2, idx = self.consume_buffer(line, idx + len(", "))
+            idx += len(", ")
+            kwargs_str = line[idx:].split(", ")
+            alpha = kwargs_str[0].split("=")[1]
+            beta = kwargs_str[1].split("=")[1]
+            out, _ = self.consume_buffer(kwargs_str[2].split("=")[1])
+            for m in [mat1, mat2, input, out]:
+                print(m.name, m.shape, m.stride)
+            print()
+            strides = ", ".join([f"{m.getStride(0)}, {m.getStride(1)}" for m in [mat1, mat2, input, out]])
+            return f"pr_info(\"==== %d/100 %d/100\", (int)(((float*){out.name})[0]), (int)(((float*){out.name})[1]));\n\taddmm({out.getShape(0)}, {out.getShape(1)}, {mat1.getShape(1)}, {mat1.name}, {mat2.name}, {input.name}, {out.name}, {strides}, {alpha}, {beta}, 0, 0, 0, 1, 1, 1);\npr_info(\"!!!! %d/100 %d/100\", (int)(((float*){out.name})[0]), (int)(((float*){out.name})[1]));\n"
+        else:
+            raise Exception(f"Kernel {kernel_name} not implemented yet!")
+
 
     def copy_build_files(self, dir='build'):
         os.system(f'cp build_template/* {dir}')

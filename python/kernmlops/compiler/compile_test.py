@@ -41,13 +41,12 @@ def query_kernel_module(inp, out_size):
     return torch.from_numpy(np.ctypeslib.as_array(out_arr))
 
 def test(model, inputs):
-    compiler = TorchKernelDeployer(model, inputs[0].shape)
-    compiler.build()
-    os.system("cd build; make; sudo insmod my_module.ko")
-
-    torch.set_printoptions(precision=5)  # number of decimal places
-
     try:
+        compiler = TorchKernelDeployer(model, inputs[0].shape)
+        compiler.build()
+        os.system("cd build; make; sudo insmod my_module.ko")
+
+        torch.set_printoptions(precision=5)  # number of decimal places
         for input in inputs:
             expected = model(input)
             output_size = 1
