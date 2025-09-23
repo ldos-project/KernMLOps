@@ -10,6 +10,10 @@ REAL_BUILD = $(realpath build)
 
 EXPORT_VARS := $(if ${BUILD}, BUILD=${REAL_BUILD}) KBUILD=${KBUILD}
 
+LATEST_STABLE_KERNEL := $(shell ls /boot | grep -E '^vmlinuz+-[0-9]+\.[0-9]+\.[0-9]+-[0-9]+-generic' | sort -V | tail -n 1)
+
+LATEST_STABLE_CONFIG := $(patsubst vmlinuz-%, config-%, $(LATEST_STABLE_CONFIG))
+
 SUDO ?= ""
 
 DIRS = ${KBUILD} ${MODULE} ${BUILD}
@@ -54,8 +58,9 @@ echo:
 ${DIRS}:
 	mkdir -p $@
 
-${KBUILD}/.config: config/config-6.12.0+ | ${KBUILD}
+${KBUILD}/.config: /boot/${LATEST_STABLE_CONFIG} config/config_edits.txt | ${KBUILD}
 	cp $< $@
+	../config/apply_config.sh ${KERNEL}/scripts/config config/config_edits.txt $@
 	+yes ""| ${MAKE} -C ${KERNEL} O=${KBUILD} olddefconfig
 
 ${KBUILD}/vmlinux: ${KBUILD}/.config
