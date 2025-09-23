@@ -31,12 +31,14 @@ int kprobe__do_madvise(struct pt_regs* ctx, struct mm_struct* mm, unsigned long 
 int kretprobe__do_madvise(struct pt_regs* ctx) {
   u32 pid = bpf_get_current_pid_tgid();
   madvise_output_t* data;
-  if (((int)PT_REGS_RC(ctx)) != 0)
+  if (((int)PT_REGS_RC(ctx)) != 0) {
     madvise_hash.delete(&pid);
-  return 0;
-  if ((data = madvise_hash.lookup(&pid)) == NULL)
+    return 0;
+  }
+  if ((data = madvise_hash.lookup(&pid)) == NULL) {
     madvise_hash.delete(&pid);
-  return 0;
+    return 0;
+  }
   madvise_output.perf_submit(ctx, data, sizeof(madvise_output_t));
   madvise_hash.delete(&pid);
   return 0;
@@ -62,9 +64,10 @@ int kretprobe__do_vmi_align_munmap(struct pt_regs* ctx) {
   u32 pid = bpf_get_current_pid_tgid();
   if ((data = munmap_hash.lookup(&pid)) == NULL)
     return 0;
-  if (((int)PT_REGS_RC(ctx)) != 0)
+  if (((int)PT_REGS_RC(ctx)) != 0) {
     munmap_hash.delete(&pid);
-  return 0;
+    return 0;
+  }
   madvise_output.perf_submit(ctx, data, sizeof(madvise_output_t));
   munmap_hash.delete(&pid);
   return 0;
