@@ -1,3 +1,4 @@
+import shutil
 import signal
 import subprocess
 import time
@@ -101,7 +102,7 @@ class RedisBenchmark(Benchmark):
         if not self.config.load_from_rdb:
             dump = Path("dump.rdb")
             if dump.exists():
-                dump.unlink()
+                shutil.move(dump, dump.with_suffix(".rdb.bak"))
 
         # start the redis server
         start_redis = [
