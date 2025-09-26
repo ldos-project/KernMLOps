@@ -4,53 +4,52 @@ from typing import Protocol, override
 
 import polars as pl
 from data_schema.schema import (
-  UPTIME_TIMESTAMP,
-  CollectionData,
-  CollectionGraph,
-  CollectionTable,
-  GraphEngine,
-  collection_id_column,
-  cumulative_pma_as_cdf,
-  cumulative_pma_as_pdf,
+    UPTIME_TIMESTAMP,
+    CollectionData,
+    CollectionGraph,
+    CollectionTable,
+    GraphEngine,
+    collection_id_column,
+    cumulative_pma_as_cdf,
+    cumulative_pma_as_pdf,
 )
 
 
 @dataclass(frozen=True)
 class CustomHWEventID:
-  name: str
-  umask: str | None
+    name: str
+    umask: str | None
 
 
 class PerfHWCacheConfig:
-  # From perf_hw_cache_id in uapi/linux/perf_event.h
-  class Cache(Enum):
-    PERF_COUNT_HW_CACHE_L1D = 0
-    PERF_COUNT_HW_CACHE_L1I = 1
-    PERF_COUNT_HW_CACHE_LL = 2
-    PERF_COUNT_HW_CACHE_DTLB = 3
-    PERF_COUNT_HW_CACHE_ITLB = 4
-    PERF_COUNT_HW_CACHE_BPU = 5
-    PERF_COUNT_HW_CACHE_NODE = 6
+    # From perf_hw_cache_id in uapi/linux/perf_event.h
+    class Cache(Enum):
+        PERF_COUNT_HW_CACHE_L1D = 0
+        PERF_COUNT_HW_CACHE_L1I = 1
+        PERF_COUNT_HW_CACHE_LL = 2
+        PERF_COUNT_HW_CACHE_DTLB = 3
+        PERF_COUNT_HW_CACHE_ITLB = 4
+        PERF_COUNT_HW_CACHE_BPU = 5
+        PERF_COUNT_HW_CACHE_NODE = 6
 
-  # From perf_hw_cache_op_id in uapi/linux/perf_event.h
-  class Op(Enum):
-    PERF_COUNT_HW_CACHE_OP_READ = 0
-    PERF_COUNT_HW_CACHE_OP_WRITE = 1
-    PERF_COUNT_HW_CACHE_OP_PREFETCH = 2
+    # From perf_hw_cache_op_id in uapi/linux/perf_event.h
+    class Op(Enum):
+        PERF_COUNT_HW_CACHE_OP_READ = 0
+        PERF_COUNT_HW_CACHE_OP_WRITE = 1
+        PERF_COUNT_HW_CACHE_OP_PREFETCH = 2
 
-  # From perf_hw_cache_op_result_id  in uapi/linux/perf_event.h
-  class Result(Enum):
-    PERF_COUNT_HW_CACHE_RESULT_ACCESS = 0
-    PERF_COUNT_HW_CACHE_RESULT_MISS = 1
+    # From perf_hw_cache_op_result_id  in uapi/linux/perf_event.h
+    class Result(Enum):
+        PERF_COUNT_HW_CACHE_RESULT_ACCESS = 0
+        PERF_COUNT_HW_CACHE_RESULT_MISS = 1
 
-  # From https://man7.org/linux/man-pages/man2/perf_event_open.2.html
-  @classmethod
-  def config(cls, cache: Cache, op: Op, result: Result) -> int:
-    return (cache.value) | (op.value << 8) | (result.value << 16)
+    # From https://man7.org/linux/man-pages/man2/perf_event_open.2.html
+    @classmethod
+    def config(cls, cache: Cache, op: Op, result: Result) -> int:
+        return (cache.value) | (op.value << 8) | (result.value << 16)
 
 
 class PerfCollectionTable(CollectionTable, Protocol):
-
     @classmethod
     def name(cls) -> str: ...
 
@@ -83,28 +82,38 @@ class PerfCollectionTable(CollectionTable, Protocol):
         return cls.from_df(
             table=table.with_columns(
                 pl.lit(collection_id).alias(collection_id_column())
-            ).rename({
-                "cumulative_count": cls.cumulative_column_name(),
-            })
+            ).rename(
+                {
+                    "cumulative_count": cls.cumulative_column_name(),
+                }
+            )
         )
 
     @classmethod
     def schema(cls) -> pl.Schema:
-        return pl.Schema({
-            "cpu": pl.Int64(),
-            "pid": pl.Int64(),
-            "tgid": pl.Int64(),
-            UPTIME_TIMESTAMP: pl.Int64(),
-            "collection_id": pl.String(),
-            cls.cumulative_column_name(): pl.Int64(),
-            "pmu_enabled_time_us": pl.Int64(),
-            "pmu_running_time_us": pl.Int64(),
-        })
+        return pl.Schema(
+            {
+                "cpu": pl.Int64(),
+                "pid": pl.Int64(),
+                "tgid": pl.Int64(),
+                UPTIME_TIMESTAMP: pl.Int64(),
+                "collection_id": pl.String(),
+                cls.cumulative_column_name(): pl.Int64(),
+                "pmu_enabled_time_us": pl.Int64(),
+                "pmu_running_time_us": pl.Int64(),
+            }
+        )
 
     def total_cumulative(self) -> int:
-        return self.filtered_table().group_by("cpu").max().sum().select(
-            self.cumulative_column_name()
-        ).to_series().to_list()[0]
+        return (
+            self.filtered_table()
+            .group_by("cpu")
+            .max()
+            .sum()
+            .select(self.cumulative_column_name())
+            .to_series()
+            .to_list()[0]
+        )
 
     # the raw data is a cumulative representation, this returns the deltas
     def as_pdf(self) -> pl.DataFrame:
@@ -124,7 +133,6 @@ class PerfCollectionTable(CollectionTable, Protocol):
 
 
 class RatePerfGraph(CollectionGraph, Protocol):
-
     graph_engine: GraphEngine
     _perf_table: PerfCollectionTable
 
@@ -163,7 +171,9 @@ class RatePerfGraph(CollectionGraph, Protocol):
 
     def plot(self) -> None:
         pdf_df = self._perf_table.as_pdf()
-        print(f"Total {self._perf_table.component_name()} {self._perf_table.measured_event_name()}: {self._perf_table.total_cumulative()}")
+        print(
+            f"Total {self._perf_table.component_name()} {self._perf_table.measured_event_name()}: {self._perf_table.total_cumulative()}"
+        )
 
         # group by and plot by cpu
         def plot_rate(pdf_df: pl.DataFrame) -> None:
@@ -172,12 +182,14 @@ class RatePerfGraph(CollectionGraph, Protocol):
                 self.graph_engine.plot(
                     self.collection_data.normalize_uptime_sec(pdf_df_group),
                     (
-                        pdf_df_group.select(self._perf_table.name()) / (
-                            pdf_df_group.select("span_duration_us") / 1_000.0
-                        )
-                    ).to_series().to_list(),
+                        pdf_df_group.select(self._perf_table.name())
+                        / (pdf_df_group.select("span_duration_us") / 1_000.0)
+                    )
+                    .to_series()
+                    .to_list(),
                     label=f"CPU {cpu[0]}",
                 )
+
         plot_rate(pdf_df)
 
     def plot_trends(self) -> None:
@@ -189,7 +201,6 @@ class RatePerfGraph(CollectionGraph, Protocol):
 
 
 class CumulativePerfGraph(CollectionGraph, Protocol):
-
     graph_engine: GraphEngine
     _perf_table: PerfCollectionTable
 
@@ -235,11 +246,12 @@ class CumulativePerfGraph(CollectionGraph, Protocol):
             for cpu, cdf_df_group in cdf_df_by_cpu:
                 self.graph_engine.plot(
                     self.collection_data.normalize_uptime_sec(cdf_df_group),
-                    (
-                        cdf_df_group.select(self._perf_table.name())
-                    ).to_series().to_list(),
+                    (cdf_df_group.select(self._perf_table.name()))
+                    .to_series()
+                    .to_list(),
                     label=f"CPU {cpu[0]}",
                 )
+
         plot_cumulative(cdf_df)
 
     def plot_trends(self) -> None:

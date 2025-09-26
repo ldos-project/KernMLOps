@@ -17,6 +17,7 @@ class CBMMEagerTracingRuntimeData:
     greatest_range_benefit: int
     decision: bool
 
+
 @dataclass(frozen=True)
 class CBMMPrezeroingTracingRuntimeData:
     load: int
@@ -30,30 +31,44 @@ class CBMMPrezeroingTracingRuntimeData:
 
 
 class CBMMBPFHook(BPFProgram):
-
     @classmethod
     def name(cls) -> str:
         return "cbmm"
 
     def __init__(self):
-        self.is_support_raw_tp = True #  BPF.support_raw_tracepoint()
+        self.is_support_raw_tp = True  #  BPF.support_raw_tracepoint()
         self.bpf_text = open(Path(__file__).parent / "bpf/cbmm.bpf.c", "r").read()
         self.cbmm_eager = list[CBMMEagerTracingRuntimeData]()
         self.cbmm_prezero = list[CBMMPrezeroingTracingRuntimeData]()
 
     def load(self, collection_id: str):
         self.collection_id = collection_id
-        self.bpf = BPF(text = self.bpf_text)
-        self.bpf.attach_kprobe(event=b"mm_estimate_changes", fn_name=b"kprobe__mm_estimate_changes")
+        self.bpf = BPF(text=self.bpf_text)
+        self.bpf.attach_kprobe(
+            event=b"mm_estimate_changes", fn_name=b"kprobe__mm_estimate_changes"
+        )
         self.bpf.attach_kretprobe(event=b"mm_decide", fn_name=b"kretprobe__mm_decide")
-        self.bpf.attach_kprobe(event=b"mm_estimate_eager_page_cost_benefit", fn_name=b"kprobe__mm_estimate_eager_page_cost_benefit")
-        self.bpf.attach_kretprobe(event=b"mm_estimate_eager_page_cost_benefit", fn_name=b"kretprobe__mm_estimate_eager_page_cost_benefit")
-        self.bpf.attach_kprobe(event=b"mm_estimate_daemon_cost", fn_name=b"kprobe__mm_estimate_daemon_cost")
+        self.bpf.attach_kprobe(
+            event=b"mm_estimate_eager_page_cost_benefit",
+            fn_name=b"kprobe__mm_estimate_eager_page_cost_benefit",
+        )
+        self.bpf.attach_kretprobe(
+            event=b"mm_estimate_eager_page_cost_benefit",
+            fn_name=b"kretprobe__mm_estimate_eager_page_cost_benefit",
+        )
+        self.bpf.attach_kprobe(
+            event=b"mm_estimate_daemon_cost", fn_name=b"kprobe__mm_estimate_daemon_cost"
+        )
         self.bpf.attach_kprobe(event=b"get_avenrun", fn_name=b"kprobe__get_avenrun")
-        self.bpf.attach_kretprobe(event=b"get_avenrun", fn_name=b"kretprobe__get_avenrun")
-        #self.bpf.attach_kprobe(event=b"mm_estimate_async_prezeroing_lock_contention_cost",
+        self.bpf.attach_kretprobe(
+            event=b"get_avenrun", fn_name=b"kretprobe__get_avenrun"
+        )
+        # self.bpf.attach_kprobe(event=b"mm_estimate_async_prezeroing_lock_contention_cost",
         #   fn_name=b"kprobe__mm_estimate_async_prezeroing_lock_contention_cost")
-        self.bpf.attach_kretprobe(event=b"mm_estimated_prezeroed_used", fn_name=b"kretprobe__mm_estimated_prezeroed_used")
+        self.bpf.attach_kretprobe(
+            event=b"mm_estimated_prezeroed_used",
+            fn_name=b"kretprobe__mm_estimated_prezeroed_used",
+        )
         self.bpf["cbmm_eager"].open_perf_buffer(self._cbmm_eager_eh, page_cnt=64)
         self.bpf["cbmm_prezero"].open_perf_buffer(self._cbmm_prezero_eh, page_cnt=64)
 
@@ -97,14 +112,13 @@ class CBMMBPFHook(BPFProgram):
     def _cbmm_prezero_eh(self, cpu, cbmm_async_prezeroing_inputs, size):
         event = self.bpf["cbmm_prezero"].event(cbmm_async_prezeroing_inputs)
         x = CBMMPrezeroingTracingRuntimeData(
-                load=event.load,
-                daemon_cost=event.daemon_cost,
-                prezero_n=event.prezero_n,
-                nfree=event.nfree,
-                critical_section_cost=event.critical_section_cost,
-                zeroing_per_page_cost=event.zeroing_per_page_cost,
-                recent_used=event.recent_used,
-                decision=bool(event.decision),
-            )
-        self.cbmm_prezero.append(x
+            load=event.load,
+            daemon_cost=event.daemon_cost,
+            prezero_n=event.prezero_n,
+            nfree=event.nfree,
+            critical_section_cost=event.critical_section_cost,
+            zeroing_per_page_cost=event.zeroing_per_page_cost,
+            recent_used=event.recent_used,
+            decision=bool(event.decision),
         )
+        self.cbmm_prezero.append(x)

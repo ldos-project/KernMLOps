@@ -27,7 +27,7 @@ class MachineSoftwareConfiguration:
     transparent_hugepages: str
     huge_pages: int
     huge_page_size_bytes: int
-    quanta_length: int # TODO(Patrick): add this
+    quanta_length: int  # TODO(Patrick): add this
     is_vm: bool = False
 
 
@@ -43,7 +43,7 @@ class MachineHardwareCacheConfiguration:
 
 @dataclass(frozen=True)
 class DiskPartitions:
-    device_id: int # (major << 20) | minor
+    device_id: int  # (major << 20) | minor
     name: str
     mount_point: str
     filesystem: str

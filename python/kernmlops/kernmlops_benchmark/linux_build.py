@@ -18,7 +18,6 @@ class LinuxBuildBenchmarkConfig(ConfigBase):
 
 
 class LinuxBuildBenchmark(Benchmark):
-
     @classmethod
     def name(cls) -> str:
         return "linux_build"
@@ -33,7 +32,12 @@ class LinuxBuildBenchmark(Benchmark):
         linux_config = cast(LinuxBuildBenchmarkConfig, getattr(config, cls.name()))
         return LinuxBuildBenchmark(generic_config=generic_config, config=linux_config)
 
-    def __init__(self, *, generic_config: GenericBenchmarkConfig, config: LinuxBuildBenchmarkConfig):
+    def __init__(
+        self,
+        *,
+        generic_config: GenericBenchmarkConfig,
+        config: LinuxBuildBenchmarkConfig,
+    ):
         self.generic_config = generic_config
         self.config = config
         self.benchmark_dir = self.generic_config.get_benchmark_dir() / self.name()
@@ -98,7 +102,15 @@ class LinuxBuildBenchmark(Benchmark):
             return None
 
         graph_engine.plot_event_as_sec(ts_us=file_data.get_first_occurrence_us("make"))
-        graph_engine.plot_event_as_sec(ts_us=file_data.get_last_occurrence_us("bzImage"))
-        graph_engine.plot_event_as_sec(ts_us=file_data.get_last_occurrence_us("vmlinux.bin"))
-        graph_engine.plot_event_as_sec(ts_us=file_data.get_last_occurrence_us("vmlinux.o"))
-        graph_engine.plot_event_as_sec(ts_us=file_data.get_last_occurrence_us("vmlinux"))
+        graph_engine.plot_event_as_sec(
+            ts_us=file_data.get_last_occurrence_us("bzImage")
+        )
+        graph_engine.plot_event_as_sec(
+            ts_us=file_data.get_last_occurrence_us("vmlinux.bin")
+        )
+        graph_engine.plot_event_as_sec(
+            ts_us=file_data.get_last_occurrence_us("vmlinux.o")
+        )
+        graph_engine.plot_event_as_sec(
+            ts_us=file_data.get_last_occurrence_us("vmlinux")
+        )

@@ -53,3 +53,10 @@ repos:
       - id: clang-format
         args: [-i]
         exclude: module/fstore/|module/test/e2e/.*\.c$|module/test/e2e/.*\.h$
+  - repo: local
+    hooks:
+      - id: make-format
+        name: make format
+        types_or: [ python, pyi ]
+        language: system
+        entry: make format

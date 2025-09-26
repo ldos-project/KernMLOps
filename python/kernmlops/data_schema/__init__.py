@@ -35,9 +35,13 @@ table_types: list[type[CollectionTable]] = [
     CollapseHugePageDataTable,
 ] + list(perf.perf_table_types.values())
 
-def demote(user_id: int | None = None, group_id: int | None = None) -> Callable[[], None]:
+
+def demote(
+    user_id: int | None = None, group_id: int | None = None
+) -> Callable[[], None]:
     def no_op():
         pass
+
     if user_id is None:
         # if the user id is unspecified and the account is not privileged do nothing
         if os.getuid() >= 1000:
@@ -52,7 +56,9 @@ def demote(user_id: int | None = None, group_id: int | None = None) -> Callable[
     def do_demote():
         os.setgid(group_id)
         os.setuid(user_id)
+
     return do_demote
+
 
 def get_user_group_ids() -> tuple[int, int]:
     curr = os.getuid()
@@ -66,7 +72,6 @@ def get_user_group_ids() -> tuple[int, int]:
     group_id = int(os.environ.get("GID", user_id))
 
     return (user_id, group_id)
-
 
 
 __all__ = [

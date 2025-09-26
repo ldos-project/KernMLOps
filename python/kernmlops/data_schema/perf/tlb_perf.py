@@ -15,7 +15,6 @@ from data_schema.schema import (
 
 
 class DTLBPerfTable(PerfCollectionTable):
-
     @classmethod
     def name(cls) -> str:
         return "dtlb_misses"
@@ -26,11 +25,11 @@ class DTLBPerfTable(PerfCollectionTable):
 
     @classmethod
     def ev_config(cls) -> int:
-      return PerfHWCacheConfig.config(
-        cache=PerfHWCacheConfig.Cache.PERF_COUNT_HW_CACHE_DTLB,
-        op=PerfHWCacheConfig.Op.PERF_COUNT_HW_CACHE_OP_READ,
-        result=PerfHWCacheConfig.Result.PERF_COUNT_HW_CACHE_RESULT_MISS,
-      )
+        return PerfHWCacheConfig.config(
+            cache=PerfHWCacheConfig.Cache.PERF_COUNT_HW_CACHE_DTLB,
+            op=PerfHWCacheConfig.Op.PERF_COUNT_HW_CACHE_OP_READ,
+            result=PerfHWCacheConfig.Result.PERF_COUNT_HW_CACHE_RESULT_MISS,
+        )
 
     @classmethod
     def hw_ids(cls) -> list[CustomHWEventID]:
@@ -75,10 +74,7 @@ class DTLBRateGraph(RatePerfGraph):
     def with_graph_engine(cls, graph_engine: GraphEngine) -> CollectionGraph | None:
         perf_table = graph_engine.collection_data.get(cls.perf_table_type())
         if perf_table is not None:
-            return DTLBRateGraph(
-                graph_engine=graph_engine,
-                perf_table=perf_table
-            )
+            return DTLBRateGraph(graph_engine=graph_engine, perf_table=perf_table)
         return None
 
 
@@ -95,15 +91,11 @@ class DTLBCumulativeGraph(CumulativePerfGraph):
     def with_graph_engine(cls, graph_engine: GraphEngine) -> CollectionGraph | None:
         perf_table = graph_engine.collection_data.get(cls.perf_table_type())
         if perf_table is not None:
-            return DTLBCumulativeGraph(
-                graph_engine=graph_engine,
-                perf_table=perf_table
-            )
+            return DTLBCumulativeGraph(graph_engine=graph_engine, perf_table=perf_table)
         return None
 
 
 class ITLBPerfTable(PerfCollectionTable):
-
     @classmethod
     def name(cls) -> str:
         return "itlb_misses"
@@ -114,11 +106,11 @@ class ITLBPerfTable(PerfCollectionTable):
 
     @classmethod
     def ev_config(cls) -> int:
-      return PerfHWCacheConfig.config(
-        cache=PerfHWCacheConfig.Cache.PERF_COUNT_HW_CACHE_ITLB,
-        op=PerfHWCacheConfig.Op.PERF_COUNT_HW_CACHE_OP_READ,
-        result=PerfHWCacheConfig.Result.PERF_COUNT_HW_CACHE_RESULT_MISS,
-      )
+        return PerfHWCacheConfig.config(
+            cache=PerfHWCacheConfig.Cache.PERF_COUNT_HW_CACHE_ITLB,
+            op=PerfHWCacheConfig.Op.PERF_COUNT_HW_CACHE_OP_READ,
+            result=PerfHWCacheConfig.Result.PERF_COUNT_HW_CACHE_RESULT_MISS,
+        )
 
     @classmethod
     def hw_ids(cls) -> list[CustomHWEventID]:
@@ -163,10 +155,7 @@ class ITLBRateGraph(RatePerfGraph):
     def with_graph_engine(cls, graph_engine: GraphEngine) -> CollectionGraph | None:
         perf_table = graph_engine.collection_data.get(cls.perf_table_type())
         if perf_table is not None:
-            return ITLBRateGraph(
-                graph_engine=graph_engine,
-                perf_table=perf_table
-            )
+            return ITLBRateGraph(graph_engine=graph_engine, perf_table=perf_table)
         return None
 
 
@@ -183,15 +172,11 @@ class ITLBCumulativeGraph(CumulativePerfGraph):
     def with_graph_engine(cls, graph_engine: GraphEngine) -> CollectionGraph | None:
         perf_table = graph_engine.collection_data.get(cls.perf_table_type())
         if perf_table is not None:
-            return ITLBCumulativeGraph(
-                graph_engine=graph_engine,
-                perf_table=perf_table
-            )
+            return ITLBCumulativeGraph(graph_engine=graph_engine, perf_table=perf_table)
         return None
 
 
 class TLBFlushPerfTable(PerfCollectionTable):
-
     @classmethod
     def name(cls) -> str:
         return "tlb_flushes"
@@ -250,10 +235,7 @@ class TLBFlushRateGraph(RatePerfGraph):
     def with_graph_engine(cls, graph_engine: GraphEngine) -> CollectionGraph | None:
         perf_table = graph_engine.collection_data.get(cls.perf_table_type())
         if perf_table is not None:
-            return TLBFlushRateGraph(
-                graph_engine=graph_engine,
-                perf_table=perf_table
-            )
+            return TLBFlushRateGraph(graph_engine=graph_engine, perf_table=perf_table)
         return None
 
 
@@ -271,14 +253,12 @@ class TLBFlushCumulativeGraph(CumulativePerfGraph):
         perf_table = graph_engine.collection_data.get(cls.perf_table_type())
         if perf_table is not None:
             return TLBFlushCumulativeGraph(
-                graph_engine=graph_engine,
-                perf_table=perf_table
+                graph_engine=graph_engine, perf_table=perf_table
             )
         return None
 
 
 class DTLBWalkDurationPerfTable(PerfCollectionTable):
-
     @classmethod
     def name(cls) -> str:
         return "dtlb_walk_duration"

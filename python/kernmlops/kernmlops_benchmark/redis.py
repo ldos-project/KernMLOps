@@ -44,13 +44,14 @@ class RedisConfig(ConfigBase):
     server_sleep: str | None = None
     explicit_purge: bool = False
 
+
 size_redis = [
     "redis-cli",
     "DBSIZE",
 ]
 
-class RedisBenchmark(Benchmark):
 
+class RedisBenchmark(Benchmark):
     @classmethod
     def name(cls) -> str:
         return "redis"
@@ -108,16 +109,22 @@ class RedisBenchmark(Benchmark):
         while i < 10 and ping_redis.returncode != 0:
             time.sleep(1)
             ping_redis = subprocess.run(["redis-cli", "ping"])
-            i+=1
+            i += 1
 
         if ping_redis.returncode != 0:
             raise BenchmarkError("Redis Failed To Start")
 
-        server_space : int | float | None = None if self.config.server_sleep is None else timeparse(self.config.server_sleep)
-        if server_space is not None :
+        server_space: int | float | None = (
+            None
+            if self.config.server_sleep is None
+            else timeparse(self.config.server_sleep)
+        )
+        if server_space is not None:
             time.sleep(server_space)
 
-        space : int | float | None = None if self.config.sleep is None else timeparse(self.config.sleep)
+        space: int | float | None = (
+            None if self.config.sleep is None else timeparse(self.config.sleep)
+        )
         process: subprocess.Popen | None = None
         for out_i in range(self.config.outer_repeat):
             for i in range(self.config.repeat):
@@ -125,7 +132,7 @@ class RedisBenchmark(Benchmark):
                     process.wait()
                     if self.config.explicit_purge:
                         self.purge_server()
-                    if space is not None :
+                    if space is not None:
                         time.sleep(space)
                     if process.returncode != 0:
                         self.process = process
@@ -134,29 +141,29 @@ class RedisBenchmark(Benchmark):
                 insert_start = out_i * self.config.record_count
                 # Load Server
                 load_redis = [
-                        "python",
-                        f"{self.benchmark_dir}/YCSB/bin/ycsb",
-                        "load",
-                        "redis",
-                        "-s",
-                        "-P",
-                        f"{self.benchmark_dir}/YCSB/workloads/workloada",
-                        "-p",
-                        "redis.host=127.0.0.1",
-                        "-p",
-                        "redis.port=6379",
-                        "-p",
-                        f"recordcount={self.config.record_count}",
-                        "-p",
-                        f"fieldcount={self.config.field_count}",
-                        "-p",
-                        f"fieldlength={self.config.field_length}",
-                        "-p",
-                        f"minfieldlength={self.config.min_field_length}",
-                        "-p",
-                        f"insertstart={insert_start}",
-                        "-p",
-                        f"fieldlengthdistribution={self.config.field_length_distribution}",
+                    "python",
+                    f"{self.benchmark_dir}/YCSB/bin/ycsb",
+                    "load",
+                    "redis",
+                    "-s",
+                    "-P",
+                    f"{self.benchmark_dir}/YCSB/workloads/workloada",
+                    "-p",
+                    "redis.host=127.0.0.1",
+                    "-p",
+                    "redis.port=6379",
+                    "-p",
+                    f"recordcount={self.config.record_count}",
+                    "-p",
+                    f"fieldcount={self.config.field_count}",
+                    "-p",
+                    f"fieldlength={self.config.field_length}",
+                    "-p",
+                    f"minfieldlength={self.config.min_field_length}",
+                    "-p",
+                    f"insertstart={insert_start}",
+                    "-p",
+                    f"fieldlengthdistribution={self.config.field_length_distribution}",
                 ]
 
                 if i == 0:
@@ -174,50 +181,50 @@ class RedisBenchmark(Benchmark):
                 record_count = (out_i + 1) * self.config.record_count
 
                 run_redis = [
-                        f"{self.benchmark_dir}/YCSB/bin/ycsb",
-                        "run",
-                        "redis",
-                        "-s",
-                        "-P",
-                        f"{self.benchmark_dir}/YCSB/workloads/workloada",
-                        "-p",
-                        f"operationcount={self.config.operation_count}",
-                        "-p",
-                        f"recordcount={record_count}",
-                        "-p",
-                        "workload=site.ycsb.workloads.CoreWorkload",
-                        "-p",
-                        f"readproportion={self.config.read_proportion}",
-                        "-p",
-                        f"updateproportion={self.config.update_proportion}",
-                        "-p",
-                        f"scanproportion={self.config.scan_proportion}",
-                        "-p",
-                        f"insertproportion={self.config.insert_proportion}",
-                        "-p",
-                        f"readmodifywriteproportion={self.config.rmw_proportion}",
-                        "-p",
-                        f"scanproportion={self.config.scan_proportion}",
-                        "-p",
-                        f"deleteproportion={self.config.delete_proportion}",
-                        "-p",
-                        "redis.host=127.0.0.1",
-                        "-p",
-                        "redis.port=6379",
-                        "-p",
-                        f"requestdistribution={self.config.request_distribution}",
-                        "-p",
-                        f"threadcount={self.config.thread_count}",
-                        "-p",
-                        f"target={self.config.target}",
-                        "-p",
-                        f"fieldcount={self.config.field_count}",
-                        "-p",
-                        f"fieldlength={self.config.field_length}",
-                        "-p",
-                        f"minfieldlength={self.config.min_field_length}",
-                        "-p",
-                        f"fieldlengthdistribution={self.config.field_length_distribution}",
+                    f"{self.benchmark_dir}/YCSB/bin/ycsb",
+                    "run",
+                    "redis",
+                    "-s",
+                    "-P",
+                    f"{self.benchmark_dir}/YCSB/workloads/workloada",
+                    "-p",
+                    f"operationcount={self.config.operation_count}",
+                    "-p",
+                    f"recordcount={record_count}",
+                    "-p",
+                    "workload=site.ycsb.workloads.CoreWorkload",
+                    "-p",
+                    f"readproportion={self.config.read_proportion}",
+                    "-p",
+                    f"updateproportion={self.config.update_proportion}",
+                    "-p",
+                    f"scanproportion={self.config.scan_proportion}",
+                    "-p",
+                    f"insertproportion={self.config.insert_proportion}",
+                    "-p",
+                    f"readmodifywriteproportion={self.config.rmw_proportion}",
+                    "-p",
+                    f"scanproportion={self.config.scan_proportion}",
+                    "-p",
+                    f"deleteproportion={self.config.delete_proportion}",
+                    "-p",
+                    "redis.host=127.0.0.1",
+                    "-p",
+                    "redis.port=6379",
+                    "-p",
+                    f"requestdistribution={self.config.request_distribution}",
+                    "-p",
+                    f"threadcount={self.config.thread_count}",
+                    "-p",
+                    f"target={self.config.target}",
+                    "-p",
+                    f"fieldcount={self.config.field_count}",
+                    "-p",
+                    f"fieldlength={self.config.field_length}",
+                    "-p",
+                    f"minfieldlength={self.config.min_field_length}",
+                    "-p",
+                    f"fieldlengthdistribution={self.config.field_length_distribution}",
                 ]
                 process = subprocess.Popen(run_redis, preexec_fn=demote())
         self.process = process

@@ -60,7 +60,11 @@ def cli_collect_data(
     config_overrides = yaml.safe_load(config_file.read_text())
     config = KernmlopsConfig().merge(config_overrides)
     collector_config: GenericCollectorConfig = config.collector_config
-    name = benchmark_name if benchmark_name else str(config.benchmark_config.generic.benchmark)
+    name = (
+        benchmark_name
+        if benchmark_name
+        else str(config.benchmark_config.generic.benchmark)
+    )
     benchmark = benchmarks[name].from_config(config.benchmark_config)
     collect.run_collect(
         collector_config=collector_config,
@@ -89,7 +93,9 @@ def cli_collect_data(
 )
 def cli_collect_dump(input_dir: Path, benchmark_name: str | None):
     """Debug tool to dump collected data."""
-    kernmlops_dfs = data_import.read_parquet_dir(input_dir, benchmark_name=benchmark_name)
+    kernmlops_dfs = data_import.read_parquet_dir(
+        input_dir, benchmark_name=benchmark_name
+    )
     for name, kernmlops_df in kernmlops_dfs.items():
         print(f"{name}: {kernmlops_df}")
 
@@ -136,14 +142,22 @@ def cli_collect_dump(input_dir: Path, benchmark_name: str | None):
     type=bool,
     help="Use matplotlib to graph data",
 )
-def cli_collect_graph(input_dir: Path, output_dir: Path | None, collection_id: str, no_trends: bool, use_matplot: bool):
+def cli_collect_graph(
+    input_dir: Path,
+    output_dir: Path | None,
+    collection_id: str,
+    no_trends: bool,
+    use_matplot: bool,
+):
     """Debug tool to graph collected data."""
     collection_data = data_schema.CollectionData.from_data(
         data_dir=input_dir,
         collection_id=collection_id,
         table_types=data_schema.table_types,
     )
-    collection_data.dump(output_dir=output_dir, no_trends=no_trends, use_matplot=use_matplot)
+    collection_data.dump(
+        output_dir=output_dir, no_trends=no_trends, use_matplot=use_matplot
+    )
 
 
 @cli_collect.command("perf-list")

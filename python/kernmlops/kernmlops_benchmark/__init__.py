@@ -27,7 +27,7 @@ benchmarks: Mapping[str, type[Benchmark]] = {
     MongoDbBenchmark.name(): MongoDbBenchmark,
     LinnosBenchmark.name(): LinnosBenchmark,
     RedisBenchmark.name(): RedisBenchmark,
-    MemcachedBenchmark.name(): MemcachedBenchmark
+    MemcachedBenchmark.name(): MemcachedBenchmark,
 }
 
 BenchmarkConfig = make_dataclass(
@@ -39,7 +39,8 @@ BenchmarkConfig = make_dataclass(
             GenericBenchmarkConfig,
             field(default=GenericBenchmarkConfig()),
         )
-    ] + [
+    ]
+    + [
         (name, ConfigBase, field(default=benchmark.default_config()))
         for name, benchmark in benchmarks.items()
     ],
