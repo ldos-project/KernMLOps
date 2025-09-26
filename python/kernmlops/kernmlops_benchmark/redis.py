@@ -2,6 +2,7 @@ import signal
 import subprocess
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import cast
 
 from data_schema import GraphEngine, demote
@@ -43,14 +44,16 @@ class RedisConfig(ConfigBase):
     sleep: str | None = None
     server_sleep: str | None = None
     explicit_purge: bool = False
+    load_from_rdb: bool = False
+
 
 size_redis = [
     "redis-cli",
     "DBSIZE",
 ]
 
-class RedisBenchmark(Benchmark):
 
+class RedisBenchmark(Benchmark):
     @classmethod
     def name(cls) -> str:
         return "redis"
@@ -94,6 +97,11 @@ class RedisBenchmark(Benchmark):
             raise BenchmarkRunningError()
         if self.server is not None:
             raise BenchmarkRunningError()
+
+        if not self.config.load_from_rdb:
+            dump = Path("dump.rdb")
+            if dump.exists():
+                dump.unlink()
 
         # start the redis server
         start_redis = [
