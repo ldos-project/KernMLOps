@@ -1,7 +1,6 @@
 import platform
 import subprocess
 import time
-import uuid
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from functools import lru_cache
@@ -13,7 +12,6 @@ import psutil
 
 @dataclass(frozen=True)
 class MachineIDInfo:
-    collection_id: str
     hostname: str
     start_time_sec: float
     uptime_sec: float
@@ -125,12 +123,10 @@ def machine_info() -> MachineInfo:
 
 def machine_id_info() -> MachineIDInfo:
     uname = platform.uname()
-    collection_id = str(uuid.uuid4())
     hostname = uname.node
     start_time_sec = psutil.boot_time()
     uptime_sec = time.time() - start_time_sec
     return MachineIDInfo(
-        collection_id=collection_id,
         hostname=hostname,
         start_time_sec=start_time_sec,
         uptime_sec=uptime_sec,
