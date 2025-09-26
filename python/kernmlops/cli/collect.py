@@ -100,7 +100,8 @@ def run_collect(
     *,
     collector_config: ConfigBase,
     benchmark: Benchmark,
-    verbose: bool
+    verbose: bool,
+    collection_prefix: str | None,
 ):
     if not benchmark.is_configured():
         raise BenchmarkNotConfiguredError(f"benchmark {benchmark.name()} is not configured")
@@ -111,6 +112,8 @@ def run_collect(
     system_info = data_collection.machine_info().to_polars()
     system_info = system_info.unnest(system_info.columns)
     collection_id = str(uuid.uuid4())
+    if collection_prefix:
+        collection_id = f"{collection_prefix}-{collection_id}"
     output_dir = (
         generic_config.get_output_dir() / "curated"
         if bpf_programs

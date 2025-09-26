@@ -51,10 +51,19 @@ def cli_collect():
     is_flag=True,
     type=bool,
 )
+@click.option(
+    "-p",
+    "--collection-prefix",
+    "collection_prefix",
+    default=None,
+    type=str,
+    help="Prefix to append to the collection id",
+)
 def cli_collect_data(
     config_file: Path,
     benchmark_name: str | None,
     verbose: bool,
+    collection_prefix: str | None,
 ):
     """Run data collection tooling."""
     config_overrides = yaml.safe_load(config_file.read_text())
@@ -66,6 +75,7 @@ def cli_collect_data(
         collector_config=collector_config,
         benchmark=benchmark,
         verbose=verbose,
+        collection_prefix=collection_prefix,
     )
 
 
