@@ -7,6 +7,7 @@ benchmark_config:
   redis:
     operation_count: 100
     record_count: 100
+    load_from_rdb: false
 collector_config:
   generic:
     poll_rate: 0.1
