@@ -1,6 +1,7 @@
 import os
 import signal
 import sys
+import uuid
 from datetime import datetime
 from pathlib import Path
 from queue import Queue
@@ -145,7 +146,7 @@ def run_collect(*, collector_config: ConfigBase, benchmark: Benchmark, verbose: 
     bpf_programs = generic_config.get_hooks()
     system_info = data_collection.machine_info().to_polars()
     system_info = system_info.unnest(system_info.columns)
-    collection_id = system_info["collection_id"][0]
+    collection_id = str(uuid.uuid4())
     output_dir = (
         generic_config.get_output_dir() / "curated"
         if bpf_programs
