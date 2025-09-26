@@ -17,12 +17,12 @@ KernmlopsConfig = make_dataclass(
             "collector_config",
             CollectorConfig,
             field(default=CollectorConfig()),
-        )
+        ),
     ],
     frozen=True,
 )
 
 
 __all__ = [
-  "KernmlopsConfig",
+    "KernmlopsConfig",
 ]

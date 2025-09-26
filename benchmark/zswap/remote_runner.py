@@ -10,9 +10,16 @@ import paramiko
 
 
 class RemoteExperimentRunner:
-    def __init__(self, remote_host: str, ssh_key: str, port: int, ssh_timeout: int = 300, exp_timeout: int = 5400):
+    def __init__(
+        self,
+        remote_host: str,
+        ssh_key: str,
+        port: int,
+        ssh_timeout: int = 300,
+        exp_timeout: int = 5400,
+    ):
         self.remote_host = remote_host
-        self.username, self.hostname = remote_host.split('@')
+        self.username, self.hostname = remote_host.split("@")
         self.ssh_key = os.path.expanduser(ssh_key)
         self.port = port
         self.ssh_timeout = ssh_timeout
@@ -25,7 +32,11 @@ class RemoteExperimentRunner:
     def connect(self):
         # Try to connect to remote host
         try:
-            if self.ssh and self.ssh.get_transport() and self.ssh.get_transport().is_active():
+            if (
+                self.ssh
+                and self.ssh.get_transport()
+                and self.ssh.get_transport().is_active()
+            ):
                 return True
 
             logging.debug(f"Connecting to {self.remote_host}...")
@@ -36,7 +47,7 @@ class RemoteExperimentRunner:
                 username=self.username,
                 port=self.port,
                 key_filename=self.ssh_key,
-                timeout=5
+                timeout=5,
             )
             return True
         except Exception as e:
@@ -54,8 +65,8 @@ class RemoteExperimentRunner:
         stdin, stdout, stderr = self.ssh.exec_command(command)
         exit_code = stdout.channel.recv_exit_status()
 
-        stdout_str = stdout.read().decode('utf-8')
-        stderr_str = stderr.read().decode('utf-8')
+        stdout_str = stdout.read().decode("utf-8")
+        stderr_str = stderr.read().decode("utf-8")
 
         if exit_code != 0 and not ignore_errors:
             logging.error(f"Command failed (exit code {exit_code}): {command}")
@@ -67,7 +78,11 @@ class RemoteExperimentRunner:
     def check_ssh(self):
         try:
             # Close any existing connection to ensure we're testing a fresh connection
-            if self.ssh and self.ssh.get_transport() and self.ssh.get_transport().is_active():
+            if (
+                self.ssh
+                and self.ssh.get_transport()
+                and self.ssh.get_transport().is_active()
+            ):
                 self.ssh.close()
                 self.ssh = None
 
@@ -79,7 +94,7 @@ class RemoteExperimentRunner:
                 username=self.username,
                 port=self.port,
                 key_filename=self.ssh_key,
-                timeout=5
+                timeout=5,
             )
 
             # Run a simple command to verify the connection works
@@ -135,7 +150,9 @@ class RemoteExperimentRunner:
 
             elapsed = time.time() - start_time
             if elapsed > self.ssh_timeout:
-                logging.error(f"Timeout waiting for SSH to return after {self.ssh_timeout} seconds")
+                logging.error(
+                    f"Timeout waiting for SSH to return after {self.ssh_timeout} seconds"
+                )
                 sys.exit(1)
 
             logging.debug(f"Still waiting for SSH... ({int(elapsed)} seconds elapsed)")
@@ -144,21 +161,24 @@ class RemoteExperimentRunner:
         logging.info("Waiting 30 more seconds for system to stabilize...")
         time.sleep(30)
 
-
     def setup_experiments(self):
         logging.info("Setting up experiment directories on remote host...")
         self.execute_command("rm -rf results && mkdir -p results")
 
         # Copy setup.sh script to remote host
         logging.info("Copying setup.sh to remote host...")
-        local_setup_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "setup.sh")
+        local_setup_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "setup.sh"
+        )
 
         if os.path.exists(local_setup_path):
             rsync_cmd = [
-                "rsync", "-avz",
-                "-e", f"ssh -i {self.ssh_key} -p {self.port}",
+                "rsync",
+                "-avz",
+                "-e",
+                f"ssh -i {self.ssh_key} -p {self.port}",
                 local_setup_path,
-                f"{self.remote_host}:"
+                f"{self.remote_host}:",
             ]
 
             if logging.getLogger().getEffectiveLevel() <= logging.DEBUG:
@@ -211,32 +231,40 @@ class RemoteExperimentRunner:
             # Check if experiment completed
             exit_code, stdout, stderr = self.execute_command(
                 "[ -f /tmp/experiment_complete ] && echo 'complete' || echo 'running'",
-                ignore_errors=True
+                ignore_errors=True,
             )
 
             if stdout.strip() == "complete":
                 logging.info("Experiment completed successfully")
                 # Clean up tmux session
-                self.execute_command("tmux kill-session -t experiment", ignore_errors=True)
+                self.execute_command(
+                    "tmux kill-session -t experiment", ignore_errors=True
+                )
                 return True
 
             # Check if experiment failed
             exit_code, stdout, stderr = self.execute_command(
                 "[ -f /tmp/experiment_error ] && echo 'error' || echo 'running'",
-                ignore_errors=True
+                ignore_errors=True,
             )
 
             if stdout.strip() == "error":
                 logging.error("Experiment failed!!!!!!!!!!!!!!!!")
                 # Clean up tmux session
-                self.execute_command("tmux kill-session -t experiment", ignore_errors=True)
+                self.execute_command(
+                    "tmux kill-session -t experiment", ignore_errors=True
+                )
                 return False
 
             # Check timeout
             elapsed = time.time() - start_time
             if elapsed > self.exp_timeout:
-                logging.error(f"Timeout waiting for experiment to complete after {self.exp_timeout} seconds")
-                self.execute_command("tmux kill-session -t experiment", ignore_errors=True)
+                logging.error(
+                    f"Timeout waiting for experiment to complete after {self.exp_timeout} seconds"
+                )
+                self.execute_command(
+                    "tmux kill-session -t experiment", ignore_errors=True
+                )
                 return False
 
             time.sleep(60)
@@ -255,8 +283,8 @@ class RemoteExperimentRunner:
 
         commands = [
             f"sudo cp -v {grub_config} {grub_config}.bak",
-            f'sudo sed -i \'s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="{cmdline_escaped}"/\' {grub_config}',
-            "sudo update-grub"
+            f"sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"{cmdline_escaped}\"/' {grub_config}",
+            "sudo update-grub",
         ]
 
         for cmd in commands:
@@ -267,12 +295,14 @@ class RemoteExperimentRunner:
         if swap_max is None:
             swap_max = memory_max
 
-        logging.info(f"Configuring cgroup memory with memory.max: {memory_max}, memory.swap.max: {swap_max}")
+        logging.info(
+            f"Configuring cgroup memory with memory.max: {memory_max}, memory.swap.max: {swap_max}"
+        )
 
         # First check if the cgroup exists
         _, stdout, _ = self.execute_command(
             "[ -d /sys/fs/cgroup/benchmark_group ] && echo 'exists' || echo 'not_exists'",
-            ignore_errors=True
+            ignore_errors=True,
         )
 
         # Create the cgroup if it doesn't exist
@@ -283,7 +313,7 @@ class RemoteExperimentRunner:
         # Set the memory limits
         commands = [
             f"sudo bash -c 'echo {memory_max} > /sys/fs/cgroup/benchmark_group/memory.max'",
-            f"sudo bash -c 'echo {swap_max} > /sys/fs/cgroup/benchmark_group/memory.swap.max'"
+            f"sudo bash -c 'echo {swap_max} > /sys/fs/cgroup/benchmark_group/memory.swap.max'",
         ]
 
         for cmd in commands:
@@ -322,16 +352,19 @@ class RemoteExperimentRunner:
 
         # Use rsync command line tool instead of paramiko for better performance
         rsync_cmd = [
-            "rsync", "-avz",
-            "-e", f"ssh -i {self.ssh_key} -p {self.port}",
+            "rsync",
+            "-avz",
+            "-e",
+            f"ssh -i {self.ssh_key} -p {self.port}",
             f"{self.remote_host}:{remote_path}",
-            f"{local_path}"
+            f"{local_path}",
         ]
 
         if logging.getLogger().getEffectiveLevel() <= logging.DEBUG:
             rsync_cmd.extend(["-h", "-P", "--stats", "--progress"])
 
         subprocess.run(rsync_cmd, check=True)
+
 
 def run_experiment_a(runner: RemoteExperimentRunner):
     print("Running Experiment A: Default configuration experiments")
@@ -377,7 +410,9 @@ def run_experiment_c(runner: RemoteExperimentRunner):
     # for threshold in [50, 60, 70, 80, 100]:
     for threshold in [60, 70, 80, 100]:
         print(f"Setting accept_threshold to {threshold}")
-        runner.configure_grub(f"zswap.enabled=1 zswap.accept_threshold_percent={threshold}")
+        runner.configure_grub(
+            f"zswap.enabled=1 zswap.accept_threshold_percent={threshold}"
+        )
         time.sleep(10)
 
         for j in range(1, 6):
@@ -386,7 +421,9 @@ def run_experiment_c(runner: RemoteExperimentRunner):
 
             # Set default cgroup memory limits
             runner.configure_cgroup_memory("4G", "6G")
-            if not runner.run_experiment(f"experiment_c_accept_threshold_{threshold}", j):
+            if not runner.run_experiment(
+                f"experiment_c_accept_threshold_{threshold}", j
+            ):
                 print("Experiment failed, exiting...")
                 sys.exit(1)
 
@@ -550,6 +587,7 @@ def run_experiment_j(runner: RemoteExperimentRunner):
 
         runner.sync_results("experiment_j_shrinker_off", i)
 
+
 def run_experiment_k(runner: RemoteExperimentRunner):
     """Run Experiment K: cgroup writeback OFF"""
     print("Running Experiment K: cgroup writeback OFF")
@@ -560,7 +598,9 @@ def run_experiment_k(runner: RemoteExperimentRunner):
         # Set default cgroup memory limits
         runner.configure_cgroup_memory("4G", "6G")
         # Turn off cgroup writeback
-        runner.execute_command("echo 0 | sudo tee /sys/fs/cgroup/benchmark_group/memory.zswap.writeback")
+        runner.execute_command(
+            "echo 0 | sudo tee /sys/fs/cgroup/benchmark_group/memory.zswap.writeback"
+        )
         if not runner.run_experiment("experiment_k_cgroup_writeback_off", i):
             print("Experiment failed, exiting...")
             sys.exit(1)
@@ -575,40 +615,56 @@ def run_experiment_k(runner: RemoteExperimentRunner):
 def main():
     # Command line args
     parser = argparse.ArgumentParser(
-        prog='remote_runner.py',
-        description='Run experiments on a remote host',
+        prog="remote_runner.py",
+        description="Run experiments on a remote host",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="%(prog)s user@example.com C          # Run experiment C on example.com"
+        epilog="%(prog)s user@example.com C          # Run experiment C on example.com",
     )
 
-    parser.add_argument(
-        "remote_host",
-        help="Remote host in format user@hostname"
-    )
+    parser.add_argument("remote_host", help="Remote host in format user@hostname")
 
     parser.add_argument(
         "experiment",
-        choices=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"],
-        help="Experiment to run (A, B, C, D, E, F, G, H, I, J, K)"
+        choices=[
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G",
+            "H",
+            "I",
+            "J",
+            "K",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+        ],
+        help="Experiment to run (A, B, C, D, E, F, G, H, I, J, K)",
     )
 
     parser.add_argument(
-        "-k", "--ssh-key",
+        "-k",
+        "--ssh-key",
         default="~/.ssh/cloudlab",
-        help="SSH private key path (default: ~/.ssh/cloudlab)"
+        help="SSH private key path (default: ~/.ssh/cloudlab)",
     )
 
     parser.add_argument(
-        "-p", "--port",
-        type=int,
-        default=22,
-        help="SSH port (default: 22)"
+        "-p", "--port", type=int, default=22, help="SSH port (default: 22)"
     )
 
     parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Enable verbose output"
+        "-v", "--verbose", action="store_true", help="Enable verbose output"
     )
 
     args = parser.parse_args()
@@ -617,15 +673,13 @@ def main():
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(
         level=log_level,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     # Create remote runner instance
     runner = RemoteExperimentRunner(
-        remote_host=args.remote_host,
-        ssh_key=args.ssh_key,
-        port=args.port
+        remote_host=args.remote_host, ssh_key=args.ssh_key, port=args.port
     )
     runner.setup_experiments()
     experiment = args.experiment.upper()
@@ -641,7 +695,7 @@ def main():
         "H": run_experiment_h,
         "I": run_experiment_i,
         "J": run_experiment_j,
-        "K": run_experiment_k
+        "K": run_experiment_k,
     }
 
     # Execute the selected experiment

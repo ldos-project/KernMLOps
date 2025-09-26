@@ -42,8 +42,10 @@ all_hooks: Final[Mapping[str, type[BPFProgram]]] = {
     ZswapRuntimeBPFHook.name(): ZswapRuntimeBPFHook,
 }
 
+
 def hook_names() -> list[str]:
     return list(all_hooks.keys())
+
 
 __all__ = [
     "all_hooks",

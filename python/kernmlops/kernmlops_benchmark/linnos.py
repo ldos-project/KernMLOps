@@ -6,9 +6,9 @@ from typing import Literal, cast
 from data_schema import GraphEngine, demote
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
 from kernmlops_benchmark.errors import (
-  BenchmarkNotInCollectionData,
-  BenchmarkNotRunningError,
-  BenchmarkRunningError,
+    BenchmarkNotInCollectionData,
+    BenchmarkNotRunningError,
+    BenchmarkRunningError,
 )
 from kernmlops_config import ConfigBase
 
@@ -23,15 +23,16 @@ def _default_traces() -> list[str]:
 
 @dataclass(frozen=True)
 class LinnosBenchmarkConfig(ConfigBase):
-  use_root: bool = False # required for accessing raw devices
-  shuffle_traces: bool = False
-  type: Literal["baseline", "failover"] = "baseline"
-  devices: list[str] = field(default_factory=_default_devices) # devices cannot contain '-'
-  traces: list[str] = field(default_factory=_default_traces)
+    use_root: bool = False  # required for accessing raw devices
+    shuffle_traces: bool = False
+    type: Literal["baseline", "failover"] = "baseline"
+    devices: list[str] = field(
+        default_factory=_default_devices
+    )  # devices cannot contain '-'
+    traces: list[str] = field(default_factory=_default_traces)
 
 
 class LinnosBenchmark(Benchmark):
-
     @classmethod
     def name(cls) -> str:
         return "linnos"
@@ -46,10 +47,14 @@ class LinnosBenchmark(Benchmark):
         linnos_config = cast(LinnosBenchmarkConfig, getattr(config, cls.name()))
         return LinnosBenchmark(generic_config=generic_config, config=linnos_config)
 
-    def __init__(self, *, generic_config: GenericBenchmarkConfig, config: LinnosBenchmarkConfig):
+    def __init__(
+        self, *, generic_config: GenericBenchmarkConfig, config: LinnosBenchmarkConfig
+    ):
         self.generic_config = generic_config
         self.config = config
-        self.benchmark_dir = self.generic_config.get_benchmark_dir() / self.name() / "src" / "linnos"
+        self.benchmark_dir = (
+            self.generic_config.get_benchmark_dir() / self.name() / "src" / "linnos"
+        )
         self.process: subprocess.Popen | None = None
 
     def is_configured(self) -> bool:

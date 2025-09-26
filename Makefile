@@ -90,6 +90,7 @@ lint:
 format:
 	ruff check --fix python
 	ruff check --select I --fix python
+	ruff format --exclude "*.ipynb"
 
 
 # Python commands

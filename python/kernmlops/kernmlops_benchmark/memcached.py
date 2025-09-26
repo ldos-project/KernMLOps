@@ -41,8 +41,8 @@ class MemcachedConfig(ConfigBase):
     sleep: str | None = None
     server_sleep: str | None = None
 
-class MemcachedBenchmark(Benchmark):
 
+class MemcachedBenchmark(Benchmark):
     @classmethod
     def name(cls) -> str:
         return "memcached"
@@ -55,9 +55,13 @@ class MemcachedBenchmark(Benchmark):
     def from_config(cls, config: ConfigBase) -> "Benchmark":
         generic_config = cast(GenericBenchmarkConfig, getattr(config, "generic"))
         memcached_config = cast(MemcachedConfig, getattr(config, cls.name()))
-        return MemcachedBenchmark(generic_config=generic_config, config=memcached_config)
+        return MemcachedBenchmark(
+            generic_config=generic_config, config=memcached_config
+        )
 
-    def __init__(self, *, generic_config: GenericBenchmarkConfig, config: MemcachedConfig):
+    def __init__(
+        self, *, generic_config: GenericBenchmarkConfig, config: MemcachedConfig
+    ):
         self.generic_config = generic_config
         self.config = config
         self.benchmark_dir = self.generic_config.get_benchmark_dir() / "ycsb"
@@ -102,7 +106,7 @@ class MemcachedBenchmark(Benchmark):
         while i < 10 and ping_memcached.returncode != 0:
             time.sleep(1)
             ping_memcached = subprocess.run(set_foo_memcached, shell=True)
-            i+=1
+            i += 1
 
         if ping_memcached.returncode != 0:
             raise BenchmarkError("Memcached Failed To Start")
@@ -123,17 +127,23 @@ class MemcachedBenchmark(Benchmark):
         if delete_foo.returncode != 0:
             raise BenchmarkError("Delete Single Memcached Record Failing")
 
-        server_space : int | float | None = None if self.config.server_sleep is None else timeparse(self.config.server_sleep)
-        if server_space is not None :
+        server_space: int | float | None = (
+            None
+            if self.config.server_sleep is None
+            else timeparse(self.config.server_sleep)
+        )
+        if server_space is not None:
             time.sleep(server_space)
 
-        space : int | float | None = None if self.config.sleep is None else timeparse(self.config.sleep)
+        space: int | float | None = (
+            None if self.config.sleep is None else timeparse(self.config.sleep)
+        )
 
         process: subprocess.Popen | None = None
         for i in range(self.config.repeat):
             if process is not None:
                 process.wait()
-                if space is not None :
+                if space is not None:
                     time.sleep(space)
                 if process.returncode != 0:
                     self.process = process
@@ -142,27 +152,27 @@ class MemcachedBenchmark(Benchmark):
             insert_start = i * self.config.record_count
             # Run loads
             load_memcached = [
-                    "python",
-                    f"{self.benchmark_dir}/YCSB/bin/ycsb",
-                    "load",
-                    "memcached",
-                    "-s",
-                    "-P",
-                    f"{self.benchmark_dir}/YCSB/workloads/workloada",
-                    "-p",
-                    "memcached.hosts=localhost:11211",
-                    "-p",
-                    f"recordcount={self.config.record_count}",
-                    "-p",
-                    f"fieldcount={self.config.field_count}",
-                    "-p",
-                    f"fieldlength={self.config.field_length}",
-                    "-p",
-                    f"minfieldlength={self.config.min_field_length}",
-                    "-p",
-                    f"insertstart={insert_start}",
-                    "-p",
-                    f"fieldlengthdistribution={self.config.field_length_distribution}",
+                "python",
+                f"{self.benchmark_dir}/YCSB/bin/ycsb",
+                "load",
+                "memcached",
+                "-s",
+                "-P",
+                f"{self.benchmark_dir}/YCSB/workloads/workloada",
+                "-p",
+                "memcached.hosts=localhost:11211",
+                "-p",
+                f"recordcount={self.config.record_count}",
+                "-p",
+                f"fieldcount={self.config.field_count}",
+                "-p",
+                f"fieldlength={self.config.field_length}",
+                "-p",
+                f"minfieldlength={self.config.min_field_length}",
+                "-p",
+                f"insertstart={insert_start}",
+                "-p",
+                f"fieldlengthdistribution={self.config.field_length_distribution}",
             ]
             load_memcached = subprocess.run(load_memcached, preexec_fn=demote())
 

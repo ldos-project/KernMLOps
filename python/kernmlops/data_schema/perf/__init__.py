@@ -19,7 +19,7 @@ perf_table_types: Mapping[str, type[PerfCollectionTable]] = {
 }
 
 __all__ = [
-  "perf_table_types",
-  "CustomHWEventID",
-  "PerfCollectionTable",
+    "perf_table_types",
+    "CustomHWEventID",
+    "PerfCollectionTable",
 ]

@@ -2,6 +2,6 @@ from data_collection.bpf_instrumentation.perf.perf_config import CustomHWConfigM
 from data_collection.bpf_instrumentation.perf.perf_hook import PerfBPFHook
 
 __all__ = [
-  "CustomHWConfigManager",
-  "PerfBPFHook",
+    "CustomHWConfigManager",
+    "PerfBPFHook",
 ]

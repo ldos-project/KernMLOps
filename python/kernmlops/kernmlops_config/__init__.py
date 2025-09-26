@@ -7,7 +7,6 @@ DEFAULT_CONFIG_FILE = Path("defaults.yaml")
 
 @dataclasses.dataclass(frozen=True)
 class ConfigBase:
-
     def merge(self, config_overrides: Mapping[str, Any]) -> "ConfigBase":
         def _merge(old: MutableMapping[str, Any], new: Mapping[str, Any]) -> None:
             for k, v in new.items():
