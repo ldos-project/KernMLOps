@@ -1,6 +1,7 @@
 import os
 import signal
 import sys
+import uuid
 from datetime import datetime
 from pathlib import Path
 from queue import Queue
@@ -109,8 +110,12 @@ def run_collect(
     bpf_programs = generic_config.get_hooks()
     system_info = data_collection.machine_info().to_polars()
     system_info = system_info.unnest(system_info.columns)
-    collection_id = system_info["collection_id"][0]
-    output_dir = generic_config.get_output_dir() / "curated" if bpf_programs else generic_config.get_output_dir() / "baseline"
+    collection_id = str(uuid.uuid4())
+    output_dir = (
+        generic_config.get_output_dir() / "curated"
+        if bpf_programs
+        else generic_config.get_output_dir() / "baseline"
+    )
     queue = Queue(maxsize=1)
     run_event = Event()
     run_event.set()
@@ -128,30 +133,50 @@ def run_collect(
     signal.signal(signal.SIGUSR1, signal_handler_factory(run_event))
 
     # Create stdin killer daemon
-    read_thread = Thread(target = wait_for_END, args = (run_event, sys.stdin))
+    read_thread = Thread(target=wait_for_END, args=(run_event, sys.stdin))
     read_thread.daemon = True
     read_thread.start()
 
     # Create polling thread
-    poll_thread = Thread(target = poll_instrumentation, args = (benchmark, bpf_programs, queue, run_event, generic_config.poll_rate))
+    poll_thread = Thread(
+        target=poll_instrumentation,
+        args=(benchmark, bpf_programs, queue, run_event, generic_config.poll_rate),
+    )
     poll_thread.start()
 
     # Create output thread
-    output_interval_parse : int | float | None = timeparse(generic_config.output_interval)
+    output_interval_parse: int | float | None = timeparse(
+        generic_config.output_interval
+    )
     output_interval = 60
     if output_interval_parse is not None:
         output_interval = output_interval_parse
     ended = False
     output_lock = Lock()
     (user_id, group_id) = get_user_group_ids()
-    Path(output_dir/benchmark.name()/collection_id).mkdir(parents=True, exist_ok=True)
+    Path(output_dir / benchmark.name() / collection_id).mkdir(
+        parents=True, exist_ok=True
+    )
     os.chown(generic_config.get_output_dir(), user_id, group_id)
     os.chown(output_dir, user_id, group_id)
-    os.chown(Path(output_dir/benchmark.name()), user_id, group_id)
-    os.chown(Path(output_dir/benchmark.name()/collection_id), user_id, group_id)
-    output_thread = Thread(target = output_data_thread, args = (collection_id, bpf_programs, benchmark.name(),
-                                                                run_event, generic_config.output_dfs, output_dir,
-                                                                output_lock, ended, output_interval, user_id, group_id))
+    os.chown(Path(output_dir / benchmark.name()), user_id, group_id)
+    os.chown(Path(output_dir / benchmark.name() / collection_id), user_id, group_id)
+    output_thread = Thread(
+        target=output_data_thread,
+        args=(
+            collection_id,
+            bpf_programs,
+            benchmark.name(),
+            run_event,
+            generic_config.output_dfs,
+            output_dir,
+            output_lock,
+            ended,
+            output_interval,
+            user_id,
+            group_id,
+        ),
+    )
     output_thread.daemon = True
     output_thread.start()
 
