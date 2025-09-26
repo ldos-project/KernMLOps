@@ -96,7 +96,10 @@ format:
 # Python commands
 collect:
 	@${MAKE} \
-	-e CONTAINER_CMD="bash -lc 'KERNMLOPS_CONFIG_FILE=${KERNMLOPS_CONFIG_FILE} make collect-data'" \
+	-e CONTAINER_CMD="bash -lc '\
+		KERNMLOPS_CONFIG_FILE=${KERNMLOPS_CONFIG_FILE}\
+		COLLECTION_PREFIX=\"$(COLLECTION_PREFIX)\"\
+		make collect-data'" \
 	docker
 
 collect-raw:
@@ -105,8 +108,8 @@ collect-raw:
 	--benchmark faux
 
 collect-data:
-	@python python/kernmlops collect -v \
-	-c ${KERNMLOPS_CONFIG_FILE}
+	python python/kernmlops collect -v \
+	-c ${KERNMLOPS_CONFIG_FILE} -p "$(COLLECTION_PREFIX)"
 
 benchmark-gap:
 	@python python/kernmlops collect -v \
