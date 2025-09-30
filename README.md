@@ -80,6 +80,9 @@ cp config/start_overrides.yaml overrides.yaml
 # Capture the simple overrides (Run Outside the Container) -- Expected Time: ~1 mins
 make collect
 
+# If you'd like to label the results of your runs, set a custom prefix with
+# COLLECTION_PREFIX=<my label> make collect
+
 ```
 
 ## Capturing Data -> Processing in Python
