@@ -305,6 +305,7 @@ This gives the most robust handling for multiple systems,
 see [here](https://github.com/iovisor/bcc/issues/2623#issuecomment-560214481).
 
 ### redis.clients.jedis.exceptions.JedisDataException
+<!-- TODO: move this section to a benchmark-specific doc --!>
 
 If you see the above error, you probably have stray `rdb` files that are causing
 `redis` to start slowly, and maybe influencing your runs in other unexpected
