@@ -48,7 +48,6 @@ class RedisConfig(ConfigBase):
     load_from_rdb: bool = False
 
 
-
 size_redis = [
     "redis-cli",
     "DBSIZE",
