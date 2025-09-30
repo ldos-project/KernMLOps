@@ -1,1 +1,1 @@
--d CONFIG_PC104
+-d PC104

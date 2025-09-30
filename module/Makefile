@@ -12,7 +12,7 @@ EXPORT_VARS := $(if ${BUILD}, BUILD=${REAL_BUILD}) KBUILD=${KBUILD}
 
 LATEST_STABLE_KERNEL := $(shell ls /boot | grep -E '^vmlinuz+-[0-9]+\.[0-9]+\.[0-9]+-[0-9]+-generic' | sort -V | tail -n 1)
 
-LATEST_STABLE_CONFIG := $(patsubst vmlinuz-%, config-%, $(LATEST_STABLE_CONFIG))
+LATEST_STABLE_CONFIG := $(patsubst vmlinuz-%,config-%, $(LATEST_STABLE_KERNEL))
 
 SUDO ?= ""
 
@@ -52,6 +52,8 @@ echo:
 	@echo BUILD ${BUILD}
 	@echo REAL_BUILD ${REAL_BUILD}
 	@echo EXPORT_VARS ${EXPORT_VARS}
+	@echo LATEST_STABLE_CONFIG ${LATEST_STABLE_CONFIG}
+	@echo LATEST_STABLE_KERNEL ${LATEST_STABLE_KERNEL}
 	@echo test:
 	@${MAKE} ${EXPORT_VARS} -C test echo
 
@@ -60,7 +62,7 @@ ${DIRS}:
 
 ${KBUILD}/.config: /boot/${LATEST_STABLE_CONFIG} config/config_edits.txt | ${KBUILD}
 	cp $< $@
-	../config/apply_config.sh ${KERNEL}/scripts/config config/config_edits.txt $@
+	./config/apply_config.sh ${KERNEL}/scripts/config config/config_edits.txt $@
 	+yes ""| ${MAKE} -C ${KERNEL} O=${KBUILD} olddefconfig
 
 ${KBUILD}/vmlinux: ${KBUILD}/.config
