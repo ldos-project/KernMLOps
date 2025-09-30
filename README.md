@@ -303,3 +303,12 @@ quanta_runtimes.perf_submit(ctx, &data, sizeof(data));
 
 This gives the most robust handling for multiple systems,
 see [here](https://github.com/iovisor/bcc/issues/2623#issuecomment-560214481).
+
+### redis.clients.jedis.exceptions.JedisDataException
+<!-- TODO: move this section to a benchmark-specific doc --!>
+
+If you see the above error, you probably have stray `rdb` files that are causing
+`redis` to start slowly, and maybe influencing your runs in other unexpected
+ways. Ensure that `load_from_rdb` is not set to true in the `redis` section of
+your benchmark config or always ensure that `dump.rdb` is not present before
+starting a collection!

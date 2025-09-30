@@ -1,7 +1,9 @@
+import shutil
 import signal
 import subprocess
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import cast
 
 from data_schema import GraphEngine, demote
@@ -43,6 +45,7 @@ class RedisConfig(ConfigBase):
     sleep: str | None = None
     server_sleep: str | None = None
     explicit_purge: bool = False
+    load_from_rdb: bool = False
 
 
 size_redis = [
@@ -95,6 +98,11 @@ class RedisBenchmark(Benchmark):
             raise BenchmarkRunningError()
         if self.server is not None:
             raise BenchmarkRunningError()
+
+        if not self.config.load_from_rdb:
+            dump = Path("dump.rdb")
+            if dump.exists():
+                shutil.move(dump, dump.with_suffix(".rdb.bak"))
 
         # start the redis server
         start_redis = [
