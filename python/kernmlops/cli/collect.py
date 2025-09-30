@@ -132,6 +132,7 @@ def output_data_thread(
         num += 1
         sleep(output_interval)
 
+
 def run_collect(
     *,
     collector_config: ConfigBase,
