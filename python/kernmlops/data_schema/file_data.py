@@ -7,23 +7,24 @@ from data_schema.schema import (
 
 
 class FileDataTable(CollectionTable):
-
     @classmethod
     def name(cls) -> str:
         return "file_data"
 
     @classmethod
     def schema(cls) -> pl.Schema:
-        return pl.Schema({
-            "cpu": pl.Int64(),
-            "pid": pl.Int64(),
-            "tgid": pl.Int64(),
-            UPTIME_TIMESTAMP: pl.Int64(),
-            "file_inode": pl.Int64(),
-            "file_size_bytes": pl.Int64(),
-            "file_name": pl.String(),
-            "collection_id": pl.String(),
-        })
+        return pl.Schema(
+            {
+                "cpu": pl.Int64(),
+                "pid": pl.Int64(),
+                "tgid": pl.Int64(),
+                UPTIME_TIMESTAMP: pl.Int64(),
+                "file_inode": pl.Int64(),
+                "file_size_bytes": pl.Int64(),
+                "file_name": pl.String(),
+                "collection_id": pl.String(),
+            }
+        )
 
     @classmethod
     def from_df(cls, table: pl.DataFrame) -> "FileDataTable":
@@ -53,18 +54,22 @@ class FileDataTable(CollectionTable):
         file_data = self.get_file_data(filename)
         if len(file_data) == 0:
             return None
-        return file_data.sort(
-            UPTIME_TIMESTAMP, descending=False
-        ).head(n=1).select(
-            UPTIME_TIMESTAMP
-        ).to_series().to_list()[0]
+        return (
+            file_data.sort(UPTIME_TIMESTAMP, descending=False)
+            .head(n=1)
+            .select(UPTIME_TIMESTAMP)
+            .to_series()
+            .to_list()[0]
+        )
 
     def get_last_occurrence_us(self, filename: str) -> int | None:
         file_data = self.get_file_data(filename)
         if len(file_data) == 0:
             return None
-        return file_data.sort(
-            UPTIME_TIMESTAMP, descending=True
-        ).head(n=1).select(
-            UPTIME_TIMESTAMP
-        ).to_series().to_list()[0]
+        return (
+            file_data.sort(UPTIME_TIMESTAMP, descending=True)
+            .head(n=1)
+            .select(UPTIME_TIMESTAMP)
+            .to_series()
+            .to_list()[0]
+        )

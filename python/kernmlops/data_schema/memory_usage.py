@@ -8,41 +8,36 @@ from data_schema.schema import (
 
 
 class MemoryUsageTable(CollectionTable):
-
     @classmethod
     def name(cls) -> str:
         return "memory_usage"
 
     @classmethod
     def schema(cls) -> pl.Schema:
-        return pl.Schema({
-            UPTIME_TIMESTAMP: pl.Int64(),
-
-            "mem_total_bytes": pl.Int64(),
-            "mem_free_bytes": pl.Int64(),
-            "mem_available_bytes": pl.Int64(),
-            "buffers_bytes": pl.Int64(),
-            "cached_bytes": pl.Int64(),
-
-            "swap_total_bytes": pl.Int64(),
-            "swap_free_bytes": pl.Int64(),
-
-            # data waiting to be written back to disk
-            "dirty_bytes": pl.Int64(),
-            "writeback_bytes": pl.Int64(),
-
-            "anon_pages_total_bytes": pl.Int64(),
-            "anon_hugepages_total_bytes": pl.Int64(),
-            "mapped_total_bytes": pl.Int64(),
-            "shmem_total_bytes": pl.Int64(),
-
-            "hugepages_total": pl.Int64(),
-            "hugepages_free": pl.Int64(),
-            "hugepages_reserved": pl.Int64(),
-            "hugepage_size_bytes": pl.Int64(),
-
-            "hardware_corrupted_bytes": pl.Int64(),
-        })
+        return pl.Schema(
+            {
+                UPTIME_TIMESTAMP: pl.Int64(),
+                "mem_total_bytes": pl.Int64(),
+                "mem_free_bytes": pl.Int64(),
+                "mem_available_bytes": pl.Int64(),
+                "buffers_bytes": pl.Int64(),
+                "cached_bytes": pl.Int64(),
+                "swap_total_bytes": pl.Int64(),
+                "swap_free_bytes": pl.Int64(),
+                # data waiting to be written back to disk
+                "dirty_bytes": pl.Int64(),
+                "writeback_bytes": pl.Int64(),
+                "anon_pages_total_bytes": pl.Int64(),
+                "anon_hugepages_total_bytes": pl.Int64(),
+                "mapped_total_bytes": pl.Int64(),
+                "shmem_total_bytes": pl.Int64(),
+                "hugepages_total": pl.Int64(),
+                "hugepages_free": pl.Int64(),
+                "hugepages_reserved": pl.Int64(),
+                "hugepage_size_bytes": pl.Int64(),
+                "hardware_corrupted_bytes": pl.Int64(),
+            }
+        )
 
     @classmethod
     def from_df(cls, table: pl.DataFrame) -> "MemoryUsageTable":
@@ -63,14 +58,12 @@ class MemoryUsageTable(CollectionTable):
 
 
 class MemoryUsageGraph(CollectionGraph):
-
     @classmethod
     def with_graph_engine(cls, graph_engine: GraphEngine) -> CollectionGraph | None:
         memory_usage_table = graph_engine.collection_data.get(MemoryUsageTable)
         if memory_usage_table is not None:
             return MemoryUsageGraph(
-                graph_engine=graph_engine,
-                memory_usage_table=memory_usage_table
+                graph_engine=graph_engine, memory_usage_table=memory_usage_table
             )
         return None
 
@@ -115,7 +108,7 @@ class MemoryUsageGraph(CollectionGraph):
         for plot_line in self.plot_lines:
             self.graph_engine.plot(
                 self.collection_data.normalize_uptime_sec(memory_df),
-                (memory_df.select(plot_line) / (1_024.0)**3).to_series().to_list(),
+                (memory_df.select(plot_line) / (1_024.0) ** 3).to_series().to_list(),
                 label=plot_line.replace("bytes", "gb"),
                 y_axis=self.y_axis(),
             )

@@ -15,17 +15,17 @@ def collection_id_column() -> str:
     return "collection_id"
 
 
-def _type_map(table_types: list[type["CollectionTable"]]) -> Mapping[str, type["CollectionTable"]]:
-    return {
-        table_type.name(): table_type
-        for table_type in table_types
-    }
+def _type_map(
+    table_types: list[type["CollectionTable"]],
+) -> Mapping[str, type["CollectionTable"]]:
+    return {table_type.name(): table_type for table_type in table_types}
 
 
 class CollectionGraph(Protocol):
-
     @classmethod
-    def with_graph_engine(cls, graph_engine: "GraphEngine") -> "CollectionGraph | None": ...
+    def with_graph_engine(
+        cls, graph_engine: "GraphEngine"
+    ) -> "CollectionGraph | None": ...
 
     @classmethod
     def base_name(cls) -> str: ...
@@ -42,7 +42,6 @@ class CollectionGraph(Protocol):
 
 
 class CollectionTable(Protocol):
-
     @classmethod
     def name(cls) -> str: ...
 
@@ -55,7 +54,9 @@ class CollectionTable(Protocol):
     @classmethod
     def from_df_id(cls, table: pl.DataFrame, collection_id: str) -> "CollectionTable":
         return cls.from_df(
-            table=table.with_columns(pl.lit(collection_id).alias(collection_id_column()))
+            table=table.with_columns(
+                pl.lit(collection_id).alias(collection_id_column())
+            )
         )
 
     @property
@@ -74,7 +75,6 @@ class CollectionsTable[T: CollectionTable]:
 
 
 class SystemInfoTable(CollectionTable):
-
     @classmethod
     def name(cls) -> str:
         return "system_info"
@@ -104,43 +104,30 @@ class SystemInfoTable(CollectionTable):
 
     @property
     def id(self) -> str:
-        return self.table[
-            collection_id_column()
-        ][0]
+        return self.table[collection_id_column()][0]
 
     @property
     def pid(self) -> int:
-        return self.table[
-            "collection_pid"
-        ][0]
+        return self.table["collection_pid"][0]
 
     @property
     def benchmark(self) -> str:
-        return self.table[
-            "benchmark_name"
-        ][0]
+        return self.table["benchmark_name"][0]
 
     @property
     def start_uptime_sec(self) -> int:
-        return self.table[
-            "uptime_sec"
-        ][0]
+        return self.table["uptime_sec"][0]
 
     @property
     def benchmark_time_sec(self) -> int:
-        return self.table[
-            "collection_time_sec"
-        ][0]
+        return self.table["collection_time_sec"][0]
 
     @property
     def cpus(self) -> int:
-        return self.table[
-            "cores"
-        ][0]
+        return self.table["cores"][0]
 
 
 class CollectionData:
-
     def __init__(self, collection_tables: Mapping[str, CollectionTable]):
         self._tables = collection_tables
         system_info = self.get(SystemInfoTable)
@@ -187,7 +174,13 @@ class CollectionData:
             return cast(T, table)
         return None
 
-    def graph(self, out_dir: Path | None = None, *, use_matplot: bool = False, no_trends: bool = False) -> None:
+    def graph(
+        self,
+        out_dir: Path | None = None,
+        *,
+        use_matplot: bool = False,
+        no_trends: bool = False,
+    ) -> None:
         # TODO(Patrick) use verbosity for filtering graphs
         graph_engine = GraphEngine(collection_data=self, use_matplot=use_matplot)
         for _, collection_table in self.tables.items():
@@ -203,7 +196,9 @@ class CollectionData:
             print("Hit 'Enter' to continue...")
             input()
 
-    def dump(self, *, output_dir: Path | None, use_matplot: bool, no_trends: bool = False):
+    def dump(
+        self, *, output_dir: Path | None, use_matplot: bool, no_trends: bool = False
+    ):
         self.graph(out_dir=output_dir, no_trends=no_trends, use_matplot=use_matplot)
         for name, table in self.tables.items():
             with pl.Config(tbl_cols=-1):
@@ -211,18 +206,19 @@ class CollectionData:
 
     def normalize_uptime_sec(self, table_df: pl.DataFrame) -> list[float]:
         return (
-            (table_df.select(UPTIME_TIMESTAMP) / 1_000_000.0) - self.start_uptime_sec
-        ).to_series().to_list()
+            ((table_df.select(UPTIME_TIMESTAMP) / 1_000_000.0) - self.start_uptime_sec)
+            .to_series()
+            .to_list()
+        )
 
     @classmethod
     def from_tables(
         cls,
         tables: list[CollectionTable],
     ) -> "CollectionData":
-        return CollectionData({
-            collection_table.name(): collection_table
-            for collection_table in tables
-        })
+        return CollectionData(
+            {collection_table.name(): collection_table for collection_table in tables}
+        )
 
     @classmethod
     def from_dfs(
@@ -246,29 +242,27 @@ class CollectionData:
         collection_tables = dict[str, CollectionTable]()
         type_map = _type_map(table_types)
         dataframe_dirs = [
-            x for x in data_dir.iterdir()
-            if x.is_dir() and x.name in type_map
+            x for x in data_dir.iterdir() if x.is_dir() and x.name in type_map
         ]
         for dataframe_dir in dataframe_dirs:
             dfs = [
-                pl.read_parquet(x) for x in dataframe_dir.iterdir()
-                if x.is_file() and x.suffix == ".parquet" and x.name.startswith(collection_id)
+                pl.read_parquet(x)
+                for x in dataframe_dir.iterdir()
+                if x.is_file()
+                and x.suffix == ".parquet"
+                and x.name.startswith(collection_id)
             ]
             # Throw explainable error
             assert len(dfs) <= 1
             if dfs:
-                collection_tables[dataframe_dir.name] = type_map[dataframe_dir.name].from_df(dfs[0])
+                collection_tables[dataframe_dir.name] = type_map[
+                    dataframe_dir.name
+                ].from_df(dfs[0])
         return CollectionData(collection_tables)
 
 
 class GraphEngine:
-
-    def __init__(
-        self,
-        *,
-        collection_data: CollectionData,
-        use_matplot: bool = False
-    ):
+    def __init__(self, *, collection_data: CollectionData, use_matplot: bool = False):
         self.collection_data = collection_data
         self._plt = pyplot if use_matplot else plotext
         self._y_axis: str | None = None
@@ -277,12 +271,7 @@ class GraphEngine:
         self._ax2 = None
         self._cleared = False
 
-    def graph(
-        self,
-        graph: CollectionGraph,
-        *,
-        no_trends: bool = False
-    ) -> None:
+    def graph(self, graph: CollectionGraph, *, no_trends: bool = False) -> None:
         from kernmlops_benchmark import benchmarks
 
         self.clear()
@@ -321,7 +310,7 @@ class GraphEngine:
             manager = pyplot.get_current_fig_manager()
             if manager is not None:
                 manager.full_screen_toggle()
-            #self._figure.tight_layout()
+            # self._figure.tight_layout()
             self._figure.show()
         else:
             self._plt.show()
@@ -359,7 +348,7 @@ class GraphEngine:
         if self._plt is plotext:
             plotext.vline(ts_sec)
         else:
-            pyplot.axvline(ts_sec) # label="value"
+            pyplot.axvline(ts_sec)  # label="value"
 
     def savefig(self, graph: CollectionGraph, out_dir: Path) -> None:
         if self._cleared:
@@ -377,7 +366,7 @@ class GraphEngine:
             self._figure.savefig(
                 str(graph_dir / f"{graph.base_name().replace(' ', '_').lower()}.png"),
                 dpi=100,
-                bbox_inches='tight',
+                bbox_inches="tight",
             )
 
     def clear(self) -> None:
@@ -389,75 +378,114 @@ class GraphEngine:
         self._cleared = True
 
 
-def cumulative_pma_as_pdf(table: pl.DataFrame, *, counter_column: str, counter_column_rename: str) -> pl.DataFrame:
+def cumulative_pma_as_pdf(
+    table: pl.DataFrame, *, counter_column: str, counter_column_rename: str
+) -> pl.DataFrame:
     cumulative_columns = [
         counter_column,
         "pmu_enabled_time_us",
         "pmu_running_time_us",
     ]
     final_select = [
-        column
-        for column in table.columns
-        if column not in cumulative_columns
+        column for column in table.columns if column not in cumulative_columns
     ]
     final_select.extend([counter_column_rename, "span_duration_us"])
     by_cpu_pdf_dfs = [
-        by_cpu_df.lazy().sort(UPTIME_TIMESTAMP).with_columns(
-            pl.col(counter_column).shift(1, fill_value=0).alias(f"{counter_column}_shifted"),
-            pl.col("pmu_running_time_us").shift(1, fill_value=0).alias("pmu_running_time_us_shifted"),
-            pl.col("pmu_enabled_time_us").shift(1, fill_value=0).alias("pmu_enabled_time_us_shifted"),
-        ).with_columns(
-            (pl.col(counter_column) - pl.col(f"{counter_column}_shifted")).alias(f"{counter_column_rename}_raw"),
-            (pl.col("pmu_running_time_us") - pl.col("pmu_running_time_us_shifted")).alias("span_duration_us"),
-        ).with_columns(
+        by_cpu_df.lazy()
+        .sort(UPTIME_TIMESTAMP)
+        .with_columns(
+            pl.col(counter_column)
+            .shift(1, fill_value=0)
+            .alias(f"{counter_column}_shifted"),
+            pl.col("pmu_running_time_us")
+            .shift(1, fill_value=0)
+            .alias("pmu_running_time_us_shifted"),
+            pl.col("pmu_enabled_time_us")
+            .shift(1, fill_value=0)
+            .alias("pmu_enabled_time_us_shifted"),
+        )
+        .with_columns(
+            (pl.col(counter_column) - pl.col(f"{counter_column}_shifted")).alias(
+                f"{counter_column_rename}_raw"
+            ),
             (
-                (
-                    pl.col("span_duration_us")
-                ) / (
-                    pl.col("pmu_enabled_time_us") - pl.col("pmu_enabled_time_us_shifted")
+                pl.col("pmu_running_time_us") - pl.col("pmu_running_time_us_shifted")
+            ).alias("span_duration_us"),
+        )
+        .with_columns(
+            (
+                (pl.col("span_duration_us"))
+                / (
+                    pl.col("pmu_enabled_time_us")
+                    - pl.col("pmu_enabled_time_us_shifted")
                 )
             ).alias("sampling_scaling"),
-        ).with_columns(
-            (pl.col(f"{counter_column_rename}_raw") * pl.col("sampling_scaling")).alias(counter_column_rename),
-        ).select(final_select)
+        )
+        .with_columns(
+            (pl.col(f"{counter_column_rename}_raw") * pl.col("sampling_scaling")).alias(
+                counter_column_rename
+            ),
+        )
+        .select(final_select)
         for _, by_cpu_df in table.group_by("cpu")
     ]
     return pl.concat(by_cpu_pdf_dfs).collect()
 
 
-def cumulative_pma_as_cdf(table: pl.DataFrame, *, counter_column: str, counter_column_rename: str) -> pl.DataFrame:
+def cumulative_pma_as_cdf(
+    table: pl.DataFrame, *, counter_column: str, counter_column_rename: str
+) -> pl.DataFrame:
     cumulative_columns = [
         counter_column,
         "pmu_enabled_time_us",
         "pmu_running_time_us",
     ]
     final_select = [
-        column
-        for column in table.columns
-        if column not in cumulative_columns
+        column for column in table.columns if column not in cumulative_columns
     ]
     final_select.extend([counter_column_rename, "span_duration_us"])
     by_cpu_cdf_dfs = [
-        by_cpu_df.lazy().sort(UPTIME_TIMESTAMP).with_columns(
-            pl.col(counter_column).shift(1, fill_value=0).alias(f"{counter_column}_shifted"),
-            pl.col("pmu_running_time_us").shift(1, fill_value=0).alias("pmu_running_time_us_shifted"),
-            pl.col("pmu_enabled_time_us").shift(1, fill_value=0).alias("pmu_enabled_time_us_shifted"),
-        ).with_columns(
-            (pl.col(counter_column) - pl.col(f"{counter_column}_shifted")).alias(f"{counter_column_rename}_raw"),
-            (pl.col("pmu_running_time_us") - pl.col("pmu_running_time_us_shifted")).alias("span_duration_us"),
-        ).with_columns(
+        by_cpu_df.lazy()
+        .sort(UPTIME_TIMESTAMP)
+        .with_columns(
+            pl.col(counter_column)
+            .shift(1, fill_value=0)
+            .alias(f"{counter_column}_shifted"),
+            pl.col("pmu_running_time_us")
+            .shift(1, fill_value=0)
+            .alias("pmu_running_time_us_shifted"),
+            pl.col("pmu_enabled_time_us")
+            .shift(1, fill_value=0)
+            .alias("pmu_enabled_time_us_shifted"),
+        )
+        .with_columns(
+            (pl.col(counter_column) - pl.col(f"{counter_column}_shifted")).alias(
+                f"{counter_column_rename}_raw"
+            ),
             (
-                (
-                    pl.col("span_duration_us")
-                ) / (
-                    pl.col("pmu_enabled_time_us") - pl.col("pmu_enabled_time_us_shifted")
+                pl.col("pmu_running_time_us") - pl.col("pmu_running_time_us_shifted")
+            ).alias("span_duration_us"),
+        )
+        .with_columns(
+            (
+                (pl.col("span_duration_us"))
+                / (
+                    pl.col("pmu_enabled_time_us")
+                    - pl.col("pmu_enabled_time_us_shifted")
                 )
             ).alias("sampling_scaling"),
-        ).with_columns(
-            (pl.col(f"{counter_column_rename}_raw") * pl.col("sampling_scaling")).alias(f"{counter_column_rename}_pdf"),
-        ).with_columns(
-            pl.col(f"{counter_column_rename}_pdf").cum_sum().alias(counter_column_rename),
-        ).select(final_select)
+        )
+        .with_columns(
+            (pl.col(f"{counter_column_rename}_raw") * pl.col("sampling_scaling")).alias(
+                f"{counter_column_rename}_pdf"
+            ),
+        )
+        .with_columns(
+            pl.col(f"{counter_column_rename}_pdf")
+            .cum_sum()
+            .alias(counter_column_rename),
+        )
+        .select(final_select)
         for _, by_cpu_df in table.group_by("cpu")
     ]
     return pl.concat(by_cpu_cdf_dfs).collect()
