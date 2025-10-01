@@ -44,6 +44,7 @@ def test(model, inputs):
     try:
         compiler = TorchKernelDeployer(model, inputs[0].shape)
         compiler.build()
+        return
         os.system("cd build; make; sudo insmod my_module.ko")
 
         torch.set_printoptions(precision=5)  # number of decimal places
@@ -62,3 +63,10 @@ def test(model, inputs):
         print("Tests done!")
     finally:
         os.system("sudo rmmod my_module")
+
+if __name__ == '__main__':
+    while True:
+        s = input("? ")
+        nums = [float(i) for i in s.split(" ")]
+        inp = torch.tensor(nums, dtype=torch.float32)
+        print(query_kernel_module(inp, 10))

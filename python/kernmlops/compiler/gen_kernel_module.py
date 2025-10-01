@@ -33,6 +33,7 @@ class TorchKernelDeployer:
         self.output_size_flat = None
 
         self.buffers = {}
+        self.kernel_launch_grid = {}
 
     @staticmethod
     def collect_parameters(module):
@@ -92,9 +93,11 @@ void free_primals(primals_t p) {{
 
     def dump_torch_files(self):
         '''Tell pytorch to compile the model and dump triton kernels/python glue into a "dump" folder'''
+        os.system("sudo rm -rf dump")
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
         os.environ["TORCH_LOGS"] = "output_code"
         os.environ["TORCHINDUCTOR_CACHE_DIR"] = "dump"
+        os.environ["TORCHINDUCTOR_DUMP_LAUNCH_PARAMS"] = "1"
         config.cpu_backend = "triton"
 
         compiled = torch.compile(self.model, fullgraph=True, backend="inductor")
@@ -108,6 +111,13 @@ void free_primals(primals_t p) {{
         '''Move triton kernels (asm) from the dump folder to some target folder'''
         os.system(f"mkdir -p {target_dir}")
         os.system(f"mv dump/triton/*/*/*.asm {target_dir}")
+        os.system("mv *.launch_params kernels.params")
+        with open("kernels.params") as f:
+            for line in f.readlines():
+                # Ex: triton_poi_fused_relu_0 | T, T, T, T, 10, 16, num_warps=1, num_stages=1 | (1, 1, 1)
+                kernel_name, signature, grid = line.split(" | ")
+                grid = eval(grid)
+                self.kernel_launch_grid[kernel_name] = grid
 
     def get_python_triton_wrapper(self):
         '''Return the python wrapper that launches the triton kernels'''
@@ -267,7 +277,13 @@ void free_primals(primals_t p) {{
                 end_args = line.find(")")
                 args = line[start_args:end_args].split(", ")[:-1]
                 # args = [arg if not arg.startswith("primals") else f"primals[{int(arg[8:]) - 1}]" for arg in args]
-                c_wrapper.append(f"\t{kernel_name}({", ".join(args)}, 0, 0, 0, 1, 1, 1);\n")
+                grid_size = self.kernel_launch_grid[kernel_name]
+                c_wrapper.append(f"\tfor (int x = 0; x < {grid_size[0]}; x++) {{\n")
+
+                c_wrapper.append(f"\t\tfor (int y = 0; y < {grid_size[1]}; y++) {{\n")
+                c_wrapper.append(f"\t\t\tfor (int z = 0; z < {grid_size[2]}; z++) {{\n")
+                c_wrapper.append(f"\t\t\t\t{kernel_name}({", ".join(args)}, x, y, z, {', '.join([str(i) for i in grid_size])});\n")
+                c_wrapper.append("\t\t\t}\n\t\t}\n\t}\n")
 
             elif tokens[0].startswith("extern_kernels"):
                 #extern_kernels.[kernel_name](...)
@@ -306,7 +322,8 @@ void free_primals(primals_t p) {{
                 print(m.name, m.shape, m.stride)
             print()
             strides = ", ".join([f"{m.getStride(0)}, {m.getStride(1)}" for m in [mat1, mat2, input, out]])
-            return f"pr_info(\"==== %d/100 %d/100\", (int)(((float*){out.name})[0]), (int)(((float*){out.name})[1]));\n\taddmm({out.getShape(0)}, {out.getShape(1)}, {mat1.getShape(1)}, {mat1.name}, {mat2.name}, {input.name}, {out.name}, {strides}, {alpha}, {beta}, 0, 0, 0, 1, 1, 1);\npr_info(\"!!!! %d/100 %d/100\", (int)(((float*){out.name})[0]), (int)(((float*){out.name})[1]));\n"
+            # return f"pr_info(\"==== %d/100 %d/100\", (int)(((float*){out.name})[0]), (int)(((float*){out.name})[1]));\n\taddmm({out.getShape(0)}, {out.getShape(1)}, {mat1.getShape(1)}, {mat1.name}, {mat2.name}, {input.name}, {out.name}, {strides}, {alpha}, {beta}, 0, 0, 0, 1, 1, 1);\npr_info(\"!!!! %d/100 %d/100\", (int)(((float*){out.name})[0]), (int)(((float*){out.name})[1]));\n"
+            return f"\taddmm({out.getShape(0)}, {out.getShape(1)}, {mat1.getShape(1)}, {mat1.name}, {mat2.name}, {input.name}, {out.name}, {strides}, {alpha}, {beta}, 0, 0, 0, 1, 1, 1);\n"
         else:
             raise Exception(f"Kernel {kernel_name} not implemented yet!")
 
@@ -319,7 +336,10 @@ void free_primals(primals_t p) {{
         self.save_triton_kernels()
         self.copy_build_files()
         with open(output_file, 'w') as f:
-            f.write("""#include <linux/kernel.h>
+            f.write("""
+#ifdef KERNEL_MODE
+
+#include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
@@ -332,6 +352,34 @@ MODULE_LICENSE("GPL");
 
 #define heap_alloc(x) kmalloc(x, GFP_ATOMIC)
 #define heap_free(x) kfree(x)
+#define log(...) pr_info(__VA_ARGS__)
+
+#define DEVICE_NAME "model_run"
+#define CLASS_NAME  "model_class"
+
+#define IOCTL_PROC _IOWR('m', 1, struct model_data *)
+
+struct model_data {
+    float __user *in;   // pointer to user input buffer
+    float __user *out;  // pointer to user output buffer
+    int input_size;     // number of floats
+};
+
+static dev_t dev_num;
+static struct cdev my_cdev;
+static struct class *my_class;
+
+#else
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define heap_alloc(x) malloc(x)
+#define heap_free(x) free(x)
+#define log(...) printf(__VA_ARGS__)
+
+#endif
 
 """)
             f.writelines(self.gen_c_triton_signature_declarations())
@@ -339,27 +387,14 @@ MODULE_LICENSE("GPL");
             f.write(self.gen_primals_init_code(torch.zeros(self.input_shape, dtype=torch.float32)))
             f.write(f"""
 
-#define DEVICE_NAME "model_run"
-#define CLASS_NAME  "model_class"
-
-#define IOCTL_PROC _IOWR('m', 1, struct model_data *)
-
-struct model_data {{
-    float __user *in;   // pointer to user input buffer
-    float __user *out;  // pointer to user output buffer
-    int input_size;     // number of floats
-}};
-
-static dev_t dev_num;
-static struct cdev my_cdev;
-static struct class *my_class;
-
 primals_t primals;
 
 void forward(primals_t p, void* input, void* output) {{
     memcpy(p.primals[p.input_idx], input, p.input_size * sizeof(void*));
     call(p.primals, output);
 }}
+
+#ifdef KERNEL_MODE
 
 static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {{
@@ -400,8 +435,6 @@ static struct file_operations fops = {{
     .unlocked_ioctl = my_ioctl,
 }};
 
-
-
 int init(void) {{
     pr_info("Hello %x!\\n", IOCTL_PROC);
 
@@ -434,6 +467,27 @@ void cleanup(void) {{
 }}
 module_init(init);
 module_exit(cleanup);
+
+#else
+
+int main(void) {{
+    primals = allocate_primals();
+
+    void* inp = heap_alloc(20 * sizeof (float));
+    void* out = heap_alloc(10 * sizeof (float));
+    for (int i = 0; i < 20; i++) {{
+        ((float*)inp)[i] = 0;
+    }}
+    forward(primals, inp, out);
+    for (int i = 0; i < 10; i++) {{
+        log("%.4f ", ((float*)out)[i]);
+    }}
+    log("\\n");
+    free_primals(primals);
+    return 0;
+}}
+
+#endif
 """)
 
         # os.system("rm -rf dump")

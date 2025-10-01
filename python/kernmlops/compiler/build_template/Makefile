@@ -1,5 +1,5 @@
 KERNEL_MODULE_SRC := main
-USER_SRC := user
+USER_SRC := main
 
 TRITON_KERNELS_ASM := $(wildcard *.asm)
 O_FILES := $(TRITON_KERNELS_ASM:.asm=.o)
@@ -12,7 +12,7 @@ PWD := $(CURDIR)
 
 obj-m += my_module.o
 my_module-objs := $(KERNEL_MODULE_SRC).o $(O_FILES) $(SLEEF_OBJS) shim.o
-CFLAGS_main.o += -mhard-float
+CFLAGS_main.o += -DKERNEL_MODE -mhard-float
 
 all: my_module.ko
 
