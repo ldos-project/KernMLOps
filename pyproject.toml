@@ -25,4 +25,5 @@ dependencies = [
   "pexpect",
   "plotnine",
   "pyarrow",
+  "torch>=2.7.0",
 ]

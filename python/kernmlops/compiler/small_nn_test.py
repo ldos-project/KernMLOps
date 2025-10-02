@@ -1,0 +1,30 @@
+
+import torch
+import torch.nn as nn
+from compile_test import test
+
+
+class SimpleNet(nn.Module):
+    def __init__(self, n):
+        super().__init__()
+        self.fc1 = nn.Linear(2, n)
+        self.relu = nn.ReLU()
+
+        self.fc2 = nn.Linear(n, n)
+        self.relu1 = nn.ReLU()
+        self.fc3 = nn.Linear(n, n)
+        self.relu2 = nn.ReLU()
+        self.fc4 = nn.Linear(n, 3)
+
+    def forward(self, x):
+        x = self.relu(self.fc1(x))
+        x = self.relu1(self.fc2(x))
+        x = self.relu2(self.fc3(x))
+        x = self.fc4(x)
+
+        return x
+
+if __name__ == "__main__":
+    model = SimpleNet(5)
+    model.eval()
+    test(model, [1000 * torch.randn((2,), dtype=torch.float32) for i in range(50)])

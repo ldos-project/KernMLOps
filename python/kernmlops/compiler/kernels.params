@@ -1,0 +1,3 @@
+triton_poi_fused_relu_threshold_backward_0 | T, T, 50, 64, num_warps=1, num_stages=1 | (1, 1, 1)
+triton_poi_fused_relu_threshold_backward_0 | T, T, 50, 64, num_warps=1, num_stages=1 | (1, 1, 1)
+triton_poi_fused_relu_threshold_backward_0 | T, T, 50, 64, num_warps=1, num_stages=1 | (1, 1, 1)
