@@ -68,5 +68,8 @@ if __name__ == '__main__':
     while True:
         s = input("? ")
         nums = [float(i) for i in s.split(" ")]
-        inp = torch.tensor(nums, dtype=torch.float32)
+        if len(nums) == 1:
+            inp = torch.zeros((int(nums[0]),), dtype=torch.float32)
+        else:
+            inp = torch.tensor(nums, dtype=torch.float32)
         print(query_kernel_module(inp, 10))
