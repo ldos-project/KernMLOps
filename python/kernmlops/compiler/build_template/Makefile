@@ -26,8 +26,8 @@ $(SLEEF_CMDS): .%.o.cmd: %.o
 my_module.ko: $(O_FILES) $(KERNEL_MODULE_SRC).c shim.c $(SLEEF_CMDS)
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
 
-user: $(O_FILES) $(USER_SRC).c
-	gcc $(USER_SRC).c $(O_FILES) -o user -g
+user: $(O_FILES) $(USER_SRC).c $(SLEEF_OBJS)
+	gcc $(USER_SRC).c $(O_FILES) $(SLEEF_OBJS) -o user -g
 
 clean:
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean

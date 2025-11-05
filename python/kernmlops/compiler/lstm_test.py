@@ -1,5 +1,5 @@
 import torch
-from gen_kernel_module import build
+from module_test import test
 
 
 class VectorizedLSTM(torch.nn.Module):
@@ -43,7 +43,7 @@ class VectorizedLSTM(torch.nn.Module):
             h = o * torch.tanh(c)
             outputs.append(h)
 
-        return torch.stack(outputs, dim=0), (h, c)
+        return torch.stack(outputs, dim=0)#, (h, c)
 
 
 # ---------------------------
@@ -54,4 +54,6 @@ if __name__ == "__main__":
     x = torch.randn(seq_len, batch, input_size)
 
     lstm = VectorizedLSTM(input_size, hidden_size)
-    build(lstm, x)
+    lstm.eval()
+    print(lstm(torch.zeros_like(x, dtype=torch.float32)))
+    test(lstm, [torch.randn_like(x, dtype=torch.float32) for i in range(50)])

@@ -2,13 +2,14 @@
 import ctypes
 import fcntl
 import os
+import time
 
 import numpy as np
 import torch
 from gen_kernel_module import TorchKernelDeployer
 
 
-def query_kernel_module(inp, out_size):
+def query_kernel_module(inp, out_size, measure_time=False):
     DEVICE = "/dev/model_run"
 
     IOCTL_PROC = 0xc0086d01
@@ -25,10 +26,11 @@ def query_kernel_module(inp, out_size):
             ("input_size", ctypes.c_int),
         ]
 
-    n = len(inp)
+    inp_flat = np.ravel(inp).astype(np.float32)
+    n = inp_flat.size
 
     # create ctypes arrays
-    in_arr = (ctypes.c_float * n)(*inp)
+    in_arr = (ctypes.c_float * n)(*inp_flat)
     out_arr = (ctypes.c_float * out_size)()
 
     # build ioctl struct
@@ -36,15 +38,19 @@ def query_kernel_module(inp, out_size):
 
     # open device and call ioctl
     with open(DEVICE, "wb", buffering=0) as fd:
+        t1 = time.time_ns()
         fcntl.ioctl(fd, IOCTL_PROC, data)
+        t2 = time.time_ns()
 
-    return torch.from_numpy(np.ctypeslib.as_array(out_arr))
+    output = torch.from_numpy(np.ctypeslib.as_array(out_arr))
+    if not measure_time:
+        return output
+    return output, t2 - t1
 
 def test(model, inputs):
     try:
-        compiler = TorchKernelDeployer(model, inputs[0].shape)
-        compiler.build()
-        return
+        module = TorchKernelDeployer(model, inputs[0].shape)
+        module.build()
         os.system("cd build; make; sudo insmod my_module.ko")
 
         torch.set_printoptions(precision=5)  # number of decimal places
@@ -59,10 +65,11 @@ def test(model, inputs):
                 print(f"\tExpected: {expected}")
                 print(f"\tOutput: {result}")
             else:
-                print(f"Passed with input {input}")
+                print("Passed!")
         print("Tests done!")
     finally:
         os.system("sudo rmmod my_module")
+
 
 if __name__ == '__main__':
     while True:

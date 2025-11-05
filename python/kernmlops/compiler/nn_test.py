@@ -1,7 +1,7 @@
 
 import torch
 import torch.nn as nn
-from compile_test import test
+from module_test import test
 
 
 class SimpleNet(nn.Module):
@@ -11,7 +11,7 @@ class SimpleNet(nn.Module):
         self.relu = nn.ReLU()
 
         self.fc2 = nn.Linear(b, b)
-        self.relu1 = nn.ReLU()
+        self.relu1 = nn.Sigmoid()
         self.fc3 = nn.Linear(b, b)
         self.relu2 = nn.ReLU()
         self.fc4 = nn.Linear(b, c)

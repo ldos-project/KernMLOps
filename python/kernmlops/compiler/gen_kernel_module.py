@@ -1,15 +1,17 @@
 import os
+import pathlib
 
 import torch
 import torch._inductor.config as config
 
 
 class Buffer:
-    def __init__(self, name, shadow=True, shape=(), stride=()):
+    def __init__(self, name, shadow=True, shape=(), stride=(), offset=0):
         self.name = name
         self.shadow = shadow
         self.shape = shape
         self.stride = stride
+        self.offset = offset
     def getShape(self, dim):
         if dim >= len(self.shape):
             return 1
@@ -18,10 +20,12 @@ class Buffer:
         if dim >= len(self.stride):
             return 1
         return self.stride[dim]
+    def getReferenceName(self):
+        return f"{self.name} + {self.offset}"
 
 class TorchKernelDeployer:
     def __init__(self, model, input_shape):
-        # TODO handle models with multiple inputs
+        # TODO handle models with multiple inputs & outputs
         self.model = model
 
         self.input_shape = input_shape
@@ -91,26 +95,28 @@ void free_primals(primals_t p) {{
 
         return s
 
-    def dump_torch_files(self):
+    def dump_torch_files(self, dump_dir=pathlib.Path("dump")):
         '''Tell pytorch to compile the model and dump triton kernels/python glue into a "dump" folder'''
-        os.system("sudo rm -rf dump")
+        os.system(f"sudo rm -rf {str(dump_dir)}")
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
         os.environ["TORCH_LOGS"] = "output_code"
-        os.environ["TORCHINDUCTOR_CACHE_DIR"] = "dump"
+        os.environ["TORCHINDUCTOR_CACHE_DIR"] = str(dump_dir)
         os.environ["TORCHINDUCTOR_DUMP_LAUNCH_PARAMS"] = "1"
         config.cpu_backend = "triton"
 
         compiled = torch.compile(self.model, fullgraph=True, backend="inductor")
+
         out = compiled(torch.randn(self.input_shape, dtype=torch.float32))
+
         self.output_shape = out.shape
         self.output_size_flat = 1
         for dim in self.output_shape:
             self.output_size_flat *= dim
 
-    def save_triton_kernels(self, target_dir="build"):
+    def save_triton_kernels(self, dump_dir=pathlib.Path("dump"), target_dir=pathlib.Path("build")):
         '''Move triton kernels (asm) from the dump folder to some target folder'''
-        os.system(f"mkdir -p {target_dir}")
-        os.system(f"mv dump/triton/*/*/*.asm {target_dir}")
+        target_dir.mkdir(exist_ok=True)
+        os.system(f"mv {str(dump_dir)}/triton/*/*/*.asm {str(target_dir)}")
         os.system("mv *.launch_params kernels.params")
         with open("kernels.params") as f:
             for line in f.readlines():
@@ -119,9 +125,9 @@ void free_primals(primals_t p) {{
                 grid = eval(grid)
                 self.kernel_launch_grid[kernel_name] = grid
 
-    def get_python_triton_wrapper(self):
+    def get_python_triton_wrapper(self, dump_dir):
         '''Return the python wrapper that launches the triton kernels'''
-        file_name = os.popen('grep -r "def call(args):" dump').read().split(":")[0]
+        file_name = os.popen(f'grep -r "def call(args):" {str(dump_dir)}').read().split(":")[0]
         with open(file_name) as file:
             contents = file.readlines()
             start = contents.index("def call(args):\n")
@@ -158,13 +164,13 @@ void free_primals(primals_t p) {{
             return "int"
         raise ValueError(f"Bad Triton Type: {triton_type}")
 
-    def gen_c_triton_signature_declarations(self):
+    def gen_c_triton_signature_declarations(self, dump_dir):
         '''
         Generate the C declarations for all of the triton kernels
 
         Ex: extern void [kernel_name](...);
         '''
-        triton_src_files = os.popen('grep -rl "@triton.jit" dump | xargs grep -L "def call(args):"').read().split()
+        triton_src_files = os.popen(f'grep -rl "@triton.jit" {str(dump_dir)} | xargs grep -L "def call(args):"').read().split()
         declarations = []
         for file_name in triton_src_files:
             with open(file_name) as f:
@@ -193,6 +199,7 @@ void free_primals(primals_t p) {{
             c_types = [self.get_c_type(triton_type) for triton_type in triton_types]
             declarations.append(f"extern void {kernel_name}({', '.join(c_types)}, int, int, int, int, int, int);\n")
         declarations.append("extern void addmm(int, int, int, void*, void*, void*, void*, int, int, int, int, int, int, int, int, float, float, int, int, int, int, int, int);\n")
+        declarations.append("extern void mm(int, int, int, void*, void*, void*, int, int, int, int, int, int, int, int, int, int, int, int);\n")
         return declarations
 
     def consume_buffer(self, string, start=0):
@@ -201,6 +208,7 @@ void free_primals(primals_t p) {{
         string = string[start:]
         if string.startswith("reinterpret_tensor"):
             # reinterpret_tensor(bufx, (...shape), (...strides), y)
+            print(string)
             func_name_len = len("reinterpret_tensor(")
             name = string[func_name_len:].split(", ")[0]
             # there are three close parens in the expression, find the last one
@@ -213,8 +221,8 @@ void free_primals(primals_t p) {{
             size = remaining_args[0]
             stride = remaining_args[1]
             offset = remaining_args[2]
-            assert(offset == 0)
-            return Buffer(name, shape=size, stride=stride, shadow=True), idx + start + 1
+            print(remaining_args)
+            return Buffer(name, shape=size, stride=stride, shadow=True, offset=offset), idx + start + 1
         else:
             # just the plain buffer name
             tokens = string.split(", ")
@@ -224,6 +232,7 @@ void free_primals(primals_t p) {{
             else:
                 # bufx)
                 buf = string.split(")")[0]
+            print(self.buffers)
             return self.buffers[buf], start + len(buf)
 
     def gen_c_triton_wrapper(self, python_wrapper):
@@ -269,7 +278,7 @@ void free_primals(primals_t p) {{
                     size *= x
                 size *= self.get_torch_type_size(tokens[-1][:-1])
                 c_wrapper.append(f"\tvoid* {tokens[0]} = heap_alloc({size});\n")
-                self.buffers[tokens[0]] = Buffer(tokens[0], shape=shape, stride=stride, shadow=False)
+                self.buffers[tokens[0]] = Buffer(tokens[0], shape=shape, stride=stride, shadow=True)
             elif ".run" in tokens[0]:
                 #[kernel_name].run(arg1, arg2, ..., stream=streamNone)
                 kernel_name = tokens[0].split(".")[0]
@@ -290,12 +299,16 @@ void free_primals(primals_t p) {{
                 c_wrapper.append(self.gen_extern_kernel_call(line))
 
             elif tokens[0].startswith("buf") and tokens[2].startswith("buf"):
-                c_wrapper.append(f"\tvoid* {tokens[0]} = {tokens[2].replace(';', '')};\n")
+                # bufx = bufy; del bufy  # reuse
+                copied = tokens[2].replace(';', '')
+                c_wrapper.append(f"\tvoid* {tokens[0]} = {copied};\n")
+                copied_buf = self.buffers[copied]
+                self.buffers[tokens[0]] = Buffer(copied, shape=copied_buf.shape, stride=copied_buf.stride, shadow=True)
             elif tokens[0] == "return":
                 # return (reinterpret_tensor(bufx, ...), ...)
                 # return (bufx, ...)
                 buf, idx = self.consume_buffer(line[len("return ("):])
-                c_wrapper.append(f"\tmemcpy(out, {buf.name}, {self.output_size_flat} * sizeof (float));\n")
+                c_wrapper.append(f"\tmemcpy(out, {buf.getReferenceName()}, {self.output_size_flat} * sizeof (float));\n")
                 for name, buf in self.buffers.items():
                     if not buf.shadow:
                         c_wrapper.append(f"\theap_free({name});\n")
@@ -318,24 +331,30 @@ void free_primals(primals_t p) {{
             alpha = kwargs_str[0].split("=")[1]
             beta = kwargs_str[1].split("=")[1]
             out, _ = self.consume_buffer(kwargs_str[2].split("=")[1])
-            for m in [mat1, mat2, input, out]:
-                print(m.name, m.shape, m.stride)
-            print()
             strides = ", ".join([f"{m.getStride(0)}, {m.getStride(1)}" for m in [mat1, mat2, input, out]])
-            # return f"pr_info(\"==== %d/100 %d/100\", (int)(((float*){out.name})[0]), (int)(((float*){out.name})[1]));\n\taddmm({out.getShape(0)}, {out.getShape(1)}, {mat1.getShape(1)}, {mat1.name}, {mat2.name}, {input.name}, {out.name}, {strides}, {alpha}, {beta}, 0, 0, 0, 1, 1, 1);\npr_info(\"!!!! %d/100 %d/100\", (int)(((float*){out.name})[0]), (int)(((float*){out.name})[1]));\n"
-            return f"\taddmm({out.getShape(0)}, {out.getShape(1)}, {mat1.getShape(1)}, {mat1.name}, {mat2.name}, {input.name}, {out.name}, {strides}, {alpha}, {beta}, 0, 0, 0, 1, 1, 1);\n"
+            return f"\taddmm({out.getShape(0)}, {out.getShape(1)}, {mat1.getShape(1)}, {mat1.getReferenceName()}, {mat2.getReferenceName()}, {input.getReferenceName()}, {out.getReferenceName()}, {strides}, {alpha}, {beta}, 0, 0, 0, 1, 1, 1);\n"
+        elif kernel_name == "mm":
+            # extern_kernels.mm(mat1, mat2, out=buf1)
+            mat1, idx = self.consume_buffer(line, idx)
+            mat2, idx = self.consume_buffer(line, idx + len(", "))
+            idx += len(", out=")
+            out, _ = self.consume_buffer(line, idx)
+            strides = ", ".join([f"{m.getStride(0)}, {m.getStride(1)}" for m in [mat1, mat2, out]])
+            return f"\tmm({out.getShape(0)}, {out.getShape(1)}, {mat1.getShape(1)}, {mat1.getReferenceName()}, {mat2.getReferenceName()}, {out.getReferenceName()}, {strides}, 0, 0, 0, 1, 1, 1);\n"
         else:
             raise Exception(f"Kernel {kernel_name} not implemented yet!")
 
 
-    def copy_build_files(self, dir='build'):
-        os.system(f'cp build_template/* {dir}')
+    def copy_build_files(self, dir=pathlib.Path('build')):
+        module_root = pathlib.Path(__file__).parent
+        template_dir = module_root / "build_template"
+        os.system(f'cp {str(template_dir)}/* {str(dir)}')
 
-    def build(self, output_file="build/main.c", debug=False):
-        self.dump_torch_files()
-        self.save_triton_kernels()
-        self.copy_build_files()
-        with open(output_file, 'w') as f:
+    def build(self, output_dir=pathlib.Path("build")):
+        self.dump_torch_files(output_dir / "dump")
+        self.save_triton_kernels(output_dir / "dump", output_dir)
+        self.copy_build_files(output_dir)
+        with (output_dir / 'main.c').open('w') as f:
             f.write("""
 #ifdef KERNEL_MODE
 
@@ -382,8 +401,8 @@ static struct class *my_class;
 #endif
 
 """)
-            f.writelines(self.gen_c_triton_signature_declarations())
-            f.writelines(self.gen_c_triton_wrapper(self.get_python_triton_wrapper()))
+            f.writelines(self.gen_c_triton_signature_declarations(output_dir / "dump"))
+            f.writelines(self.gen_c_triton_wrapper(self.get_python_triton_wrapper(output_dir / "dump")))
             f.write(self.gen_primals_init_code(torch.zeros(self.input_shape, dtype=torch.float32)))
             f.write(f"""
 
@@ -399,7 +418,7 @@ void forward(primals_t p, void* input, void* output) {{
 static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {{
     struct model_data data;
-    float kbuf_in[256];
+    float* kbuf_in = heap_alloc({self.input_size_flat} * sizeof (float));
     int i;
 
     if (cmd != IOCTL_PROC)
@@ -408,7 +427,7 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
     if (copy_from_user(&data, (void __user *)arg, sizeof(data)))
         return -EFAULT;
 
-    if (data.input_size > 256)
+    if (data.input_size != {self.input_size_flat})
         return -EINVAL;
 
     // copy input floats from user
@@ -420,6 +439,7 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
     forward(primals, kbuf_in, kbuf_out);
     kernel_fpu_end();
 
+    heap_free(kbuf_in);
     // copy results back to user buffer
     if (copy_to_user(data.out, kbuf_out, {self.output_size_flat} * sizeof(float))) {{
         heap_free(kbuf_out);
@@ -473,13 +493,13 @@ module_exit(cleanup);
 int main(void) {{
     primals = allocate_primals();
 
-    void* inp = heap_alloc(20 * sizeof (float));
-    void* out = heap_alloc(10 * sizeof (float));
-    for (int i = 0; i < 20; i++) {{
+    void* inp = heap_alloc({self.input_size_flat} * sizeof (float));
+    void* out = heap_alloc({self.output_size_flat} * sizeof (float));
+    for (int i = 0; i < {self.input_size_flat}; i++) {{
         ((float*)inp)[i] = 0;
     }}
     forward(primals, inp, out);
-    for (int i = 0; i < 10; i++) {{
+    for (int i = 0; i < {self.output_size_flat}; i++) {{
         log("%.4f ", ((float*)out)[i]);
     }}
     log("\\n");
@@ -489,5 +509,3 @@ int main(void) {{
 
 #endif
 """)
-
-        # os.system("rm -rf dump")
