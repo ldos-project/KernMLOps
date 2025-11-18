@@ -1,0 +1,14 @@
+---
+- hosts: development
+  roles:
+    - osquery
+    - install-bcc
+
+- hosts: install-benchmarks
+  roles:
+    - clone-kernel
+    - install-gap
+
+- hosts: test
+  roles:
+    - clone-kernel

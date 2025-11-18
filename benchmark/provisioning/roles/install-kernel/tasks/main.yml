@@ -1,0 +1,51 @@
+---
+# tasks file for install-kernel
+
+# From https://planeta.github.io/programming/kernel-development-setup-with-vagrant/
+
+# TODO(Patrick): Add symbolic links for these args
+# - name: Install kernel
+#   become: true
+#   ansible.posix.synchronize:
+#     src: kernel/boot/
+#     dest: /boot/
+#     checksum: true
+#   register: kernel
+# - name: Install kernel headers
+#   become: true
+#   ansible.posix.synchronize:
+#     src: kernel/usr/include/
+#     dest: /usr/include/
+# - name: Install kernel modules
+#   become: true
+#   ansible.posix.synchronize:
+#     src: kernel/lib/modules/
+#     dest: /lib/modules/
+#     checksum: true
+#   register: modules
+# - name: Display modules result
+#   debug:
+#       var: modules.stdout_lines
+
+# - name: Update GRUB
+#   become: true
+#   command: update-grub
+#   when: kernel.changed or modules.changed
+#   register: grub
+# - name: Reboot
+#   become: true
+#   shell: /sbin/shutdown -r now 'Rebooting box to update system libs/kernel as needed'
+#   async: 1
+#   poll: 1
+#   ignore_errors: true
+#   when: grub.changed
+# - name: Wait for system to become reachable again
+#   wait_for_connection:
+#       delay: 1
+#       timeout: 60
+# - name: Verify new update (optional)
+#   command: uname -mrs
+#   register: uname_result
+# - name: Display new kernel version
+#   debug:
+#       var: uname_result.stdout_lines

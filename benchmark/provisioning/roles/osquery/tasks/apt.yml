@@ -1,0 +1,29 @@
+---
+# apt tasks file for osquery
+
+- name: Ensure keyring directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Add osquery apt key
+  become: true
+  ansible.builtin.get_url:
+    url: https://pkg.osquery.io/deb/pubkey.gpg
+    dest: /etc/apt/keyrings/osquery.asc
+
+- name: Add osquery repository into apt sources list
+  become: true
+  ansible.builtin.apt_repository:
+    repo: deb [arch=amd64 signed-by=/etc/apt/keyrings/osquery.asc] https://pkg.osquery.io/deb deb main
+    state: present
+    filename: osquery
+
+- name: Install osquery via apt
+  become: true
+  ansible.builtin.apt:
+    name:
+      - osquery
+    state: present

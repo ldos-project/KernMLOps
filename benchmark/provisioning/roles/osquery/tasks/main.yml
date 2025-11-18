@@ -1,0 +1,19 @@
+---
+# tasks file for installing osquery
+
+# Install osquery package
+- name: dnf install osquery
+  ansible.builtin.include_tasks:
+    file: dnf.yml
+  when: ansible_facts['pkg_mgr'] == "dnf"
+- name: apt install osquery
+  ansible.builtin.include_tasks:
+    file: apt.yml
+  when: ansible_facts['pkg_mgr'] == "apt"
+
+- name: copy example configuration file to /etc
+  become: true
+  ansible.builtin.copy:
+    src: /opt/osquery/share/osquery/osquery.example.conf
+    dest: /etc/osquery/osquery.conf
+    remote_src: true

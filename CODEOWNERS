@@ -1,0 +1,5 @@
+CODEOWNERS @tewaro
+module/ @tewaro
+Dockerfile.dev @tewaro
+Makefile @tewaro
+* @ldos-project/kermit

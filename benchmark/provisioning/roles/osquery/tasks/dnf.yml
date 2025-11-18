@@ -1,0 +1,32 @@
+---
+# dnf tasks file for osquery
+
+- name: Download osquery GPG key
+  become: true
+  ansible.builtin.get_url:
+    url: https://pkg.osquery.io/rpm/GPG
+    dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-osquery
+    mode: 0600
+
+# - name: Import OS Query key
+#   become: true
+#   ansible.builtin.rpm_key:
+#     state: present
+#     key: https://pkg.osquery.io/rpm/GPG
+
+- name: Copy osquery repo over
+  become: true
+  ansible.builtin.copy:
+    src: osquery.repo
+    dest: /etc/yum.repos.d/osquery.repo
+
+
+# TODO: fix fix fix
+- name: Install osquery
+  become: true
+  ansible.builtin.dnf:
+    name:
+      - osquery
+    enablerepo:
+      - osquery-s3-rpm
+    state: present

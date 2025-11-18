@@ -1,0 +1,6 @@
+---
+# defaults file for install-bcc
+
+version: "0.31.0"
+download_location: "/opt/bcc"
+python_version: "3.12"

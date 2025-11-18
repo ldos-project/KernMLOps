@@ -1,0 +1,4 @@
+fatal: not a git repository (or any parent up to mount point /var)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+docker: invalid reference format.
+See 'docker run --help'.

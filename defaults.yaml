@@ -1,0 +1,46 @@
+---
+benchmark_config:
+  generic:
+    benchmark: faux
+    benchmark_dir: ''
+    cpus: 0
+    skip_clear_page_cache: false
+    transparent_hugepages: always
+  faux: {}
+  linux_build: {}
+  gap:
+    gap_benchmark: pr
+    gap_benchmark_size: 25
+    trials: 2
+  mongodb:
+    operation_count: 1000000
+    read_proportion: 0.25
+    update_proportion: 0.75
+  linnos:
+    use_root: false
+    shuffle_traces: false
+    type: baseline
+    devices:
+      - /dev/nvme0n1
+      - /dev/nvme1n1
+      - /dev/nvme2n1
+  memcached:
+    operation_count: 1000000
+    read_proportion: 0.99
+    update_proportion: 0.01
+collector_config:
+  generic:
+    poll_rate: 0.5
+    output_dir: data
+    output_graphs: false
+    hooks:
+      - file_data
+      - memory_usage
+      - process_metadata
+      - quanta_runtime
+      - block_io
+      - perf
+      - collapse_huge_pages
+      - mm_rss_stat
+      - process_trace
+      - zswap_runtime

@@ -1,0 +1,141 @@
+ARG BUILD_IMAGE=ubuntu:24.04
+FROM ubuntu:24.04 AS deps
+
+USER root
+
+WORKDIR /dependencies
+
+# bcc dependencies
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -y \
+    && apt-get install -y \
+    zip \
+    curl \
+    build-essential \
+    cmake \
+    git \
+    python3 \
+    python3-pip \
+    python3-setuptools \
+    bpfcc-tools \
+    kmod \
+    && apt-get clean
+
+# Install OSQuery
+RUN mkdir -p /etc/apt/keyrings
+RUN curl -fsSL  https://pkg.osquery.io/deb/pubkey.gpg | gpg --dearmor -o /etc/apt/keyrings/osquery.gpg
+RUN echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/osquery.gpg] https://pkg.osquery.io/deb deb main" \
+  | tee /etc/apt/sources.list.d/osquery.list > /dev/null
+RUN apt-get update -y \
+    && apt-get install -y \
+    osquery \
+    && apt-get clean
+RUN cp /opt/osquery/share/osquery/osquery.example.conf /etc/osquery/osquery.conf
+
+# Install libpfm4
+RUN git clone --branch v4.13.0 https://github.com/wcohen/libpfm4.git /dependencies/libpfm4
+RUN make -C /dependencies/libpfm4
+
+# benchmark dependencies
+RUN apt-get update -y \
+    && apt-get install -y \
+    git \
+    fakeroot \
+    build-essential \
+    libncurses-dev \
+    xz-utils \
+    libssl-dev \
+    bc \
+    flex \
+    libelf-dev \
+    bison \
+    netcat-openbsd \
+    nmap \
+    maven \
+    libgoogle-perftools-dev \
+    && apt-get clean
+
+# lib_pfm4
+RUN echo "export LIB_PFM4_DIR=/dependencies/libpfm4" >> /root/.profile
+RUN apt-get update && \
+    apt-get install -y openjdk-11-jdk && \
+    echo 'export PATH=$PATH:/usr/lib/jvm/java-11-openjdk-amd64/bin' >> /root/.profile
+
+
+# Install MongoDB
+RUN apt-get update && \
+    apt-get install -y gnupg curl && \
+    curl -fsSL https://pgp.mongodb.com/server-6.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-6.0.gpg && \
+    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list && \
+    apt-get update && \
+    apt-get install -y mongodb-org && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Redis server
+RUN git clone https://github.com/redis/redis.git -b 7.4.2 --depth 1 \
+  && cd redis \
+  && make install -j`nproc` \
+  && make distclean \
+  && make MALLOC=tcmalloc -j`nproc` \
+  && mv src/redis-server /usr/bin/redis-server-tcmalloc \
+  && cd ../ \
+  && rm -rf redis
+
+# Install memcached
+RUN apt-get update && \
+    apt-get install -y \
+        memcached && \
+    apt-get clean
+
+# Base development image
+FROM ${BUILD_IMAGE} AS dev
+
+RUN apt-get update -y \
+  &&  apt-get install -y \
+  vim \
+  pkg-config \
+  bpftrace \
+  zsh \
+  psmisc \
+  && apt-get clean
+
+RUN ln -s /usr/bin/python3.12 /usr/bin/python
+# May be required for Ubuntu:24.04 images that come with uid 1000
+RUN deluser --remove-home ubuntu
+
+COPY --chown=root pyproject.toml /root/pyproject.toml
+RUN pip install uv --break-system-packages && \
+  uv pip compile /root/pyproject.toml -o requirements.txt && \
+  uv pip install \
+  --system \
+  --break-system-packages \
+  -r requirements.txt
+
+FROM ${BUILD_IMAGE} AS user
+
+ARG IS_CI=true
+
+ARG UNAME
+ARG UID
+ARG GID
+
+COPY scripts/settings.xml /etc/maven/settings.xml
+
+RUN if [ "${UNAME}" != "root" ] ; then groupadd -g ${GID} ${UNAME} \
+      ;  useradd -ms /bin/bash  -u "${UID}" -g "${GID}" ${UNAME}; fi
+
+RUN mkdir -p /home/${UNAME} \
+      && chown ${UNAME}:${GID} /home/${UNAME}
+
+ARG SRC_DIR=/KernMLOps
+RUN echo "export SRC_DIR=${SRC_DIR}" >> /root/.profile
+RUN echo "export UNAME=${UNAME}" >> /root/.profile
+RUN echo "export GID=${GID}" >> /root/.profile
+
+WORKDIR /home/${UNAME}
+
+WORKDIR ${SRC_DIR}
+
+LABEL creator="${UNAME}"
+LABEL project="KernMLOps"

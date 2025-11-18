@@ -1,0 +1,55 @@
+---
+# tasks file for install-gap
+
+# - name: Gather apt package facts
+#   ansible.builtin.package_facts:
+#     manager: apt
+#   when: ansible_facts['pkg_mgr'] == "apt"
+
+# - name: Install apt packages to build linux kernel
+#   become: true
+#   ansible.builtin.apt:
+#     update_cache: true
+#     pkg: "{{ linux_kernel_apt_pkgs }}"
+#     state: present
+#   when:
+#     - ansible_facts['pkg_mgr'] == "apt"
+#     - linux_kernel_apt_pkgs is not ansible.builtin.subset(ansible_facts.packages.keys() | list)
+
+- name: Ensure benchmark directory exists
+  ansible.builtin.file:
+    path: "{{ benchmark_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Check gap installed
+  stat:
+    path: "{{ gap_benchmark_dir }}"
+  register: gap
+
+- name: Clone gap repo
+  ansible.builtin.git:
+    repo: 'https://github.com/sbeamer/gapbs.git'
+    dest: "{{ gap_benchmark_dir }}"
+    single_branch: true
+    version: "v{{ gap_version }}"
+  register: gap_download
+  when: not gap.stat.exists
+
+- name: Build gap repo
+  community.general.make:
+    chdir: "{{ gap_benchmark_dir }}"
+  when: gap_download.changed
+
+- name: Ensure gap graph directory exists
+  ansible.builtin.file:
+    path: "{{ gap_benchmark_dir }}/graphs"
+    state: directory
+    mode: '0755'
+  register: graph_dir
+
+- name: Create Kronecker scale 25 graph
+  ansible.builtin.command: "{{ gap_benchmark_dir }}/converter -g 25 -b {{ gap_benchmark_dir }}/graphs/kron25.sg"
+  args:
+    creates: "{{ gap_benchmark_dir }}/graphs/kron25.sg"
+  when: graph_dir.changed

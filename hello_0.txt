@@ -1,0 +1,2948 @@
+In file included from /virtual/main.c:1:
+In file included from include/linux/ptrace.h:6:
+In file included from include/linux/sched.h:9:
+arch/x86/include/asm/current.h:47:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+   47 |                 return this_cpu_read_const(const_pcpu_hot.current_task);
+      |                        ^
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:30: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                                     ^
+note: (skipping 1 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/ptrace.h:6:
+In file included from include/linux/sched.h:9:
+arch/x86/include/asm/current.h:47:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:9: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                ^
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/ptrace.h:6:
+In file included from include/linux/sched.h:10:
+arch/x86/include/asm/processor.h:448:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+  448 |                 return this_cpu_read_const(const_pcpu_hot.top_of_stack);
+      |                        ^
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:30: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                                     ^
+note: (skipping 1 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/ptrace.h:6:
+In file included from include/linux/sched.h:10:
+arch/x86/include/asm/processor.h:448:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:9: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                ^
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+4 warnings generated.
+perf BPF program loaded
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:9:
+In file included from include/linux/preempt.h:45:
+In file included from arch/x86/include/asm/preempt.h:7:
+arch/x86/include/asm/current.h:47:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+   47 |                 return this_cpu_read_const(const_pcpu_hot.current_task);
+      |                        ^
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:30: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                                     ^
+note: (skipping 1 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:9:
+In file included from include/linux/preempt.h:45:
+In file included from arch/x86/include/asm/preempt.h:7:
+arch/x86/include/asm/current.h:47:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:9: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                ^
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:13:
+In file included from include/linux/thread_info.h:49:
+In file included from arch/x86/include/asm/thread_info.h:30:
+In file included from arch/x86/include/asm/cpufeature.h:5:
+arch/x86/include/asm/processor.h:448:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+  448 |                 return this_cpu_read_const(const_pcpu_hot.top_of_stack);
+      |                        ^
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:30: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                                     ^
+note: (skipping 1 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:13:
+In file included from include/linux/thread_info.h:49:
+In file included from arch/x86/include/asm/thread_info.h:30:
+In file included from arch/x86/include/asm/cpufeature.h:5:
+arch/x86/include/asm/processor.h:448:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:9: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                ^
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+4 warnings generated.
+madvise BPF program loaded
+sh: 1: Syntax error: ")" unexpected
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:9:
+In file included from include/linux/preempt.h:45:
+In file included from arch/x86/include/asm/preempt.h:7:
+arch/x86/include/asm/current.h:47:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+   47 |                 return this_cpu_read_const(const_pcpu_hot.current_task);
+      |                        ^
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:30: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                                     ^
+note: (skipping 1 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:9:
+In file included from include/linux/preempt.h:45:
+In file included from arch/x86/include/asm/preempt.h:7:
+arch/x86/include/asm/current.h:47:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:9: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                ^
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:13:
+In file included from include/linux/thread_info.h:49:
+In file included from arch/x86/include/asm/thread_info.h:30:
+In file included from arch/x86/include/asm/cpufeature.h:5:
+arch/x86/include/asm/processor.h:448:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+  448 |                 return this_cpu_read_const(const_pcpu_hot.top_of_stack);
+      |                        ^
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:30: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                                     ^
+note: (skipping 1 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:13:
+In file included from include/linux/thread_info.h:49:
+In file included from arch/x86/include/asm/thread_info.h:30:
+In file included from arch/x86/include/asm/cpufeature.h:5:
+arch/x86/include/asm/processor.h:448:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:9: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                ^
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+/virtual/main.c:14:58: warning: declaration of 'struct mm_gather' will not be visible outside of this function [-Wvisibility]
+   14 | int kprobe__unmap_page_range(struct pt_regs* ctx, struct mm_gather* tlb, struct vm_area_struct* vma,
+      |                                                          ^
+/virtual/main.c:15:77: warning: declaration of 'struct zap_details' will not be visible outside of this function [-Wvisibility]
+   15 |                              unsigned long start, unsigned long end, struct zap_details* details) {
+      |                                                                             ^
+/virtual/main.c:26:62: warning: declaration of 'struct mm_gather' will not be visible outside of this function [-Wvisibility]
+   26 | int kprobe__unmap_hugepage_range(struct pt_regs* ctx, struct mm_gather* tlb,
+      |                                                              ^
+7 warnings generated.
+unmap_range BPF program loaded
+sh: 1: Syntax error: Unterminated quoted string
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:9:
+In file included from include/linux/preempt.h:45:
+In file included from arch/x86/include/asm/preempt.h:7:
+arch/x86/include/asm/current.h:47:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+   47 |                 return this_cpu_read_const(const_pcpu_hot.current_task);
+      |                        ^
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:30: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                                     ^
+note: (skipping 1 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:9:
+In file included from include/linux/preempt.h:45:
+In file included from arch/x86/include/asm/preempt.h:7:
+arch/x86/include/asm/current.h:47:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:9: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                ^
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:13:
+In file included from include/linux/thread_info.h:49:
+In file included from arch/x86/include/asm/thread_info.h:30:
+In file included from arch/x86/include/asm/cpufeature.h:5:
+arch/x86/include/asm/processor.h:448:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+  448 |                 return this_cpu_read_const(const_pcpu_hot.top_of_stack);
+      |                        ^
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:30: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                                     ^
+note: (skipping 1 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/mm_types.h:8:
+In file included from include/linux/kref.h:7:
+In file included from include/linux/spinlock.h:13:
+In file included from include/linux/thread_info.h:49:
+In file included from arch/x86/include/asm/thread_info.h:30:
+In file included from arch/x86/include/asm/cpufeature.h:5:
+arch/x86/include/asm/processor.h:448:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:9: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                ^
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+4 warnings generated.
+mm_rss_stat BPF program loaded
+sh: 1: Syntax error: Unterminated quoted string
+In file included from /virtual/main.c:1:
+In file included from include/linux/sched.h:9:
+arch/x86/include/asm/current.h:47:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+   47 |                 return this_cpu_read_const(const_pcpu_hot.current_task);
+      |                        ^
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:30: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                                     ^
+note: (skipping 1 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/sched.h:9:
+arch/x86/include/asm/current.h:47:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:9: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                ^
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/sched.h:10:
+arch/x86/include/asm/processor.h:448:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+  448 |                 return this_cpu_read_const(const_pcpu_hot.top_of_stack);
+      |                        ^
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:30: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                                     ^
+note: (skipping 1 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+In file included from /virtual/main.c:1:
+In file included from include/linux/sched.h:10:
+arch/x86/include/asm/processor.h:448:10: warning: multiple identical address spaces specified for type [-Wduplicate-decl-specifier]
+arch/x86/include/asm/percpu.h:540:36: note: expanded from macro 'this_cpu_read_const'
+  540 | #define this_cpu_read_const(pcp)                        __raw_cpu_read_const(pcp)
+      |                                                         ^
+arch/x86/include/asm/percpu.h:147:35: note: expanded from macro '__raw_cpu_read_const'
+  147 | #define __raw_cpu_read_const(pcp)       __raw_cpu_read(, , pcp)
+      |                                         ^
+arch/x86/include/asm/percpu.h:139:9: note: expanded from macro '__raw_cpu_read'
+  139 |         *(qual __my_cpu_type(pcp) *)__my_cpu_ptr(&(pcp));               \
+      |                ^
+arch/x86/include/asm/percpu.h:87:40: note: expanded from macro '__my_cpu_type'
+   87 | #define __my_cpu_type(var)      typeof(var) __percpu_seg_override
+      |                                             ^
+arch/x86/include/asm/percpu.h:45:32: note: expanded from macro '__percpu_seg_override'
+   45 | # define __percpu_seg_override  __seg_gs
+      |                                 ^
+<built-in>:358:33: note: expanded from macro '__seg_gs'
+  358 | #define __seg_gs __attribute__((address_space(256)))
+      |                                 ^
+4 warnings generated.
+process_trace BPF program loaded
+Finished loading BPF programs
+Could not connect to Redis at 127.0.0.1:6379: Connection refused
+68795:C 18 Nov 2025 14:43:18.058 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+68795:C 18 Nov 2025 14:43:18.058 * Redis version=7.4.2, bits=64, commit=a0a6f23d, modified=0, pid=68795, just started
+68795:C 18 Nov 2025 14:43:18.058 * Configuration loaded
+68795:M 18 Nov 2025 14:43:18.059 * monotonic clock: POSIX clock_gettime
+68795:M 18 Nov 2025 14:43:18.062 # Failed to write PID file: No such file or directory
+                _._                                                  
+           _.-``__ ''-._                                             
+      _.-``    `.  `_.  ''-._           Redis Community Edition      
+  .-`` .-```.  ```\/    _.,_ ''-._     7.4.2 (a0a6f23d/0) 64 bit
+ (    '      ,       .-`  | `,    )     Running in standalone mode
+ |`-._`-...-` __...-.``-._|'` _.-'|     Port: 6379
+ |    `-._   `._    /     _.-'    |     PID: 68795
+  `-._    `-._  `-./  _.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |           https://redis.io       
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |                                  
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+      `-._    `-.__.-'    _.-'                                       
+          `-._        _.-'                                           
+              `-.__.-'                                               
+
+68795:M 18 Nov 2025 14:43:18.062 # Warning: Could not create server TCP listening socket ::1:6379: bind: Cannot assign requested address
+68795:M 18 Nov 2025 14:43:18.062 * Server initialized
+68795:M 18 Nov 2025 14:43:18.063 * Ready to accept connections tcp
+PONG
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+Possibly lost 5399 samples
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=0 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=0 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:44:25:340 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:44:35:301 10 sec: 1450 operations; 145 current ops/sec; est completion in 19 seconds [INSERT: Count=1450, Max=37855, Min=133, Avg=6846.16, 90=12271, 99=18975, 99.9=25135, 99.99=37855] 
+2025-11-18 14:44:45:301 20 sec: 3053 operations; 160.3 current ops/sec; est completion in 7 second [INSERT: Count=1603, Max=15367, Min=125, Avg=6224.26, 90=11367, 99=13751, 99.9=15231, 99.99=15367] 
+2025-11-18 14:44:51:730 26 sec: 4096 operations; 162.23 current ops/sec; [CLEANUP: Count=1, Max=675, Min=675, Avg=675, 90=675, 99=675, 99.9=675, 99.99=675] [INSERT: Count=1043, Max=14863, Min=115, Avg=6157.87, 90=11583, 99=14175, 99.9=14735, 99.99=14863] 
+[OVERALL], RunTime(ms), 26429
+[OVERALL], Throughput(ops/sec), 154.98127057399068
+[TOTAL_GCS_G1_Young_Generation], Count, 39
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 73
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.27621173710696584
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 39
+[TOTAL_GC_TIME], Time(ms), 73
+[TOTAL_GC_TIME_%], Time(%), 0.27621173710696584
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 675.0
+[CLEANUP], MinLatency(us), 675
+[CLEANUP], MaxLatency(us), 675
+[CLEANUP], 95thPercentileLatency(us), 675
+[CLEANUP], 99thPercentileLatency(us), 675
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6427.510498046875
+[INSERT], MinLatency(us), 115
+[INSERT], MaxLatency(us), 37855
+[INSERT], 95thPercentileLatency(us), 12895
+[INSERT], 99thPercentileLatency(us), 15367
+[INSERT], Return=OK, 4096
+OK
+(integer) 4097
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=4096 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=4096 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:45:00:229 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:45:00:628 0 sec: 4096 operations; 9163.31 current ops/sec; [READ: Count=138, Max=20783, Min=116, Avg=4174.04, 90=8711, 99=19679, 99.9=20783, 99.99=20783] [DELETE: Count=3500, Max=12447, Min=39, Avg=394.55, 90=907, 99=4247, 99.9=12303, 99.99=12447] [DELETE-FAILED: Count=366, Max=2503, Min=87, Avg=319.08, 90=933, 99=2401, 99.9=2503, 99.99=2503] [CLEANUP: Count=16, Max=887, Min=71, Avg=348.88, 90=766, 99=887, 99.9=887, 99.99=887] [READ-FAILED: Count=92, Max=2163, Min=55, Avg=270.41, 90=680, 99=2163, 99.9=2163, 99.99=2163] 
+[OVERALL], RunTime(ms), 447
+[OVERALL], Throughput(ops/sec), 9163.31096196868
+[TOTAL_GCS_G1_Young_Generation], Count, 3
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 17
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 3.803131991051454
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 3
+[TOTAL_GC_TIME], Time(ms), 17
+[TOTAL_GC_TIME_%], Time(%), 3.803131991051454
+[READ], Operations, 138
+[READ], AverageLatency(us), 4174.036231884058
+[READ], MinLatency(us), 116
+[READ], MaxLatency(us), 20783
+[READ], 95thPercentileLatency(us), 13887
+[READ], 99thPercentileLatency(us), 19679
+[READ], Return=OK, 138
+[READ], Return=ERROR, 92
+[DELETE], Operations, 3500
+[DELETE], AverageLatency(us), 394.5534285714286
+[DELETE], MinLatency(us), 39
+[DELETE], MaxLatency(us), 12447
+[DELETE], 95thPercentileLatency(us), 1431
+[DELETE], 99thPercentileLatency(us), 4247
+[DELETE], Return=OK, 3500
+[DELETE], Return=ERROR, 366
+[DELETE-FAILED], Operations, 366
+[DELETE-FAILED], AverageLatency(us), 319.08469945355193
+[DELETE-FAILED], MinLatency(us), 87
+[DELETE-FAILED], MaxLatency(us), 2503
+[DELETE-FAILED], 95thPercentileLatency(us), 1387
+[DELETE-FAILED], 99thPercentileLatency(us), 2401
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 348.875
+[CLEANUP], MinLatency(us), 71
+[CLEANUP], MaxLatency(us), 887
+[CLEANUP], 95thPercentileLatency(us), 887
+[CLEANUP], 99thPercentileLatency(us), 887
+[READ-FAILED], Operations, 92
+[READ-FAILED], AverageLatency(us), 270.4130434782609
+[READ-FAILED], MinLatency(us), 55
+[READ-FAILED], MaxLatency(us), 2163
+[READ-FAILED], 95thPercentileLatency(us), 907
+[READ-FAILED], 99thPercentileLatency(us), 2163
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=4096 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=4096 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:45:08:956 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:45:18:911 10 sec: 1467 operations; 146.69 current ops/sec; est completion in 18 seconds [INSERT: Count=1467, Max=40895, Min=179, Avg=6771.16, 90=12447, 99=18863, 99.9=26527, 99.99=40895] 
+Possibly lost 2629 samples
+Possibly lost 29931 samples
+Possibly lost 210 samples
+Possibly lost 580 samples
+Possibly lost 421 samples
+Possibly lost 133 samples
+Possibly lost 240 samples
+Possibly lost 575 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+2025-11-18 14:45:28:911 20 sec: 3155 operations; 168.82 current ops/sec; est completion in 6 second [INSERT: Count=1688, Max=15295, Min=120, Avg=5910.27, 90=11151, 99=13359, 99.9=15287, 99.99=15295] 
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 269 samples
+Possibly lost 670 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 3 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 10 samples
+Possibly lost 2 samples
+Possibly lost 7 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 5 samples
+Possibly lost 6 samples
+Possibly lost 3 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 5 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 3 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 3 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 1 samples
+Possibly lost 8 samples
+Possibly lost 3 samples
+Possibly lost 5 samples
+Possibly lost 4 samples
+Possibly lost 11147 samples
+Possibly lost 72481 samples
+2025-11-18 14:45:34:351 25 sec: 4096 operations; 172.98 current ops/sec; [CLEANUP: Count=1, Max=646, Min=646, Avg=646, 90=646, 99=646, 99.9=646, 99.99=646] [INSERT: Count=941, Max=20143, Min=141, Avg=5774.94, 90=10839, 99=13695, 99.9=20143, 99.99=20143] 
+[OVERALL], RunTime(ms), 25440
+[OVERALL], Throughput(ops/sec), 161.0062893081761
+[TOTAL_GCS_G1_Young_Generation], Count, 38
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 68
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.2672955974842767
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 38
+[TOTAL_GC_TIME], Time(ms), 68
+[TOTAL_GC_TIME_%], Time(%), 0.2672955974842767
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 646.0
+[CLEANUP], MinLatency(us), 646
+[CLEANUP], MaxLatency(us), 646
+[CLEANUP], 95thPercentileLatency(us), 646
+[CLEANUP], 99thPercentileLatency(us), 646
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6187.512451171875
+[INSERT], MinLatency(us), 120
+[INSERT], MaxLatency(us), 40895
+[INSERT], 95thPercentileLatency(us), 12591
+[INSERT], 99thPercentileLatency(us), 15471
+[INSERT], Return=OK, 4096
+OK
+(integer) 5694
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+Possibly lost 47134 samples
+Possibly lost 18314 samples
+Possibly lost 26900 samples
+Possibly lost 16 samples
+Possibly lost 96215 samples
+Possibly lost 96230 samples
+Possibly lost 6785 samples
+Possibly lost 16044 samples
+Possibly lost 1726 samples
+Possibly lost 10551 samples
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=8192 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=8192 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:45:43:298 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:45:43:705 0 sec: 4096 operations; 9102.22 current ops/sec; [READ: Count=119, Max=21935, Min=195, Avg=4796.97, 90=9775, 99=21679, 99.9=21935, 99.99=21935] [DELETE: Count=3188, Max=12647, Min=39, Avg=346.01, 90=698, 99=5975, 99.9=12447, 99.99=12647] [DELETE-FAILED: Count=689, Max=13407, Min=74, Avg=373.15, 90=795, 99=2475, 99.9=13407, 99.99=13407] [CLEANUP: Count=16, Max=1288, Min=54, Avg=602.69, 90=1179, 99=1288, 99.9=1288, 99.99=1288] [READ-FAILED: Count=100, Max=15119, Min=55, Avg=454.15, 90=526, 99=10559, 99.9=15119, 99.99=15119] 
+[OVERALL], RunTime(ms), 450
+[OVERALL], Throughput(ops/sec), 9102.222222222223
+[TOTAL_GCS_G1_Young_Generation], Count, 3
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 20
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 4.444444444444445
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 3
+[TOTAL_GC_TIME], Time(ms), 20
+[TOTAL_GC_TIME_%], Time(%), 4.444444444444445
+[READ], Operations, 119
+[READ], AverageLatency(us), 4796.9747899159665
+[READ], MinLatency(us), 195
+[READ], MaxLatency(us), 21935
+[READ], 95thPercentileLatency(us), 17007
+[READ], 99thPercentileLatency(us), 21679
+[READ], Return=OK, 119
+[READ], Return=ERROR, 100
+[DELETE], Operations, 3188
+[DELETE], AverageLatency(us), 346.0144291091593
+[DELETE], MinLatency(us), 39
+[DELETE], MaxLatency(us), 12647
+[DELETE], 95thPercentileLatency(us), 1074
+[DELETE], 99thPercentileLatency(us), 5975
+[DELETE], Return=OK, 3188
+[DELETE], Return=ERROR, 689
+[DELETE-FAILED], Operations, 689
+[DELETE-FAILED], AverageLatency(us), 373.1509433962264
+[DELETE-FAILED], MinLatency(us), 74
+[DELETE-FAILED], MaxLatency(us), 13407
+[DELETE-FAILED], 95thPercentileLatency(us), 1218
+[DELETE-FAILED], 99thPercentileLatency(us), 2475
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 602.6875
+[CLEANUP], MinLatency(us), 54
+[CLEANUP], MaxLatency(us), 1288
+[CLEANUP], 95thPercentileLatency(us), 1288
+[CLEANUP], 99thPercentileLatency(us), 1288
+[READ-FAILED], Operations, 100
+[READ-FAILED], AverageLatency(us), 454.15
+[READ-FAILED], MinLatency(us), 55
+[READ-FAILED], MaxLatency(us), 15119
+[READ-FAILED], 95thPercentileLatency(us), 989
+[READ-FAILED], 99thPercentileLatency(us), 10559
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=8192 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=8192 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:45:51:943 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:46:01:901 10 sec: 1481 operations; 148.09 current ops/sec; est completion in 18 seconds [INSERT: Count=1481, Max=23951, Min=178, Avg=6700.78, 90=12383, 99=21119, 99.9=23455, 99.99=23951] 
+2025-11-18 14:46:11:901 20 sec: 3117 operations; 163.62 current ops/sec; est completion in 7 second [INSERT: Count=1636, Max=14479, Min=180, Avg=6102.08, 90=11375, 99=13295, 99.9=14415, 99.99=14479] 
+2025-11-18 14:46:17:820 25 sec: 4096 operations; 165.37 current ops/sec; [CLEANUP: Count=1, Max=677, Min=677, Avg=677, 90=677, 99=677, 99.9=677, 99.99=677] [INSERT: Count=979, Max=19679, Min=125, Avg=6033.49, 90=11423, 99=13487, 99.9=19679, 99.99=19679] 
+[OVERALL], RunTime(ms), 25920
+[OVERALL], Throughput(ops/sec), 158.02469135802468
+[TOTAL_GCS_G1_Young_Generation], Count, 38
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 65
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.2507716049382716
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 38
+[TOTAL_GC_TIME], Time(ms), 65
+[TOTAL_GC_TIME_%], Time(%), 0.2507716049382716
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 677.0
+[CLEANUP], MinLatency(us), 677
+[CLEANUP], MaxLatency(us), 677
+[CLEANUP], 95thPercentileLatency(us), 677
+[CLEANUP], 99thPercentileLatency(us), 677
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6302.15966796875
+[INSERT], MinLatency(us), 125
+[INSERT], MaxLatency(us), 23951
+[INSERT], 95thPercentileLatency(us), 12687
+[INSERT], 99thPercentileLatency(us), 15687
+[INSERT], Return=OK, 4096
+OK
+(integer) 7661
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=12288 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=12288 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:46:26:141 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:46:26:541 0 sec: 4096 operations; 9163.31 current ops/sec; [READ: Count=117, Max=21519, Min=149, Avg=4506.48, 90=8511, 99=21263, 99.9=21519, 99.99=21519] [DELETE: Count=3101, Max=15815, Min=33, Avg=289.79, 90=545, 99=2477, 99.9=14591, 99.99=15815] [DELETE-FAILED: Count=781, Max=15639, Min=64, Avg=356.7, 90=753, 99=2241, 99.9=15639, 99.99=15639] [CLEANUP: Count=16, Max=888, Min=61, Avg=250.38, 90=710, 99=888, 99.9=888, 99.99=888] [READ-FAILED: Count=97, Max=9255, Min=45, Avg=625.51, 90=795, 99=9255, 99.9=9255, 99.99=9255] 
+[OVERALL], RunTime(ms), 447
+[OVERALL], Throughput(ops/sec), 9163.31096196868
+[TOTAL_GCS_G1_Young_Generation], Count, 3
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 19
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 4.250559284116331
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 3
+[TOTAL_GC_TIME], Time(ms), 19
+[TOTAL_GC_TIME_%], Time(%), 4.250559284116331
+[READ], Operations, 117
+[READ], AverageLatency(us), 4506.478632478633
+[READ], MinLatency(us), 149
+[READ], MaxLatency(us), 21519
+[READ], 95thPercentileLatency(us), 13359
+[READ], 99thPercentileLatency(us), 21263
+[READ], Return=OK, 117
+[READ], Return=ERROR, 97
+[DELETE], Operations, 3101
+[DELETE], AverageLatency(us), 289.78781038374717
+[DELETE], MinLatency(us), 33
+[DELETE], MaxLatency(us), 15815
+[DELETE], 95thPercentileLatency(us), 951
+[DELETE], 99thPercentileLatency(us), 2477
+[DELETE], Return=OK, 3101
+[DELETE], Return=ERROR, 781
+[DELETE-FAILED], Operations, 781
+[DELETE-FAILED], AverageLatency(us), 356.6991037131882
+[DELETE-FAILED], MinLatency(us), 64
+[DELETE-FAILED], MaxLatency(us), 15639
+[DELETE-FAILED], 95thPercentileLatency(us), 1082
+[DELETE-FAILED], 99thPercentileLatency(us), 2241
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 250.375
+[CLEANUP], MinLatency(us), 61
+[CLEANUP], MaxLatency(us), 888
+[CLEANUP], 95thPercentileLatency(us), 888
+[CLEANUP], 99thPercentileLatency(us), 888
+[READ-FAILED], Operations, 97
+[READ-FAILED], AverageLatency(us), 625.5051546391752
+[READ-FAILED], MinLatency(us), 45
+[READ-FAILED], MaxLatency(us), 9255
+[READ-FAILED], 95thPercentileLatency(us), 7363
+[READ-FAILED], 99thPercentileLatency(us), 9255
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=12288 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=12288 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:46:34:706 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:46:44:659 10 sec: 1496 operations; 149.6 current ops/sec; est completion in 18 seconds [INSERT: Count=1497, Max=28847, Min=152, Avg=6635.1, 90=12007, 99=19583, 99.9=23407, 99.99=28847] 
+Possibly lost 9329 samples
+Possibly lost 1735 samples
+Possibly lost 21660 samples
+2025-11-18 14:46:54:659 20 sec: 3138 operations; 164.2 current ops/sec; est completion in 7 second [INSERT: Count=1641, Max=15039, Min=115, Avg=6080.06, 90=11311, 99=13695, 99.9=14743, 99.99=15039] 
+Possibly lost 34347 samples
+Possibly lost 197924 samples
+Possibly lost 1721 samples
+Possibly lost 11199 samples
+Possibly lost 34831 samples
+Possibly lost 9570 samples
+Possibly lost 22516 samples
+Possibly lost 22040 samples
+Possibly lost 27516 samples
+Possibly lost 6770 samples
+Possibly lost 22693 samples
+Possibly lost 21975 samples
+2025-11-18 14:47:00:478 25 sec: 4096 operations; 164.63 current ops/sec; [CLEANUP: Count=1, Max=707, Min=707, Avg=707, 90=707, 99=707, 99.9=707, 99.99=707] [INSERT: Count=958, Max=15151, Min=133, Avg=6065.51, 90=11295, 99=13599, 99.9=15151, 99.99=15151] 
+[OVERALL], RunTime(ms), 25819
+[OVERALL], Throughput(ops/sec), 158.64285990936907
+[TOTAL_GCS_G1_Young_Generation], Count, 38
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 58
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.22464076842635267
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 38
+[TOTAL_GC_TIME], Time(ms), 58
+[TOTAL_GC_TIME_%], Time(%), 0.22464076842635267
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 707.0
+[CLEANUP], MinLatency(us), 707
+[CLEANUP], MaxLatency(us), 707
+[CLEANUP], 95thPercentileLatency(us), 707
+[CLEANUP], 99thPercentileLatency(us), 707
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6279.51220703125
+[INSERT], MinLatency(us), 115
+[INSERT], MaxLatency(us), 28847
+[INSERT], 95thPercentileLatency(us), 12615
+[INSERT], 99thPercentileLatency(us), 15199
+[INSERT], Return=OK, 4096
+OK
+(integer) 9652
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=16384 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=16384 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:47:08:552 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:47:08:952 0 sec: 4096 operations; 9225.23 current ops/sec; [READ: Count=122, Max=19631, Min=142, Avg=3849.16, 90=7359, 99=15407, 99.9=19631, 99.99=19631] [DELETE: Count=3036, Max=10647, Min=32, Avg=287.49, 90=676, 99=2229, 99.9=10135, 99.99=10647] [DELETE-FAILED: Count=848, Max=10799, Min=69, Avg=364.95, 90=891, 99=2357, 99.9=10799, 99.99=10799] [CLEANUP: Count=16, Max=1281, Min=91, Avg=547.56, 90=1131, 99=1281, 99.9=1281, 99.99=1281] [READ-FAILED: Count=90, Max=11599, Min=53, Avg=345.9, 90=606, 99=11599, 99.9=11599, 99.99=11599] 
+[OVERALL], RunTime(ms), 445
+[OVERALL], Throughput(ops/sec), 9204.494382022473
+[TOTAL_GCS_G1_Young_Generation], Count, 3
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 13
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 2.9213483146067416
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 3
+[TOTAL_GC_TIME], Time(ms), 13
+[TOTAL_GC_TIME_%], Time(%), 2.9213483146067416
+[READ], Operations, 122
+[READ], AverageLatency(us), 3849.1639344262294
+[READ], MinLatency(us), 142
+[READ], MaxLatency(us), 19631
+[READ], 95thPercentileLatency(us), 8959
+[READ], 99thPercentileLatency(us), 15407
+[READ], Return=OK, 122
+[READ], Return=ERROR, 90
+[DELETE], Operations, 3036
+[DELETE], AverageLatency(us), 287.49110671936756
+[DELETE], MinLatency(us), 32
+[DELETE], MaxLatency(us), 10647
+[DELETE], 95thPercentileLatency(us), 1077
+[DELETE], 99thPercentileLatency(us), 2229
+[DELETE], Return=OK, 3036
+[DELETE], Return=ERROR, 848
+[DELETE-FAILED], Operations, 848
+[DELETE-FAILED], AverageLatency(us), 364.95400943396226
+[DELETE-FAILED], MinLatency(us), 69
+[DELETE-FAILED], MaxLatency(us), 10799
+[DELETE-FAILED], 95thPercentileLatency(us), 1284
+[DELETE-FAILED], 99thPercentileLatency(us), 2357
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 547.5625
+[CLEANUP], MinLatency(us), 91
+[CLEANUP], MaxLatency(us), 1281
+[CLEANUP], 95thPercentileLatency(us), 1281
+[CLEANUP], 99thPercentileLatency(us), 1281
+[READ-FAILED], Operations, 90
+[READ-FAILED], AverageLatency(us), 345.9
+[READ-FAILED], MinLatency(us), 53
+[READ-FAILED], MaxLatency(us), 11599
+[READ-FAILED], 95thPercentileLatency(us), 1099
+[READ-FAILED], 99thPercentileLatency(us), 11599
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=16384 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=16384 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:47:17:336 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:47:27:293 10 sec: 1395 operations; 139.5 current ops/sec; est completion in 20 seconds [INSERT: Count=1395, Max=38367, Min=177, Avg=7117.57, 90=12775, 99=20255, 99.9=27295, 99.99=38367] 
+2025-11-18 14:47:37:293 20 sec: 2996 operations; 160.1 current ops/sec; est completion in 8 second [INSERT: Count=1601, Max=15495, Min=133, Avg=6235.39, 90=11679, 99=13703, 99.9=15223, 99.99=15495] 
+2025-11-18 14:47:43:855 26 sec: 4096 operations; 167.66 current ops/sec; [CLEANUP: Count=1, Max=757, Min=757, Avg=757, 90=757, 99=757, 99.9=757, 99.99=757] [INSERT: Count=1100, Max=17999, Min=123, Avg=5958.01, 90=11167, 99=13727, 99.9=16103, 99.99=17999] 
+[OVERALL], RunTime(ms), 26561
+[OVERALL], Throughput(ops/sec), 154.2110613305222
+[TOTAL_GCS_G1_Young_Generation], Count, 39
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 58
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.21836527239185272
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 39
+[TOTAL_GC_TIME], Time(ms), 58
+[TOTAL_GC_TIME_%], Time(%), 0.21836527239185272
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 757.0
+[CLEANUP], MinLatency(us), 757
+[CLEANUP], MaxLatency(us), 757
+[CLEANUP], 95thPercentileLatency(us), 757
+[CLEANUP], 99thPercentileLatency(us), 757
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6461.343994140625
+[INSERT], MinLatency(us), 123
+[INSERT], MaxLatency(us), 38367
+[INSERT], 95thPercentileLatency(us), 12903
+[INSERT], 99thPercentileLatency(us), 16447
+[INSERT], Return=OK, 4096
+OK
+(integer) 11684
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=20480 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=20480 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:47:51:945 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:47:52:341 0 sec: 4096 operations; 9163.31 current ops/sec; [READ: Count=96, Max=24575, Min=124, Avg=4744.74, 90=7963, 99=24575, 99.9=24575, 99.99=24575] [DELETE: Count=3034, Max=11175, Min=34, Avg=243.61, 90=449, 99=1701, 99.9=10359, 99.99=11175] [DELETE-FAILED: Count=863, Max=11383, Min=70, Avg=305.36, 90=673, 99=1754, 99.9=11383, 99.99=11383] [CLEANUP: Count=16, Max=995, Min=54, Avg=347.12, 90=945, 99=995, 99.9=995, 99.99=995] [READ-FAILED: Count=103, Max=1356, Min=52, Avg=202.19, 90=512, 99=1206, 99.9=1356, 99.99=1356] 
+[OVERALL], RunTime(ms), 447
+[OVERALL], Throughput(ops/sec), 9163.31096196868
+[TOTAL_GCS_G1_Young_Generation], Count, 2
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 11
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 2.460850111856823
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 2
+[TOTAL_GC_TIME], Time(ms), 11
+[TOTAL_GC_TIME_%], Time(%), 2.460850111856823
+[READ], Operations, 96
+[READ], AverageLatency(us), 4744.739583333333
+[READ], MinLatency(us), 124
+[READ], MaxLatency(us), 24575
+[READ], 95thPercentileLatency(us), 13927
+[READ], 99thPercentileLatency(us), 24575
+[READ], Return=OK, 96
+[READ], Return=ERROR, 103
+[DELETE], Operations, 3034
+[DELETE], AverageLatency(us), 243.6054713249835
+[DELETE], MinLatency(us), 34
+[DELETE], MaxLatency(us), 11175
+[DELETE], 95thPercentileLatency(us), 771
+[DELETE], 99thPercentileLatency(us), 1701
+[DELETE], Return=OK, 3034
+[DELETE], Return=ERROR, 863
+[DELETE-FAILED], Operations, 863
+[DELETE-FAILED], AverageLatency(us), 305.3592120509849
+[DELETE-FAILED], MinLatency(us), 70
+[DELETE-FAILED], MaxLatency(us), 11383
+[DELETE-FAILED], 95thPercentileLatency(us), 1030
+[DELETE-FAILED], 99thPercentileLatency(us), 1754
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 347.125
+[CLEANUP], MinLatency(us), 54
+[CLEANUP], MaxLatency(us), 995
+[CLEANUP], 95thPercentileLatency(us), 995
+[CLEANUP], 99thPercentileLatency(us), 995
+[READ-FAILED], Operations, 103
+[READ-FAILED], AverageLatency(us), 202.19417475728156
+[READ-FAILED], MinLatency(us), 52
+[READ-FAILED], MaxLatency(us), 1356
+[READ-FAILED], 95thPercentileLatency(us), 728
+[READ-FAILED], 99thPercentileLatency(us), 1206
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=20480 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=20480 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Possibly lost 1489 samples
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:48:00:648 0 sec: 0 operations; est completion in 0 second 
+Possibly lost 14136 samples
+Possibly lost 79906 samples
+Possibly lost 24394 samples
+Possibly lost 2598 samples
+2025-11-18 14:48:10:598 10 sec: 1531 operations; 153.1 current ops/sec; est completion in 17 seconds [INSERT: Count=1532, Max=25423, Min=135, Avg=6475.31, 90=11799, 99=17807, 99.9=24719, 99.99=25423] 
+Possibly lost 14249 samples
+Possibly lost 68666 samples
+Possibly lost 4881 samples
+Possibly lost 9875 samples
+Possibly lost 1326 samples
+Possibly lost 57020 samples
+Possibly lost 1037 samples
+Possibly lost 26301 samples
+Possibly lost 830 samples
+2025-11-18 14:48:20:598 20 sec: 3187 operations; 165.6 current ops/sec; est completion in 6 second [INSERT: Count=1655, Max=15215, Min=149, Avg=6027.15, 90=11175, 99=13559, 99.9=15095, 99.99=15215] 
+2025-11-18 14:48:26:353 25 sec: 4096 operations; 157.95 current ops/sec; [CLEANUP: Count=1, Max=699, Min=699, Avg=699, 90=699, 99=699, 99.9=699, 99.99=699] [INSERT: Count=909, Max=16383, Min=109, Avg=6328.54, 90=11695, 99=13759, 99.9=16383, 99.99=16383] 
+[OVERALL], RunTime(ms), 25755
+[OVERALL], Throughput(ops/sec), 159.0370801786061
+[TOTAL_GCS_G1_Young_Generation], Count, 38
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 61
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.23684721413317805
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 38
+[TOTAL_GC_TIME], Time(ms), 61
+[TOTAL_GC_TIME_%], Time(%), 0.23684721413317805
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 699.0
+[CLEANUP], MinLatency(us), 699
+[CLEANUP], MaxLatency(us), 699
+[CLEANUP], 95thPercentileLatency(us), 699
+[CLEANUP], 99thPercentileLatency(us), 699
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6261.657958984375
+[INSERT], MinLatency(us), 109
+[INSERT], MaxLatency(us), 25423
+[INSERT], 95thPercentileLatency(us), 12527
+[INSERT], 99thPercentileLatency(us), 14711
+[INSERT], Return=OK, 4096
+OK
+(integer) 13767
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=24576 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=24576 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:48:34:551 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:48:34:953 0 sec: 4096 operations; 9183.86 current ops/sec; [READ: Count=108, Max=21391, Min=223, Avg=4578.04, 90=8295, 99=18079, 99.9=21391, 99.99=21391] [DELETE: Count=3053, Max=14015, Min=35, Avg=270.98, 90=515, 99=1792, 99.9=12647, 99.99=14015] [DELETE-FAILED: Count=827, Max=13879, Min=70, Avg=401.82, 90=762, 99=9119, 99.9=13879, 99.99=13879] [CLEANUP: Count=16, Max=891, Min=55, Avg=338, 90=876, 99=891, 99.9=891, 99.99=891] [READ-FAILED: Count=108, Max=1297, Min=60, Avg=204.75, 90=532, 99=1271, 99.9=1297, 99.99=1297] 
+[OVERALL], RunTime(ms), 447
+[OVERALL], Throughput(ops/sec), 9163.31096196868
+[TOTAL_GCS_G1_Young_Generation], Count, 3
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 13
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 2.9082774049217
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 3
+[TOTAL_GC_TIME], Time(ms), 13
+[TOTAL_GC_TIME_%], Time(%), 2.9082774049217
+[READ], Operations, 108
+[READ], AverageLatency(us), 4578.037037037037
+[READ], MinLatency(us), 223
+[READ], MaxLatency(us), 21391
+[READ], 95thPercentileLatency(us), 16943
+[READ], 99thPercentileLatency(us), 18079
+[READ], Return=OK, 108
+[READ], Return=ERROR, 108
+[DELETE], Operations, 3053
+[DELETE], AverageLatency(us), 270.9760890926957
+[DELETE], MinLatency(us), 35
+[DELETE], MaxLatency(us), 14015
+[DELETE], 95thPercentileLatency(us), 916
+[DELETE], 99thPercentileLatency(us), 1792
+[DELETE], Return=OK, 3053
+[DELETE], Return=ERROR, 827
+[DELETE-FAILED], Operations, 827
+[DELETE-FAILED], AverageLatency(us), 401.8186215235792
+[DELETE-FAILED], MinLatency(us), 70
+[DELETE-FAILED], MaxLatency(us), 13879
+[DELETE-FAILED], 95thPercentileLatency(us), 1084
+[DELETE-FAILED], 99thPercentileLatency(us), 9119
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 338.0
+[CLEANUP], MinLatency(us), 55
+[CLEANUP], MaxLatency(us), 891
+[CLEANUP], 95thPercentileLatency(us), 891
+[CLEANUP], 99thPercentileLatency(us), 891
+[READ-FAILED], Operations, 108
+[READ-FAILED], AverageLatency(us), 204.75
+[READ-FAILED], MinLatency(us), 60
+[READ-FAILED], MaxLatency(us), 1297
+[READ-FAILED], 95thPercentileLatency(us), 876
+[READ-FAILED], 99thPercentileLatency(us), 1271
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=24576 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=24576 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:48:43:093 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:48:53:049 10 sec: 1476 operations; 147.6 current ops/sec; est completion in 18 seconds [INSERT: Count=1476, Max=30527, Min=127, Avg=6723.45, 90=12151, 99=20079, 99.9=25087, 99.99=30527] 
+2025-11-18 14:49:03:049 20 sec: 3120 operations; 164.4 current ops/sec; est completion in 7 second [INSERT: Count=1644, Max=16751, Min=190, Avg=6070, 90=11191, 99=13655, 99.9=15991, 99.99=16751] 
+2025-11-18 14:49:09:178 26 sec: 4096 operations; 159.24 current ops/sec; [CLEANUP: Count=1, Max=661, Min=661, Avg=661, 90=661, 99=661, 99.9=661, 99.99=661] [INSERT: Count=976, Max=15735, Min=131, Avg=6272.67, 90=11631, 99=14127, 99.9=15735, 99.99=15735] 
+[OVERALL], RunTime(ms), 26129
+[OVERALL], Throughput(ops/sec), 156.76068735887327
+[TOTAL_GCS_G1_Young_Generation], Count, 38
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 65
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.248765739216962
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 38
+[TOTAL_GC_TIME], Time(ms), 65
+[TOTAL_GC_TIME_%], Time(%), 0.248765739216962
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 661.0
+[CLEANUP], MinLatency(us), 661
+[CLEANUP], MaxLatency(us), 661
+[CLEANUP], 95thPercentileLatency(us), 661
+[CLEANUP], 99thPercentileLatency(us), 661
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6353.762939453125
+[INSERT], MinLatency(us), 127
+[INSERT], MaxLatency(us), 30527
+[INSERT], 95thPercentileLatency(us), 12759
+[INSERT], 99thPercentileLatency(us), 15647
+[INSERT], Return=OK, 4096
+OK
+(integer) 15784
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=28672 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=28672 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:49:17:263 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:49:17:665 0 sec: 4096 operations; 9163.31 current ops/sec; [READ: Count=100, Max=23119, Min=348, Avg=4502.83, 90=8075, 99=20463, 99.9=23119, 99.99=23119] [DELETE: Count=2980, Max=13111, Min=33, Avg=266.41, 90=521, 99=1785, 99.9=12679, 99.99=13111] [DELETE-FAILED: Count=910, Max=8183, Min=71, Avg=301.94, 90=608, 99=1730, 99.9=8183, 99.99=8183] [CLEANUP: Count=16, Max=1021, Min=63, Avg=373.19, 90=862, 99=1021, 99.9=1021, 99.99=1021] [READ-FAILED: Count=106, Max=1134, Min=49, Avg=152.66, 90=226, 99=954, 99.9=1134, 99.99=1134] 
+[OVERALL], RunTime(ms), 447
+[OVERALL], Throughput(ops/sec), 9163.31096196868
+[TOTAL_GCS_G1_Young_Generation], Count, 2
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 14
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 3.131991051454139
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 2
+[TOTAL_GC_TIME], Time(ms), 14
+[TOTAL_GC_TIME_%], Time(%), 3.131991051454139
+[READ], Operations, 100
+[READ], AverageLatency(us), 4502.83
+[READ], MinLatency(us), 348
+[READ], MaxLatency(us), 23119
+[READ], 95thPercentileLatency(us), 11287
+[READ], 99thPercentileLatency(us), 20463
+[READ], Return=OK, 100
+[READ], Return=ERROR, 106
+[DELETE], Operations, 2980
+[DELETE], AverageLatency(us), 266.410067114094
+[DELETE], MinLatency(us), 33
+[DELETE], MaxLatency(us), 13111
+[DELETE], 95thPercentileLatency(us), 874
+[DELETE], 99thPercentileLatency(us), 1785
+[DELETE], Return=OK, 2980
+[DELETE], Return=ERROR, 910
+[DELETE-FAILED], Operations, 910
+[DELETE-FAILED], AverageLatency(us), 301.9384615384615
+[DELETE-FAILED], MinLatency(us), 71
+[DELETE-FAILED], MaxLatency(us), 8183
+[DELETE-FAILED], 95thPercentileLatency(us), 974
+[DELETE-FAILED], 99thPercentileLatency(us), 1730
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 373.1875
+[CLEANUP], MinLatency(us), 63
+[CLEANUP], MaxLatency(us), 1021
+[CLEANUP], 95thPercentileLatency(us), 1021
+[CLEANUP], 99thPercentileLatency(us), 1021
+[READ-FAILED], Operations, 106
+[READ-FAILED], AverageLatency(us), 152.66037735849056
+[READ-FAILED], MinLatency(us), 49
+[READ-FAILED], MaxLatency(us), 1134
+[READ-FAILED], 95thPercentileLatency(us), 534
+[READ-FAILED], 99thPercentileLatency(us), 954
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+Possibly lost 3126 samples
+Possibly lost 1076 samples
+Possibly lost 2203 samples
+Possibly lost 2464 samples
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=28672 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=28672 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:49:25:930 0 sec: 0 operations; est completion in 0 second 
+Possibly lost 6839 samples
+Possibly lost 1917 samples
+Possibly lost 75915 samples
+Possibly lost 4323 samples
+Possibly lost 16830 samples
+Possibly lost 1459 samples
+Possibly lost 32110 samples
+Possibly lost 10 samples
+Possibly lost 2 samples
+Possibly lost 945 samples
+Possibly lost 6 samples
+Possibly lost 3 samples
+Possibly lost 2 samples
+Possibly lost 1058 samples
+Possibly lost 166 samples
+Possibly lost 14118 samples
+Possibly lost 16624 samples
+2025-11-18 14:49:35:885 10 sec: 1419 operations; 141.9 current ops/sec; est completion in 19 seconds [INSERT: Count=1420, Max=38143, Min=158, Avg=6994.27, 90=12511, 99=19151, 99.9=25711, 99.99=38143] 
+2025-11-18 14:49:45:885 20 sec: 3038 operations; 161.9 current ops/sec; est completion in 7 second [INSERT: Count=1618, Max=17039, Min=124, Avg=6168.41, 90=11623, 99=13935, 99.9=16479, 99.99=17039] 
+2025-11-18 14:49:52:236 26 sec: 4096 operations; 166.56 current ops/sec; [CLEANUP: Count=1, Max=912, Min=912, Avg=912, 90=912, 99=912, 99.9=912, 99.99=912] [INSERT: Count=1058, Max=15815, Min=148, Avg=5994.21, 90=11247, 99=13551, 99.9=14927, 99.99=15815] 
+[OVERALL], RunTime(ms), 26352
+[OVERALL], Throughput(ops/sec), 155.4341226472374
+[TOTAL_GCS_G1_Young_Generation], Count, 38
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 65
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.24666059502125073
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 38
+[TOTAL_GC_TIME], Time(ms), 65
+[TOTAL_GC_TIME_%], Time(%), 0.24666059502125073
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 912.0
+[CLEANUP], MinLatency(us), 912
+[CLEANUP], MaxLatency(us), 912
+[CLEANUP], 95thPercentileLatency(us), 912
+[CLEANUP], 99thPercentileLatency(us), 912
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6409.723388671875
+[INSERT], MinLatency(us), 124
+[INSERT], MaxLatency(us), 38143
+[INSERT], 95thPercentileLatency(us), 12847
+[INSERT], 99thPercentileLatency(us), 15535
+[INSERT], Return=OK, 4096
+OK
+(integer) 17897
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=32768 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=32768 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:50:00:392 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:50:00:797 0 sec: 4096 operations; 9061.95 current ops/sec; [READ: Count=95, Max=17343, Min=189, Avg=4947.56, 90=10047, 99=17343, 99.9=17343, 99.99=17343] [DELETE: Count=3010, Max=9287, Min=37, Avg=275.95, 90=593, 99=2117, 99.9=9111, 99.99=9287] [DELETE-FAILED: Count=893, Max=9279, Min=71, Avg=335.55, 90=769, 99=2263, 99.9=9279, 99.99=9279] [CLEANUP: Count=16, Max=1387, Min=58, Avg=1021.19, 90=1356, 99=1387, 99.9=1387, 99.99=1387] [READ-FAILED: Count=98, Max=14983, Min=47, Avg=367.71, 90=612, 99=14983, 99.9=14983, 99.99=14983] 
+[OVERALL], RunTime(ms), 452
+[OVERALL], Throughput(ops/sec), 9061.946902654867
+[TOTAL_GCS_G1_Young_Generation], Count, 3
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 15
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 3.3185840707964607
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 3
+[TOTAL_GC_TIME], Time(ms), 15
+[TOTAL_GC_TIME_%], Time(%), 3.3185840707964607
+[READ], Operations, 95
+[READ], AverageLatency(us), 4947.557894736842
+[READ], MinLatency(us), 189
+[READ], MaxLatency(us), 17343
+[READ], 95thPercentileLatency(us), 12511
+[READ], 99thPercentileLatency(us), 17343
+[READ], Return=OK, 95
+[READ], Return=ERROR, 98
+[DELETE], Operations, 3010
+[DELETE], AverageLatency(us), 275.95448504983386
+[DELETE], MinLatency(us), 37
+[DELETE], MaxLatency(us), 9287
+[DELETE], 95thPercentileLatency(us), 926
+[DELETE], 99thPercentileLatency(us), 2117
+[DELETE], Return=OK, 3010
+[DELETE], Return=ERROR, 893
+[DELETE-FAILED], Operations, 893
+[DELETE-FAILED], AverageLatency(us), 335.54759238521837
+[DELETE-FAILED], MinLatency(us), 71
+[DELETE-FAILED], MaxLatency(us), 9279
+[DELETE-FAILED], 95thPercentileLatency(us), 1299
+[DELETE-FAILED], 99thPercentileLatency(us), 2263
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 1021.1875
+[CLEANUP], MinLatency(us), 58
+[CLEANUP], MaxLatency(us), 1387
+[CLEANUP], 95thPercentileLatency(us), 1387
+[CLEANUP], 99thPercentileLatency(us), 1387
+[READ-FAILED], Operations, 98
+[READ-FAILED], AverageLatency(us), 367.7142857142857
+[READ-FAILED], MinLatency(us), 47
+[READ-FAILED], MaxLatency(us), 14983
+[READ-FAILED], 95thPercentileLatency(us), 1146
+[READ-FAILED], 99thPercentileLatency(us), 14983
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=32768 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=32768 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:50:09:067 0 sec: 0 operations; est completion in 0 second 
+Possibly lost 18300 samples
+2025-11-18 14:50:19:026 10 sec: 1498 operations; 149.8 current ops/sec; est completion in 18 seconds [INSERT: Count=1498, Max=36799, Min=131, Avg=6628.58, 90=12071, 99=19135, 99.9=28975, 99.99=36799] 
+2025-11-18 14:50:29:026 20 sec: 3144 operations; 164.6 current ops/sec; est completion in 7 second [INSERT: Count=1646, Max=17119, Min=117, Avg=6062.91, 90=11439, 99=14015, 99.9=15631, 99.99=17119] 
+Possibly lost 382 samples
+Possibly lost 406 samples
+Possibly lost 20 samples
+Possibly lost 149 samples
+Possibly lost 145 samples
+Possibly lost 548 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 249 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 1 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 15 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 124 samples
+Possibly lost 332 samples
+Possibly lost 70 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 15 samples
+Possibly lost 2 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 139 samples
+Possibly lost 444 samples
+Possibly lost 155 samples
+Possibly lost 1 samples
+Possibly lost 528 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 4 samples
+Possibly lost 162 samples
+Possibly lost 238 samples
+Possibly lost 53 samples
+Possibly lost 43 samples
+Possibly lost 247 samples
+2025-11-18 14:50:35:088 26 sec: 4096 operations; 157.07 current ops/sec; [CLEANUP: Count=1, Max=722, Min=722, Avg=722, 90=722, 99=722, 99.9=722, 99.99=722] [INSERT: Count=952, Max=15903, Min=127, Avg=6357.93, 90=11527, 99=13823, 99.9=15903, 99.99=15903] 
+[OVERALL], RunTime(ms), 26061
+[OVERALL], Throughput(ops/sec), 157.16971720194928
+[TOTAL_GCS_G1_Young_Generation], Count, 38
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 58
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.22255477533479145
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 38
+[TOTAL_GC_TIME], Time(ms), 58
+[TOTAL_GC_TIME_%], Time(%), 0.22255477533479145
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 722.0
+[CLEANUP], MinLatency(us), 722
+[CLEANUP], MaxLatency(us), 722
+[CLEANUP], 95thPercentileLatency(us), 722
+[CLEANUP], 99thPercentileLatency(us), 722
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6338.357666015625
+[INSERT], MinLatency(us), 117
+[INSERT], MaxLatency(us), 36799
+[INSERT], 95thPercentileLatency(us), 12743
+[INSERT], 99thPercentileLatency(us), 15895
+[INSERT], Return=OK, 4096
+OK
+(integer) 19988
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+Possibly lost 12524 samples
+Possibly lost 6519 samples
+Possibly lost 11287 samples
+Possibly lost 4018 samples
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=36864 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=36864 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:50:43:511 0 sec: 0 operations; est completion in 0 second 
+Possibly lost 63295 samples
+Possibly lost 30567 samples
+Possibly lost 2859 samples
+Possibly lost 17264 samples
+Possibly lost 74505 samples
+Possibly lost 11340 samples
+Possibly lost 7494 samples
+Possibly lost 8430 samples
+Possibly lost 6802 samples
+2025-11-18 14:50:43:916 0 sec: 4096 operations; 9183.86 current ops/sec; [READ: Count=102, Max=16343, Min=120, Avg=3809.15, 90=7147, 99=14495, 99.9=16343, 99.99=16343] [DELETE: Count=3007, Max=9999, Min=32, Avg=230.57, 90=429, 99=1758, 99.9=9279, 99.99=9999] [DELETE-FAILED: Count=894, Max=9447, Min=73, Avg=287.77, 90=544, 99=2207, 99.9=9447, 99.99=9447] [CLEANUP: Count=16, Max=933, Min=55, Avg=359.88, 90=917, 99=933, 99.9=933, 99.99=933] [READ-FAILED: Count=93, Max=15343, Min=45, Avg=327.7, 90=264, 99=15343, 99.9=15343, 99.99=15343] 
+[OVERALL], RunTime(ms), 446
+[OVERALL], Throughput(ops/sec), 9183.856502242152
+[TOTAL_GCS_G1_Young_Generation], Count, 2
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 11
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 2.4663677130044843
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 2
+[TOTAL_GC_TIME], Time(ms), 11
+[TOTAL_GC_TIME_%], Time(%), 2.4663677130044843
+[READ], Operations, 102
+[READ], AverageLatency(us), 3809.1470588235293
+[READ], MinLatency(us), 120
+[READ], MaxLatency(us), 16343
+[READ], 95thPercentileLatency(us), 8351
+[READ], 99thPercentileLatency(us), 14495
+[READ], Return=OK, 102
+[READ], Return=ERROR, 93
+[DELETE], Operations, 3007
+[DELETE], AverageLatency(us), 230.56800798137678
+[DELETE], MinLatency(us), 32
+[DELETE], MaxLatency(us), 9999
+[DELETE], 95thPercentileLatency(us), 716
+[DELETE], 99thPercentileLatency(us), 1758
+[DELETE], Return=OK, 3007
+[DELETE], Return=ERROR, 894
+[DELETE-FAILED], Operations, 894
+[DELETE-FAILED], AverageLatency(us), 287.7673378076063
+[DELETE-FAILED], MinLatency(us), 73
+[DELETE-FAILED], MaxLatency(us), 9447
+[DELETE-FAILED], 95thPercentileLatency(us), 894
+[DELETE-FAILED], 99thPercentileLatency(us), 2207
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 359.875
+[CLEANUP], MinLatency(us), 55
+[CLEANUP], MaxLatency(us), 933
+[CLEANUP], 95thPercentileLatency(us), 933
+[CLEANUP], 99thPercentileLatency(us), 933
+[READ-FAILED], Operations, 93
+[READ-FAILED], AverageLatency(us), 327.6989247311828
+[READ-FAILED], MinLatency(us), 45
+[READ-FAILED], MaxLatency(us), 15343
+[READ-FAILED], 95thPercentileLatency(us), 552
+[READ-FAILED], 99thPercentileLatency(us), 15343
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=36864 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=36864 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:50:52:184 0 sec: 0 operations; est completion in 0 second 
+Possibly lost 5417 samples
+2025-11-18 14:51:02:141 10 sec: 1466 operations; 146.6 current ops/sec; est completion in 18 seconds [INSERT: Count=1466, Max=33727, Min=138, Avg=6772.88, 90=12383, 99=18415, 99.9=26735, 99.99=33727] 
+2025-11-18 14:51:12:141 20 sec: 3082 operations; 161.6 current ops/sec; est completion in 7 second [INSERT: Count=1616, Max=17551, Min=132, Avg=6173.37, 90=11615, 99=13983, 99.9=15903, 99.99=17551] 
+2025-11-18 14:51:18:479 26 sec: 4096 operations; 160.01 current ops/sec; [CLEANUP: Count=1, Max=764, Min=764, Avg=764, 90=764, 99=764, 99.9=764, 99.99=764] [INSERT: Count=1014, Max=16191, Min=154, Avg=6246.05, 90=11727, 99=14047, 99.9=15455, 99.99=16191] 
+[OVERALL], RunTime(ms), 26338
+[OVERALL], Throughput(ops/sec), 155.51674386817527
+[TOTAL_GCS_G1_Young_Generation], Count, 38
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 60
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.22780773027564735
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 38
+[TOTAL_GC_TIME], Time(ms), 60
+[TOTAL_GC_TIME_%], Time(%), 0.22780773027564735
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 764.0
+[CLEANUP], MinLatency(us), 764
+[CLEANUP], MaxLatency(us), 764
+[CLEANUP], 95thPercentileLatency(us), 764
+[CLEANUP], 99thPercentileLatency(us), 764
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6405.93505859375
+[INSERT], MinLatency(us), 132
+[INSERT], MaxLatency(us), 33727
+[INSERT], 95thPercentileLatency(us), 12991
+[INSERT], 99thPercentileLatency(us), 15239
+[INSERT], Return=OK, 4096
+OK
+(integer) 22076
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=40960 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=40960 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:51:26:411 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:51:26:813 0 sec: 4096 operations; 9163.31 current ops/sec; [READ: Count=92, Max=18639, Min=164, Avg=5045.02, 90=9167, 99=18639, 99.9=18639, 99.99=18639] [DELETE: Count=3006, Max=11775, Min=40, Avg=260.66, 90=459, 99=2393, 99.9=11023, 99.99=11775] [DELETE-FAILED: Count=901, Max=11631, Min=81, Avg=343.32, 90=580, 99=2927, 99.9=11631, 99.99=11631] [CLEANUP: Count=16, Max=1022, Min=70, Avg=261.62, 90=636, 99=1022, 99.9=1022, 99.99=1022] [READ-FAILED: Count=97, Max=8615, Min=62, Avg=626.99, 90=1257, 99=8615, 99.9=8615, 99.99=8615] 
+[OVERALL], RunTime(ms), 447
+[OVERALL], Throughput(ops/sec), 9163.31096196868
+[TOTAL_GCS_G1_Young_Generation], Count, 2
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 12
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 2.684563758389262
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 2
+[TOTAL_GC_TIME], Time(ms), 12
+[TOTAL_GC_TIME_%], Time(%), 2.684563758389262
+[READ], Operations, 92
+[READ], AverageLatency(us), 5045.021739130435
+[READ], MinLatency(us), 164
+[READ], MaxLatency(us), 18639
+[READ], 95thPercentileLatency(us), 15191
+[READ], 99thPercentileLatency(us), 18639
+[READ], Return=OK, 92
+[READ], Return=ERROR, 97
+[DELETE], Operations, 3006
+[DELETE], AverageLatency(us), 260.66234198270126
+[DELETE], MinLatency(us), 40
+[DELETE], MaxLatency(us), 11775
+[DELETE], 95thPercentileLatency(us), 772
+[DELETE], 99thPercentileLatency(us), 2393
+[DELETE], Return=OK, 3006
+[DELETE], Return=ERROR, 901
+[DELETE-FAILED], Operations, 901
+[DELETE-FAILED], AverageLatency(us), 343.31631520532744
+[DELETE-FAILED], MinLatency(us), 81
+[DELETE-FAILED], MaxLatency(us), 11631
+[DELETE-FAILED], 95thPercentileLatency(us), 962
+[DELETE-FAILED], 99thPercentileLatency(us), 2927
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 261.625
+[CLEANUP], MinLatency(us), 70
+[CLEANUP], MaxLatency(us), 1022
+[CLEANUP], 95thPercentileLatency(us), 1022
+[CLEANUP], 99thPercentileLatency(us), 1022
+[READ-FAILED], Operations, 97
+[READ-FAILED], AverageLatency(us), 626.9896907216495
+[READ-FAILED], MinLatency(us), 62
+[READ-FAILED], MaxLatency(us), 8615
+[READ-FAILED], 95thPercentileLatency(us), 4755
+[READ-FAILED], 99thPercentileLatency(us), 8615
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=40960 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=40960 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:51:35:221 0 sec: 0 operations; est completion in 0 second 
+Possibly lost 398 samples
+Possibly lost 281 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 166 samples
+Possibly lost 21 samples
+Possibly lost 164 samples
+2025-11-18 14:51:45:177 10 sec: 1451 operations; 145.1 current ops/sec; est completion in 19 seconds [INSERT: Count=1451, Max=33183, Min=124, Avg=6842.08, 90=12367, 99=21055, 99.9=25919, 99.99=33183] 
+Possibly lost 5213 samples
+Possibly lost 26 samples
+Possibly lost 13 samples
+Possibly lost 23505 samples
+Possibly lost 11 samples
+Possibly lost 282 samples
+Possibly lost 333 samples
+Possibly lost 398 samples
+Possibly lost 1 samples
+Possibly lost 78 samples
+Possibly lost 127 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 8 samples
+Possibly lost 3 samples
+Possibly lost 5 samples
+Possibly lost 4 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 5 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 3 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 3 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 7 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 4 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 8 samples
+Possibly lost 1 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 9 samples
+Possibly lost 2 samples
+Possibly lost 8 samples
+Possibly lost 1 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 641 samples
+Possibly lost 2 samples
+Possibly lost 76 samples
+Possibly lost 275 samples
+Possibly lost 649 samples
+Possibly lost 62 samples
+Possibly lost 12 samples
+Possibly lost 2 samples
+Possibly lost 7 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 7 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 5 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 3 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 8 samples
+Possibly lost 2 samples
+Possibly lost 8 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 5 samples
+Possibly lost 10 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 601 samples
+Possibly lost 9 samples
+Possibly lost 405 samples
+Possibly lost 190 samples
+Possibly lost 7 samples
+Possibly lost 107 samples
+Possibly lost 568 samples
+Possibly lost 1 samples
+Possibly lost 6 samples
+Possibly lost 3 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 135 samples
+Possibly lost 439 samples
+Possibly lost 330 samples
+Possibly lost 77 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 4 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 8 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 3 samples
+Possibly lost 627 samples
+Possibly lost 72 samples
+Possibly lost 3 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 6 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 5 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 6 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 4 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 7 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 2 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 4 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 7 samples
+Possibly lost 381 samples
+Possibly lost 42 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 4 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 6 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 12 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 7 samples
+Possibly lost 6 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 8 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 3 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 6 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 3 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 8 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 10 samples
+Possibly lost 2 samples
+Possibly lost 8 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 284 samples
+Possibly lost 706 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 6 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 7 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 401 samples
+Possibly lost 155 samples
+Possibly lost 49 samples
+Possibly lost 179 samples
+Possibly lost 235 samples
+Possibly lost 33 samples
+Possibly lost 185 samples
+Possibly lost 620 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 8 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 7 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 8 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 38 samples
+Possibly lost 207 samples
+Possibly lost 10754 samples
+2025-11-18 14:51:55:177 20 sec: 3030 operations; 157.9 current ops/sec; est completion in 8 second [INSERT: Count=1580, Max=16207, Min=118, Avg=6320.12, 90=11623, 99=13935, 99.9=15535, 99.99=16207] 
+Possibly lost 806 samples
+Possibly lost 25651 samples
+Possibly lost 45 samples
+Possibly lost 55427 samples
+Possibly lost 850 samples
+Possibly lost 6617 samples
+Possibly lost 18837 samples
+Possibly lost 40529 samples
+Possibly lost 14217 samples
+Possibly lost 2378 samples
+Possibly lost 14761 samples
+Possibly lost 12401 samples
+Possibly lost 27487 samples
+Possibly lost 4783 samples
+Possibly lost 53005 samples
+Possibly lost 3977 samples
+2025-11-18 14:52:01:661 26 sec: 4096 operations; 164.4 current ops/sec; [CLEANUP: Count=1, Max=767, Min=767, Avg=767, 90=767, 99=767, 99.9=767, 99.99=767] [INSERT: Count=1065, Max=15383, Min=166, Avg=6074.12, 90=11239, 99=13495, 99.9=15127, 99.99=15383] 
+[OVERALL], RunTime(ms), 26484
+[OVERALL], Throughput(ops/sec), 154.6594170064945
+[TOTAL_GCS_G1_Young_Generation], Count, 39
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 65
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.24543120374565774
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 39
+[TOTAL_GC_TIME], Time(ms), 65
+[TOTAL_GC_TIME_%], Time(%), 0.24543120374565774
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 767.0
+[CLEANUP], MinLatency(us), 767
+[CLEANUP], MaxLatency(us), 767
+[CLEANUP], 95thPercentileLatency(us), 767
+[CLEANUP], 99thPercentileLatency(us), 767
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6441.0615234375
+[INSERT], MinLatency(us), 118
+[INSERT], MaxLatency(us), 33183
+[INSERT], 95thPercentileLatency(us), 12799
+[INSERT], 99thPercentileLatency(us), 15895
+[INSERT], Return=OK, 4096
+OK
+(integer) 24110
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=45056 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=45056 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:52:09:823 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:52:10:225 0 sec: 4096 operations; 9163.31 current ops/sec; [READ: Count=110, Max=19391, Min=140, Avg=4330.59, 90=7811, 99=18479, 99.9=19391, 99.99=19391] [DELETE: Count=2992, Max=12047, Min=34, Avg=268.05, 90=538, 99=2129, 99.9=8951, 99.99=12047] [DELETE-FAILED: Count=877, Max=8951, Min=69, Avg=328.72, 90=790, 99=2321, 99.9=8951, 99.99=8951] [CLEANUP: Count=16, Max=872, Min=72, Avg=262.88, 90=809, 99=872, 99.9=872, 99.99=872] [READ-FAILED: Count=117, Max=8023, Min=46, Avg=492.26, 90=1035, 99=5379, 99.9=8023, 99.99=8023] 
+[OVERALL], RunTime(ms), 447
+[OVERALL], Throughput(ops/sec), 9163.31096196868
+[TOTAL_GCS_G1_Young_Generation], Count, 3
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 20
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 4.47427293064877
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 3
+[TOTAL_GC_TIME], Time(ms), 20
+[TOTAL_GC_TIME_%], Time(%), 4.47427293064877
+[READ], Operations, 110
+[READ], AverageLatency(us), 4330.590909090909
+[READ], MinLatency(us), 140
+[READ], MaxLatency(us), 19391
+[READ], 95thPercentileLatency(us), 10751
+[READ], 99thPercentileLatency(us), 18479
+[READ], Return=OK, 110
+[READ], Return=ERROR, 117
+[DELETE], Operations, 2992
+[DELETE], AverageLatency(us), 268.05414438502675
+[DELETE], MinLatency(us), 34
+[DELETE], MaxLatency(us), 12047
+[DELETE], 95thPercentileLatency(us), 906
+[DELETE], 99thPercentileLatency(us), 2129
+[DELETE], Return=OK, 2992
+[DELETE], Return=ERROR, 877
+[DELETE-FAILED], Operations, 877
+[DELETE-FAILED], AverageLatency(us), 328.7229190421893
+[DELETE-FAILED], MinLatency(us), 69
+[DELETE-FAILED], MaxLatency(us), 8951
+[DELETE-FAILED], 95thPercentileLatency(us), 1150
+[DELETE-FAILED], 99thPercentileLatency(us), 2321
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 262.875
+[CLEANUP], MinLatency(us), 72
+[CLEANUP], MaxLatency(us), 872
+[CLEANUP], 95thPercentileLatency(us), 872
+[CLEANUP], 99thPercentileLatency(us), 872
+[READ-FAILED], Operations, 117
+[READ-FAILED], AverageLatency(us), 492.2564102564103
+[READ-FAILED], MinLatency(us), 46
+[READ-FAILED], MaxLatency(us), 8023
+[READ-FAILED], 95thPercentileLatency(us), 3729
+[READ-FAILED], 99thPercentileLatency(us), 5379
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=45056 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=45056 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:52:18:560 0 sec: 0 operations; est completion in 0 second 
+Possibly lost 4300 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 2 samples
+Possibly lost 9 samples
+Possibly lost 4 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 5 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 2 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 7 samples
+Possibly lost 1 samples
+Possibly lost 9 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 7 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 2 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 4 samples
+Possibly lost 2 samples
+Possibly lost 4 samples
+Possibly lost 1 samples
+Possibly lost 5 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 1 samples
+Possibly lost 3 samples
+Possibly lost 10636 samples
+2025-11-18 14:52:28:519 10 sec: 1492 operations; 149.2 current ops/sec; est completion in 18 seconds [INSERT: Count=1492, Max=45535, Min=154, Avg=6650.07, 90=12119, 99=18303, 99.9=21487, 99.99=45535] 
+2025-11-18 14:52:38:519 20 sec: 3074 operations; 158.2 current ops/sec; est completion in 7 second [INSERT: Count=1583, Max=16039, Min=130, Avg=6311.34, 90=11663, 99=14311, 99.9=15967, 99.99=16039] 
+2025-11-18 14:52:44:851 26 sec: 4096 operations; 161.38 current ops/sec; [CLEANUP: Count=1, Max=948, Min=948, Avg=948, 90=948, 99=948, 99.9=948, 99.99=948] [INSERT: Count=1021, Max=15535, Min=127, Avg=6189.15, 90=11839, 99=13847, 99.9=15191, 99.99=15535] 
+[OVERALL], RunTime(ms), 26333
+[OVERALL], Throughput(ops/sec), 155.54627273762958
+[TOTAL_GCS_G1_Young_Generation], Count, 38
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 71
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.269623666122356
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 38
+[TOTAL_GC_TIME], Time(ms), 71
+[TOTAL_GC_TIME_%], Time(%), 0.269623666122356
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 948.0
+[CLEANUP], MinLatency(us), 948
+[CLEANUP], MaxLatency(us), 948
+[CLEANUP], 95thPercentileLatency(us), 948
+[CLEANUP], 99thPercentileLatency(us), 948
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6404.26904296875
+[INSERT], MinLatency(us), 127
+[INSERT], MaxLatency(us), 45535
+[INSERT], 95thPercentileLatency(us), 12903
+[INSERT], 99thPercentileLatency(us), 15263
+[INSERT], Return=OK, 4096
+OK
+(integer) 26240
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=49152 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=49152 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:52:53:019 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:52:53:421 0 sec: 4096 operations; 9142.86 current ops/sec; [READ: Count=116, Max=17423, Min=226, Avg=4321.32, 90=7515, 99=17199, 99.9=17423, 99.99=17423] [DELETE: Count=2961, Max=11495, Min=40, Avg=310.19, 90=730, 99=2167, 99.9=11231, 99.99=11495] [DELETE-FAILED: Count=907, Max=11383, Min=76, Avg=390.18, 90=935, 99=3085, 99.9=11383, 99.99=11383] [CLEANUP: Count=16, Max=980, Min=80, Avg=321.94, 90=884, 99=980, 99.9=980, 99.99=980] [READ-FAILED: Count=112, Max=11263, Min=54, Avg=292.1, 90=488, 99=1421, 99.9=11263, 99.99=11263] 
+[OVERALL], RunTime(ms), 448
+[OVERALL], Throughput(ops/sec), 9142.857142857143
+[TOTAL_GCS_G1_Young_Generation], Count, 3
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 17
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 3.7946428571428568
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 3
+[TOTAL_GC_TIME], Time(ms), 17
+[TOTAL_GC_TIME_%], Time(%), 3.7946428571428568
+[READ], Operations, 116
+[READ], AverageLatency(us), 4321.318965517241
+[READ], MinLatency(us), 226
+[READ], MaxLatency(us), 17423
+[READ], 95thPercentileLatency(us), 9839
+[READ], 99thPercentileLatency(us), 17199
+[READ], Return=OK, 116
+[READ], Return=ERROR, 112
+[DELETE], Operations, 2961
+[DELETE], AverageLatency(us), 310.19452887537994
+[DELETE], MinLatency(us), 40
+[DELETE], MaxLatency(us), 11495
+[DELETE], 95thPercentileLatency(us), 1110
+[DELETE], 99thPercentileLatency(us), 2167
+[DELETE], Return=OK, 2961
+[DELETE], Return=ERROR, 907
+[DELETE-FAILED], Operations, 907
+[DELETE-FAILED], AverageLatency(us), 390.1830209481808
+[DELETE-FAILED], MinLatency(us), 76
+[DELETE-FAILED], MaxLatency(us), 11383
+[DELETE-FAILED], 95thPercentileLatency(us), 1346
+[DELETE-FAILED], 99thPercentileLatency(us), 3085
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 321.9375
+[CLEANUP], MinLatency(us), 80
+[CLEANUP], MaxLatency(us), 980
+[CLEANUP], 95thPercentileLatency(us), 980
+[CLEANUP], 99thPercentileLatency(us), 980
+[READ-FAILED], Operations, 112
+[READ-FAILED], AverageLatency(us), 292.0982142857143
+[READ-FAILED], MinLatency(us), 54
+[READ-FAILED], MaxLatency(us), 11263
+[READ-FAILED], 95thPercentileLatency(us), 896
+[READ-FAILED], 99thPercentileLatency(us), 1421
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=49152 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=49152 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:53:01:692 0 sec: 0 operations; est completion in 0 second 
+Possibly lost 29073 samples
+Possibly lost 12384 samples
+2025-11-18 14:53:11:651 10 sec: 1464 operations; 146.4 current ops/sec; est completion in 18 seconds [INSERT: Count=1464, Max=24143, Min=128, Avg=6778.36, 90=12279, 99=18847, 99.9=22239, 99.99=24143] 
+Possibly lost 22017 samples
+Possibly lost 46435 samples
+Possibly lost 11709 samples
+Possibly lost 1479 samples
+Possibly lost 17558 samples
+Possibly lost 30254 samples
+Possibly lost 35945 samples
+Possibly lost 801 samples
+Possibly lost 30066 samples
+Possibly lost 6618 samples
+Possibly lost 13188 samples
+Possibly lost 71625 samples
+Possibly lost 10190 samples
+Possibly lost 14374 samples
+Possibly lost 1267 samples
+2025-11-18 14:53:21:650 20 sec: 3086 operations; 162.2 current ops/sec; est completion in 7 second [INSERT: Count=1622, Max=16399, Min=164, Avg=6152.6, 90=11535, 99=13951, 99.9=15351, 99.99=16399] 
+2025-11-18 14:53:28:168 26 sec: 4096 operations; 154.98 current ops/sec; [CLEANUP: Count=1, Max=766, Min=766, Avg=766, 90=766, 99=766, 99.9=766, 99.99=766] [INSERT: Count=1010, Max=15503, Min=141, Avg=6450.79, 90=11815, 99=13863, 99.9=15007, 99.99=15503] 
+[OVERALL], RunTime(ms), 26517
+[OVERALL], Throughput(ops/sec), 154.46694573292604
+[TOTAL_GCS_G1_Young_Generation], Count, 38
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 66
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.24889693404231247
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 38
+[TOTAL_GC_TIME], Time(ms), 66
+[TOTAL_GC_TIME_%], Time(%), 0.24889693404231247
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 766.0
+[CLEANUP], MinLatency(us), 766
+[CLEANUP], MaxLatency(us), 766
+[CLEANUP], 95thPercentileLatency(us), 766
+[CLEANUP], 99thPercentileLatency(us), 766
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6449.78515625
+[INSERT], MinLatency(us), 128
+[INSERT], MaxLatency(us), 24143
+[INSERT], 95thPercentileLatency(us), 12839
+[INSERT], 99thPercentileLatency(us), 15503
+[INSERT], Return=OK, 4096
+OK
+(integer) 28374
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=53248 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=53248 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:53:36:341 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:53:36:737 0 sec: 4096 operations; 9225.23 current ops/sec; [READ: Count=93, Max=11103, Min=203, Avg=4301.17, 90=8447, 99=11103, 99.9=11103, 99.99=11103] [DELETE: Count=3024, Max=9143, Min=35, Avg=256.2, 90=571, 99=1752, 99.9=9111, 99.99=9143] [DELETE-FAILED: Count=900, Max=9207, Min=68, Avg=346.42, 90=761, 99=2175, 99.9=9207, 99.99=9207] [CLEANUP: Count=16, Max=645, Min=58, Avg=171.06, 90=404, 99=645, 99.9=645, 99.99=645] [READ-FAILED: Count=79, Max=7659, Min=60, Avg=647.61, 90=1568, 99=7659, 99.9=7659, 99.99=7659] 
+[OVERALL], RunTime(ms), 444
+[OVERALL], Throughput(ops/sec), 9225.225225225226
+[TOTAL_GCS_G1_Young_Generation], Count, 3
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 16
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 3.6036036036036037
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 3
+[TOTAL_GC_TIME], Time(ms), 16
+[TOTAL_GC_TIME_%], Time(%), 3.6036036036036037
+[READ], Operations, 93
+[READ], AverageLatency(us), 4301.1720430107525
+[READ], MinLatency(us), 203
+[READ], MaxLatency(us), 11103
+[READ], 95thPercentileLatency(us), 9623
+[READ], 99thPercentileLatency(us), 11103
+[READ], Return=OK, 93
+[READ], Return=ERROR, 79
+[DELETE], Operations, 3024
+[DELETE], AverageLatency(us), 256.203373015873
+[DELETE], MinLatency(us), 35
+[DELETE], MaxLatency(us), 9143
+[DELETE], 95thPercentileLatency(us), 940
+[DELETE], 99thPercentileLatency(us), 1752
+[DELETE], Return=OK, 3024
+[DELETE], Return=ERROR, 900
+[DELETE-FAILED], Operations, 900
+[DELETE-FAILED], AverageLatency(us), 346.4166666666667
+[DELETE-FAILED], MinLatency(us), 68
+[DELETE-FAILED], MaxLatency(us), 9207
+[DELETE-FAILED], 95thPercentileLatency(us), 1129
+[DELETE-FAILED], 99thPercentileLatency(us), 2175
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 171.0625
+[CLEANUP], MinLatency(us), 58
+[CLEANUP], MaxLatency(us), 645
+[CLEANUP], 95thPercentileLatency(us), 645
+[CLEANUP], 99thPercentileLatency(us), 645
+[READ-FAILED], Operations, 79
+[READ-FAILED], AverageLatency(us), 647.6075949367089
+[READ-FAILED], MinLatency(us), 60
+[READ-FAILED], MaxLatency(us), 7659
+[READ-FAILED], 95thPercentileLatency(us), 4407
+[READ-FAILED], 99thPercentileLatency(us), 7659
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=53248 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=53248 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:53:45:117 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:53:55:074 10 sec: 1472 operations; 147.19 current ops/sec; est completion in 18 seconds [INSERT: Count=1472, Max=31215, Min=129, Avg=6743.33, 90=12247, 99=20383, 99.9=27327, 99.99=31215] 
+2025-11-18 14:54:05:074 20 sec: 3093 operations; 162.12 current ops/sec; est completion in 7 second [INSERT: Count=1621, Max=14927, Min=109, Avg=6156.03, 90=11423, 99=13639, 99.9=14847, 99.99=14927] 
+2025-11-18 14:54:11:116 26 sec: 4096 operations; 165.98 current ops/sec; [CLEANUP: Count=1, Max=636, Min=636, Avg=636, 90=636, 99=636, 99.9=636, 99.99=636] [INSERT: Count=1003, Max=14583, Min=130, Avg=6020.57, 90=11191, 99=13487, 99.9=14279, 99.99=14583] 
+[OVERALL], RunTime(ms), 26043
+[OVERALL], Throughput(ops/sec), 157.27834734861574
+[TOTAL_GCS_G1_Young_Generation], Count, 38
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 64
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 0.24574741773221212
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 38
+[TOTAL_GC_TIME], Time(ms), 64
+[TOTAL_GC_TIME_%], Time(%), 0.24574741773221212
+[CLEANUP], Operations, 1
+[CLEANUP], AverageLatency(us), 636.0
+[CLEANUP], MinLatency(us), 636
+[CLEANUP], MaxLatency(us), 636
+[CLEANUP], 95thPercentileLatency(us), 636
+[CLEANUP], 99thPercentileLatency(us), 636
+[INSERT], Operations, 4096
+[INSERT], AverageLatency(us), 6333.92041015625
+[INSERT], MinLatency(us), 109
+[INSERT], MaxLatency(us), 31215
+[INSERT], 95thPercentileLatency(us), 12743
+[INSERT], 99thPercentileLatency(us), 15975
+[INSERT], Return=OK, 4096
+OK
+(integer) 30412
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=57344 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p operationcount=4096 -p recordcount=57344 -p workload=site.ycsb.workloads.CoreWorkload -p readproportion=0.05 -p updateproportion=0.0 -p scanproportion=0.0 -p insertproportion=0.0 -p readmodifywriteproportion=0.0 -p scanproportion=0.0 -p deleteproportion=0.95 -p redis.host=127.0.0.1 -p redis.port=6379 -p requestdistribution=uniform -p threadcount=16 -p target=10000 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p fieldlengthdistribution=uniform -t
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:54:19:423 0 sec: 0 operations; est completion in 0 second 
+2025-11-18 14:54:19:820 0 sec: 4096 operations; 9246.05 current ops/sec; [READ: Count=113, Max=23327, Min=221, Avg=4162.65, 90=8039, 99=19167, 99.9=23327, 99.99=23327] [DELETE: Count=2991, Max=13015, Min=35, Avg=274.48, 90=553, 99=2073, 99.9=12727, 99.99=13015] [DELETE-FAILED: Count=880, Max=12991, Min=69, Avg=421.72, 90=836, 99=8207, 99.9=12991, 99.99=12991] [CLEANUP: Count=16, Max=964, Min=67, Avg=372.94, 90=963, 99=964, 99.9=964, 99.99=964] [READ-FAILED: Count=112, Max=1497, Min=53, Avg=186.23, 90=351, 99=1394, 99.9=1497, 99.99=1497] 
+[OVERALL], RunTime(ms), 443
+[OVERALL], Throughput(ops/sec), 9246.04966139955
+[TOTAL_GCS_G1_Young_Generation], Count, 3
+[TOTAL_GC_TIME_G1_Young_Generation], Time(ms), 19
+[TOTAL_GC_TIME_%_G1_Young_Generation], Time(%), 4.288939051918736
+[TOTAL_GCS_G1_Concurrent_GC], Count, 0
+[TOTAL_GC_TIME_G1_Concurrent_GC], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Concurrent_GC], Time(%), 0.0
+[TOTAL_GCS_G1_Old_Generation], Count, 0
+[TOTAL_GC_TIME_G1_Old_Generation], Time(ms), 0
+[TOTAL_GC_TIME_%_G1_Old_Generation], Time(%), 0.0
+[TOTAL_GCs], Count, 3
+[TOTAL_GC_TIME], Time(ms), 19
+[TOTAL_GC_TIME_%], Time(%), 4.288939051918736
+[READ], Operations, 113
+[READ], AverageLatency(us), 4162.654867256637
+[READ], MinLatency(us), 221
+[READ], MaxLatency(us), 23327
+[READ], 95thPercentileLatency(us), 16831
+[READ], 99thPercentileLatency(us), 19167
+[READ], Return=OK, 113
+[READ], Return=ERROR, 112
+[DELETE], Operations, 2991
+[DELETE], AverageLatency(us), 274.4831160147108
+[DELETE], MinLatency(us), 35
+[DELETE], MaxLatency(us), 13015
+[DELETE], 95thPercentileLatency(us), 874
+[DELETE], 99thPercentileLatency(us), 2073
+[DELETE], Return=OK, 2991
+[DELETE], Return=ERROR, 880
+[DELETE-FAILED], Operations, 880
+[DELETE-FAILED], AverageLatency(us), 421.72386363636366
+[DELETE-FAILED], MinLatency(us), 69
+[DELETE-FAILED], MaxLatency(us), 12991
+[DELETE-FAILED], 95thPercentileLatency(us), 1352
+[DELETE-FAILED], 99thPercentileLatency(us), 8207
+[CLEANUP], Operations, 16
+[CLEANUP], AverageLatency(us), 372.9375
+[CLEANUP], MinLatency(us), 67
+[CLEANUP], MaxLatency(us), 964
+[CLEANUP], 95thPercentileLatency(us), 964
+[CLEANUP], 99thPercentileLatency(us), 964
+[READ-FAILED], Operations, 112
+[READ-FAILED], AverageLatency(us), 186.23214285714286
+[READ-FAILED], MinLatency(us), 53
+[READ-FAILED], MaxLatency(us), 1497
+[READ-FAILED], 95thPercentileLatency(us), 780
+[READ-FAILED], 99thPercentileLatency(us), 1394
+OK
+[WARN]  Running against a source checkout. In order to get our runtime dependencies we'll have to invoke Maven. Depending on the state of your system, this may take ~30-45 seconds
+[DEBUG]  Running 'mvn -pl site.ycsb:redis-binding -am package -DskipTests dependency:build-classpath -DincludeScope=compile -Dmdep.outputFilterFile=true'
+[DEBUG]  b'/home/adityat/kernmlops-benchmark/ycsb/YCSB\n'
+java -cp /home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/conf:/home/adityat/kernmlops-benchmark/ycsb/YCSB/redis/target/redis-binding-0.18.0-SNAPSHOT.jar:/home/adityat/.m2/repository/org/apache/htrace/htrace-core4/4.1.0-incubating/htrace-core4-4.1.0-incubating.jar:/home/adityat/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.4/jackson-mapper-asl-1.9.4.jar:/home/adityat/.m2/repository/redis/clients/jedis/2.9.0/jedis-2.9.0.jar:/home/adityat/.m2/repository/org/apache/commons/commons-pool2/2.4.2/commons-pool2-2.4.2.jar:/home/adityat/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.4/jackson-core-asl-1.9.4.jar:/home/adityat/kernmlops-benchmark/ycsb/YCSB/core/target/core-0.18.0-SNAPSHOT.jar site.ycsb.Client -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=57344 -p fieldlengthdistribution=uniform -load
+Command line: -db site.ycsb.db.RedisClient -s -P /home/adityat/kernmlops-benchmark/ycsb/YCSB/workloads/workloada -p redis.host=127.0.0.1 -p redis.port=6379 -p recordcount=4096 -p fieldcount=1 -p fieldlength=2097152 -p minfieldlength=4096 -p insertstart=57344 -p fieldlengthdistribution=uniform -load
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2025-11-18 14:54:28:147 0 sec: 0 operations; est completion in 0 second 
+Possibly lost 427 samples
+Possibly lost 636 samples
+Possibly lost 37846 samples
+Possibly lost 7504 samples
+Possibly lost 48200 samples
+Possibly lost 7767 samples
+Possibly lost 97 samples
+Possibly lost 16436 samples
+Possibly lost 928 samples
+Possibly lost 9573 samples
+2025-11-18 14:54:38:105 10 sec: 1555 operations; 155.48 current ops/sec; est completion in 17 seconds [INSERT: Count=1555, Max=32735, Min=128, Avg=6386.53, 90=11687, 99=18687, 99.9=26543, 99.99=32735] 
+Possibly lost 62324 samples

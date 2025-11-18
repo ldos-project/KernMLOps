@@ -1,0 +1,3 @@
+---
+# Main Playbook
+- import_playbook: playbooks/benchmark.yml
