@@ -76,11 +76,13 @@ primals_t allocate_primals(void) {
         s += f"\tp.input_idx = {insert_pos};\n"
         s += f"\tp.input_size = {len(primals[insert_pos])};\n"
         s += "\tp.primals = heap_alloc(%d * sizeof(float*));\n" % len(primals)
+        allocs = []
         for i in range(len(primals)):
             p = torch.flatten(primals[i]).tolist()
-            s += "\tp.primals[%d] = heap_alloc(%d * sizeof(float));\n" % (i, len(p))
+            allocs.append("\tp.primals[%d] = heap_alloc(%d * sizeof(float));\n" % (i, len(p)))
             for j in range(len(p)):
-                s += "\tp.primals[%d][%d] = %.20f;\n" % (i, j, p[j])
+                allocs.append("\tp.primals[%d][%d] = %.20f;\n" % (i, j, p[j]))
+        s += ''.join(allocs)
 
         s += "\treturn p;\n}\n"
 
@@ -117,8 +119,8 @@ void free_primals(primals_t p) {{
         '''Move triton kernels (asm) from the dump folder to some target folder'''
         target_dir.mkdir(exist_ok=True)
         os.system(f"mv {str(dump_dir)}/triton/*/*/*.asm {str(target_dir)}")
-        os.system("mv *.launch_params kernels.params")
-        with open("kernels.params") as f:
+        os.system(f"mv {str(pathlib.Path(__file__).parent)}/*.launch_params {str(target_dir)}/kernels.params")
+        with open(f"{str(target_dir)}/kernels.params") as f:
             for line in f.readlines():
                 # Ex: triton_poi_fused_relu_0 | T, T, T, T, 10, 16, num_warps=1, num_stages=1 | (1, 1, 1)
                 kernel_name, signature, grid = line.split(" | ")
@@ -368,6 +370,7 @@ void free_primals(primals_t p) {{
 #include <linux/uaccess.h>
 
 MODULE_LICENSE("GPL");
+MODULE_DESCRIPTION("Compiled Pytorch Model");
 
 #define heap_alloc(x) kmalloc(x, GFP_ATOMIC)
 #define heap_free(x) kfree(x)
@@ -490,6 +493,15 @@ module_exit(cleanup);
 
 #else
 
+#include <time.h>
+#include <stdint.h>
+
+uint64_t nano_now() {{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);   // RAW = no frequency scaling
+    return (uint64_t)ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+}}
+
 int main(void) {{
     primals = allocate_primals();
 
@@ -498,11 +510,15 @@ int main(void) {{
     for (int i = 0; i < {self.input_size_flat}; i++) {{
         ((float*)inp)[i] = 0;
     }}
+    uint64_t start = nano_now();
     forward(primals, inp, out);
+    uint64_t end = nano_now();
+    log("%d\\n", end - start);
+
     for (int i = 0; i < {self.output_size_flat}; i++) {{
-        log("%.4f ", ((float*)out)[i]);
+        // log("%.4f ", ((float*)out)[i]);
     }}
-    log("\\n");
+    // log("\\n");
     free_primals(primals);
     return 0;
 }}

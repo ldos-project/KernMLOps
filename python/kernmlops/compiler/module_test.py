@@ -6,7 +6,8 @@ import time
 
 import numpy as np
 import torch
-from gen_kernel_module import TorchKernelDeployer
+
+from .gen_kernel_module import TorchKernelDeployer
 
 
 def query_kernel_module(inp, out_size, measure_time=False):
