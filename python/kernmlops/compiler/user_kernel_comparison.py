@@ -42,7 +42,7 @@ if __name__ == "__main__":
             if sys.argv[1] == "UC":
                 module = TorchKernelDeployer(model, data.shape)
                 module.build()
-                os.system("cd build; sudo make user;")
+                os.system("cd build; make user;")
 
                 out.write("============= USER SIZE %d ================\n" % i)
                 for j in range(NUM_INFERENCES):
