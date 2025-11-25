@@ -161,7 +161,7 @@ void free_primals(primals_t p) {{
         elif triton_type[0] == "f":
             # TODO handle different sized floats
             return "float"
-        elif triton_type[0] == "i":
+        elif triton_type[0] == "i" or triton_type == "constexpr":
             # TODO handle different sized ints
             return "int"
         raise ValueError(f"Bad Triton Type: {triton_type}")
@@ -190,13 +190,12 @@ void free_primals(primals_t p) {{
             close_paren = signature.find(")")
             kernel_name = signature[4:open_paren]
             arg_names = signature[open_paren + 1:close_paren].split(", ")
-            # remove type annotations if present
-            arg_names = [i.split(" : ")[0] for i in arg_names]
+            # remove type annotations if present and filter out constexpr
+            arg_names = [i.split(" : ")[0] for i in arg_names if " : tl.constexpr" not in i]
             triton_types = [sig_types[arg_name] for arg_name in arg_names]
             tmp = []
             for t in triton_types:
-                if t != "constexpr":
-                    tmp.append(t)
+                tmp.append(t)
             triton_types = tmp
             c_types = [self.get_c_type(triton_type) for triton_type in triton_types]
             declarations.append(f"extern void {kernel_name}({', '.join(c_types)}, int, int, int, int, int, int);\n")
@@ -210,7 +209,6 @@ void free_primals(primals_t p) {{
         string = string[start:]
         if string.startswith("reinterpret_tensor"):
             # reinterpret_tensor(bufx, (...shape), (...strides), y)
-            print(string)
             func_name_len = len("reinterpret_tensor(")
             name = string[func_name_len:].split(", ")[0]
             # there are three close parens in the expression, find the last one
@@ -223,7 +221,6 @@ void free_primals(primals_t p) {{
             size = remaining_args[0]
             stride = remaining_args[1]
             offset = remaining_args[2]
-            print(remaining_args)
             return Buffer(name, shape=size, stride=stride, shadow=True, offset=offset), idx + start + 1
         else:
             # just the plain buffer name
@@ -234,7 +231,6 @@ void free_primals(primals_t p) {{
             else:
                 # bufx)
                 buf = string.split(")")[0]
-            print(self.buffers)
             return self.buffers[buf], start + len(buf)
 
     def gen_c_triton_wrapper(self, python_wrapper):
@@ -242,7 +238,7 @@ void free_primals(primals_t p) {{
 
         # map primals_n -> primals[n - 1]
         num_primals = len(self.collect_parameters(self.model)) + 1
-        for i in range(num_primals):
+        for i in range(num_primals - 1, -1, -1):
             for j in range(len(python_wrapper)):
                 python_wrapper[j] = python_wrapper[j].replace(f"primals_{i + 1}", f"primals[{i}]")
 
@@ -412,7 +408,7 @@ static struct class *my_class;
 primals_t primals;
 
 void forward(primals_t p, void* input, void* output) {{
-    memcpy(p.primals[p.input_idx], input, p.input_size * sizeof(void*));
+    memcpy(p.primals[p.input_idx], input, p.input_size * sizeof(float));
     call(p.primals, output);
 }}
 
