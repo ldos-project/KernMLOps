@@ -1,5 +1,9 @@
 import os
 import pathlib
+import shutil
+
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+os.environ.setdefault("TRITON_CPU_BACKEND", "1")
 
 import torch
 import torch._inductor.config as config
@@ -100,10 +104,11 @@ void free_primals(primals_t p) {{
     def dump_torch_files(self, dump_dir=pathlib.Path("dump")):
         '''Tell pytorch to compile the model and dump triton kernels/python glue into a "dump" folder'''
         os.system(f"sudo rm -rf {str(dump_dir)}")
-        os.environ["CUDA_VISIBLE_DEVICES"] = ""
         os.environ["TORCH_LOGS"] = "output_code"
         os.environ["TORCHINDUCTOR_CACHE_DIR"] = str(dump_dir)
         os.environ["TORCHINDUCTOR_DUMP_LAUNCH_PARAMS"] = "1"
+        self.check_triton_cpu_backend()
+        self.drop_unsupported_cpu_barriers()
         config.cpu_backend = "triton"
 
         compiled = torch.compile(self.model, fullgraph=True, backend="inductor")
@@ -115,10 +120,47 @@ void free_primals(primals_t p) {{
         for dim in self.output_shape:
             self.output_size_flat *= dim
 
+    @staticmethod
+    def check_triton_cpu_backend():
+        try:
+            import triton.backends
+        except ModuleNotFoundError as e:
+            raise RuntimeError(
+                "TorchKernelDeployer needs the Triton CPU backend. Install Triton "
+                "from https://github.com/triton-lang/triton-cpu."
+            ) from e
+
+        if "cpu" not in triton.backends.backends:
+            available = sorted(triton.backends.backends.keys())
+            raise RuntimeError(
+                "Triton CPU backend is not available. "
+                f"Available Triton backends: {available}. "
+                "Install Triton from https://github.com/triton-lang/triton-cpu "
+                "and run with TRITON_CPU_BACKEND=1."
+            )
+
+    @staticmethod
+    def drop_unsupported_cpu_barriers():
+        from torch._inductor.codegen.common import DeferredLine
+
+        if getattr(DeferredLine, "_kernmlops_drops_cpu_barriers", False):
+            return
+
+        original_call = DeferredLine.__call__
+
+        def call_without_cpu_barriers(self):
+            if self.line.strip() == "tl.debug_barrier()":
+                return None
+            return original_call(self)
+
+        DeferredLine.__call__ = call_without_cpu_barriers
+        DeferredLine._kernmlops_drops_cpu_barriers = True
+
     def save_triton_kernels(self, dump_dir=pathlib.Path("dump"), target_dir=pathlib.Path("build")):
         '''Move triton kernels (asm) from the dump folder to some target folder'''
         target_dir.mkdir(exist_ok=True)
-        os.system(f"mv {str(dump_dir)}/triton/*/*/*.asm {str(target_dir)}")
+        for asm_file in (dump_dir / "triton").glob("*/*/*.asm"):
+            shutil.copyfile(asm_file, target_dir / asm_file.name)
         os.system(f"mv {str(pathlib.Path(__file__).parent)}/*.launch_params {str(target_dir)}/kernels.params")
         with open(f"{str(target_dir)}/kernels.params") as f:
             for line in f.readlines():
@@ -129,16 +171,33 @@ void free_primals(primals_t p) {{
 
     def get_python_triton_wrapper(self, dump_dir):
         '''Return the python wrapper that launches the triton kernels'''
-        file_name = os.popen(f'grep -r "def call(args):" {str(dump_dir)}').read().split(":")[0]
+        file_name = None
+        for candidate in pathlib.Path(dump_dir).rglob("*.py"):
+            contents = candidate.read_text(errors="ignore")
+            if "def call(args):" in contents or "def call(self, args):" in contents:
+                file_name = candidate
+                break
+        if file_name is None:
+            raise RuntimeError(f"Could not find PyTorch wrapper in {dump_dir}")
         with open(file_name) as file:
             contents = file.readlines()
-            start = contents.index("def call(args):\n")
+            try:
+                start = contents.index("def call(args):\n")
+                indent = 4
+            except ValueError:
+                start = contents.index("    def call(self, args):\n")
+                indent = 8
             end = start
-            while contents[end] != "\n":
+            while end + 1 < len(contents):
                 end += 1
+                if contents[end] == "\n":
+                    continue
+                line_indent = len(contents[end]) - len(contents[end].lstrip())
+                if line_indent < indent:
+                    break
 
             # dont include the indentation
-            return [contents[i][4:] for i in range(start + 1, end)]
+            return [contents[i][indent:] for i in range(start + 1, end) if contents[i].strip()]
 
     @staticmethod
     def get_torch_type_size(s):
@@ -172,33 +231,38 @@ void free_primals(primals_t p) {{
 
         Ex: extern void [kernel_name](...);
         '''
-        triton_src_files = os.popen(f'grep -rl "@triton.jit" {str(dump_dir)} | xargs grep -L "def call(args):"').read().split()
+        triton_src_files = []
+        for file_name in pathlib.Path(dump_dir).rglob("*.py"):
+            contents = file_name.read_text(errors="ignore")
+            if "@triton.jit" in contents:
+                triton_src_files.append(file_name)
         declarations = []
+        declared_kernels = set()
         for file_name in triton_src_files:
             with open(file_name) as f:
                 contents = f.readlines()
-            signature = ""
-            sig_types = {}
+            sig_types = None
             for line in contents:
-                if line.startswith("def"):
-                    signature = line
-                elif "triton_meta" in line:
+                if "triton_meta" in line:
                     start = line.find("'signature': ") + len("'signature': ")
                     end = line.find("}", start)
                     sig_types = eval(line[start:end + 1])
-            open_paren = signature.find("(")
-            close_paren = signature.find(")")
-            kernel_name = signature[4:open_paren]
-            arg_names = signature[open_paren + 1:close_paren].split(", ")
-            # remove type annotations if present and filter out constexpr
-            arg_names = [i.split(" : ")[0] for i in arg_names if " : tl.constexpr" not in i]
-            triton_types = [sig_types[arg_name] for arg_name in arg_names]
-            tmp = []
-            for t in triton_types:
-                tmp.append(t)
-            triton_types = tmp
-            c_types = [self.get_c_type(triton_type) for triton_type in triton_types]
-            declarations.append(f"extern void {kernel_name}({', '.join(c_types)}, int, int, int, int, int, int);\n")
+                elif line.startswith("def triton_"):
+                    if sig_types is None:
+                        raise RuntimeError(f"Missing Triton signature metadata before {line.strip()} in {file_name}")
+                    open_paren = line.find("(")
+                    close_paren = line.find(")")
+                    kernel_name = line[4:open_paren]
+                    if kernel_name in declared_kernels:
+                        continue
+                    declared_kernels.add(kernel_name)
+                    arg_names = line[open_paren + 1:close_paren].split(", ")
+                    # remove type annotations if present and filter out constexpr
+                    arg_names = [i.split(" : ")[0] for i in arg_names if " : tl.constexpr" not in i]
+                    triton_types = [sig_types[arg_name] for arg_name in arg_names]
+                    c_types = [self.get_c_type(triton_type) for triton_type in triton_types]
+                    declarations.append(f"extern void {kernel_name}({', '.join(c_types)}, int, int, int, int, int, int);\n")
+                    sig_types = None
         declarations.append("extern void addmm(int, int, int, void*, void*, void*, void*, int, int, int, int, int, int, int, int, float, float, int, int, int, int, int, int);\n")
         declarations.append("extern void mm(int, int, int, void*, void*, void*, int, int, int, int, int, int, int, int, int, int, int, int);\n")
         return declarations
@@ -289,7 +353,7 @@ void free_primals(primals_t p) {{
 
                 c_wrapper.append(f"\t\tfor (int y = 0; y < {grid_size[1]}; y++) {{\n")
                 c_wrapper.append(f"\t\t\tfor (int z = 0; z < {grid_size[2]}; z++) {{\n")
-                c_wrapper.append(f"\t\t\t\t{kernel_name}({", ".join(args)}, x, y, z, {', '.join([str(i) for i in grid_size])});\n")
+                c_wrapper.append(f"\t\t\t\t{kernel_name}({', '.join(args)}, x, y, z, {', '.join([str(i) for i in grid_size])});\n")
                 c_wrapper.append("\t\t\t}\n\t\t}\n\t}\n")
 
             elif tokens[0].startswith("extern_kernels"):
@@ -346,7 +410,16 @@ void free_primals(primals_t p) {{
     def copy_build_files(self, dir=pathlib.Path('build')):
         module_root = pathlib.Path(__file__).parent
         template_dir = module_root / "build_template"
-        os.system(f'cp {str(template_dir)}/* {str(dir)}')
+        dir.mkdir(exist_ok=True)
+        for template_file in template_dir.iterdir():
+            if template_file.is_file():
+                shutil.copyfile(template_file, dir / template_file.name)
+
+        sleef_dir = module_root / "libsleef_o_files"
+        shutil.copyfile(sleef_dir / "libsleef.a", dir / "libsleef.a")
+        extract_script = dir / "extract_sleef.sh"
+        shutil.copyfile(sleef_dir / "script.sh", extract_script)
+        extract_script.chmod(0o755)
 
     def build(self, output_dir=pathlib.Path("build")):
         self.dump_torch_files(output_dir / "dump")
