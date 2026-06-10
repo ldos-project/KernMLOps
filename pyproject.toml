@@ -25,4 +25,14 @@ dependencies = [
   "pexpect",
   "plotnine",
   "pyarrow",
+  "torch>=2.7.0",
+  "triton @ git+https://github.com/triton-lang/triton-cpu.git@87da2f64bd8c37a5caabdadbf4cc15f23dd6581a",
 ]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
