@@ -1,4 +1,9 @@
-# How to Generate with KCompiler
+# How to Generate Kernel Modules with KCompiler
+
+## Preparing the environment
+
+Within the repo root run `. .venv/bin/activate`
+
 
 First create a file similar to sample_nn.py
 
@@ -57,3 +62,11 @@ To see the result run `sudo dmesg` you should see:
 ```
 
 You can then make ioctl calls to the char device at <some number> and it will run the desired module calls.
+
+We included a sample in `ioctl_test.c` that is automatically created in the build directory.
+
+You can do this with:
+
+```bash
+cd build && make ioctl_test; ./ioctl_test /dev/model_run; popd
+```
