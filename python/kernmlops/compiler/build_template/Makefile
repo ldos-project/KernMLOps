@@ -39,10 +39,14 @@ $(SLEEF_CMDS): .%.o.cmd: %.o
 my_module.ko: $(O_FILES) $(SLEEF_OBJS) $(KERNEL_MODULE_SRC).c shim.c $(SLEEF_CMDS)
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
 
+
 user: $(O_FILES) $(USER_SRC).c $(SLEEF_LIB)
 	gcc $(USER_SRC).c $(O_FILES) $(SLEEF_LIB) -o user -g
+
+ioctl_test: test_ioctl.c
+	gcc test_ioctl.c -o ioctl_test -g
 
 clean:
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 	rm -rf extracted_files $(SLEEF_EXTRACTED)
-	rm -f $(O_FILES) $(TRITON_KERNELS_ASM) $(SLEEF_OBJS) .*.cmd user
+	rm -f $(O_FILES) $(TRITON_KERNELS_ASM) $(SLEEF_OBJS) .*.cmd user ioctl_test

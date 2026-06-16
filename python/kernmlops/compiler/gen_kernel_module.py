@@ -421,6 +421,68 @@ void free_primals(primals_t p) {{
         shutil.copyfile(sleef_dir / "script.sh", extract_script)
         extract_script.chmod(0o755)
 
+    def write_ioctl_test(self, output_dir):
+        with (output_dir / "test_ioctl.c").open("w") as f:
+            f.write(f"""
+#include <fcntl.h>
+#include <linux/ioctl.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+#define INPUT_SIZE {self.input_size_flat}
+#define OUTPUT_SIZE {self.output_size_flat}
+#define IOCTL_PROC _IOWR('m', 1, struct model_data *)
+
+struct model_data {{
+    float *in;
+    float *out;
+    int input_size;
+}};
+
+int main(int argc, char **argv) {{
+    if (argc != 2) {{
+        fprintf(stderr, "usage: %s <device_path>\\n", argv[0]);
+        return 2;
+    }}
+
+    float input[INPUT_SIZE];
+    float output[OUTPUT_SIZE];
+
+    for (int i = 0; i < INPUT_SIZE; i++) {{
+        input[i] = 0.0f;
+    }}
+    memset(output, 0, sizeof(output));
+
+    struct model_data data = {{
+        .in = input,
+        .out = output,
+        .input_size = INPUT_SIZE,
+    }};
+
+    int fd = open(argv[1], O_RDWR);
+    if (fd < 0) {{
+        perror("open");
+        return 1;
+    }}
+
+    if (ioctl(fd, IOCTL_PROC, &data) < 0) {{
+        perror("ioctl");
+        close(fd);
+        return 1;
+    }}
+
+    close(fd);
+
+    for (int i = 0; i < OUTPUT_SIZE; i++) {{
+        printf("%.9g\\n", output[i]);
+    }}
+
+    return 0;
+}}
+""")
+
     def build(self, output_dir=pathlib.Path("build")):
         self.dump_torch_files(output_dir / "dump")
         self.save_triton_kernels(output_dir / "dump", output_dir)
@@ -594,3 +656,4 @@ int main(void) {{
 
 #endif
 """)
+        self.write_ioctl_test(output_dir)
