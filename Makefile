@@ -45,7 +45,7 @@ DEV_IMAGE_NAME ?= tewaro/${BASE_IMAGE_NAME}-dev
 BCC_IMAGE_NAME ?= ${BASE_IMAGE_NAME}-deps
 IMAGE_NAME ?= ${LOWER_UNAME}-${BASE_IMAGE_NAME}
 SRC_DIR ?= $(shell pwd)
-VERSION ?= $(shell git log --pretty="%h" -1 Dockerfile.dev pyproject.toml)
+VERSION ?= $(shell git log --pretty="%h" -1 Dockerfile.dev pyproject_docker.toml)
 
 CONTAINER_SRC_DIR ?= /KernMLOps
 CONTAINER_WORKDIR ?= ${CONTAINER_SRC_DIR}
