@@ -4,7 +4,7 @@
 
 If you are on a cloudlab machine we have prepared then run `. /opt/uv/env`
 
-Within the repo root run `. .venv/bin/activate`
+Within the repo root run `. /opt/kermit/KernMLOps/.venv/bin/activate`
 
 First create a file similar to sample_nn.py
 
@@ -47,14 +47,14 @@ if __name__ == "__main__":
 
 Then inside the top level described virtual environment run:
 `python sample_nn.py`.
-After that to run the user-space variant (this is just to test) run 
-`cd build && make user && ./user; popd`.
+After that to run the user-space variant (this is just to test) run:
+`cd build && make user && ./user`.
 
 This will print out the result directly.
 
-To run the kernel version:
+To run the kernel version inside `build` run:
 ```
-cd build && make && sudo insmod my_module.ko; popd
+make && sudo insmod my_module.ko
 ```
 
 To see the result run `sudo dmesg` you should see:
@@ -69,5 +69,5 @@ We included a sample in `ioctl_test.c` that is automatically created in the buil
 You can do this with:
 
 ```bash
-cd build && make ioctl_test; ./ioctl_test /dev/model_run; popd
+make ioctl_test; sudo ./ioctl_test /dev/model_run
 ```
