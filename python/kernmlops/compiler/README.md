@@ -2,8 +2,9 @@
 
 ## Preparing the environment
 
-Within the repo root run `. .venv/bin/activate`
+If you are on a cloudlab machine we have prepared then run `. /opt/uv/env`
 
+Within the repo root run `. .venv/bin/activate`
 
 First create a file similar to sample_nn.py
 
