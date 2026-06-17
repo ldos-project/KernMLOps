@@ -104,7 +104,7 @@ RUN ln -s /usr/bin/python3.12 /usr/bin/python
 # May be required for Ubuntu:24.04 images that come with uid 1000
 RUN deluser --remove-home ubuntu
 
-COPY --chown=root pyproject.toml /root/pyproject.toml
+COPY --chown=root pyproject_docker.toml /root/pyproject.toml
 RUN pip install uv --break-system-packages && \
   uv pip compile /root/pyproject.toml -o requirements.txt && \
   uv pip install \

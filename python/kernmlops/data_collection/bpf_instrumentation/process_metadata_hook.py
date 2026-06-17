@@ -1,3 +1,4 @@
+import logging
 import os
 import signal
 from dataclasses import dataclass, fields
@@ -12,6 +13,12 @@ from data_collection.bpf_instrumentation.bpf_hook import BPFProgram
 from data_schema import CollectionTable
 from data_schema.generic_table import ProcessMetadataTable
 from osquery.extensions.ttypes import ExtensionStatus
+
+
+logger = logging.getLogger(__name__)
+
+OSQUERY_OPEN_TIMEOUT_SEC = 10
+OSQUERY_OPEN_INTERVAL_SEC = 0.2
 
 
 @dataclass(frozen=True)
@@ -48,11 +55,34 @@ class ProcessMetadataHook(BPFProgram):
         self.collection_id = collection_id
         self.osquery_instance = osquery.SpawnInstance()
         self.osquery_instance.open()
+
+        # osquery.SpawnInstance.open() ignores ExtensionClient.open() returning False.
+        # Wait on the actual Thrift transport before issuing the first query.
+        if not self.osquery_instance.connection._transport.isOpen():
+            logger.warning("Waiting for osquery transport to open")
+            if not self.osquery_instance.connection.open(
+                timeout=OSQUERY_OPEN_TIMEOUT_SEC,
+                interval=OSQUERY_OPEN_INTERVAL_SEC,
+            ):
+                raise RuntimeError("Timed out waiting for osquery transport to open")
+
         self.osquery_client = self.osquery_instance.client
 
-        initial_processes_query = self.osquery_client.query(
-            f"SELECT {self._query_select_columns()} FROM processes"
-        )
+        try:
+            initial_processes_query = self.osquery_client.query(
+                f"SELECT {self._query_select_columns()} FROM processes"
+            )
+        except Exception:
+            if self.osquery_instance.instance is not None:
+                logger.exception(
+                    "Initial osquery process metadata query failed; process poll=%r",
+                    self.osquery_instance.instance.poll(),
+                )
+            else:
+                logger.exception(
+                    "Initial osquery process metadata query failed; no process instance"
+                )
+            raise
         # TODO(Patrick): Add error handling
         assert isinstance(initial_processes_query.status, ExtensionStatus)
         assert initial_processes_query.status.code == 0
