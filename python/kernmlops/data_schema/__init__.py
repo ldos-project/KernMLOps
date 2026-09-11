@@ -7,7 +7,13 @@ from typing import Callable
 from data_schema import perf
 from data_schema.block_io import BlockIOLatencyTable, BlockIOQueueTable, BlockIOTable
 from data_schema.file_data import FileDataTable
-from data_schema.generic_table import ProcessMetadataTable
+from data_schema.generic_table import (
+    OriginalPerfTable,
+    PolicyDTLBTable,
+    PolicyRSSTable,
+    PolicyStatusTable,
+    ProcessMetadataTable,
+)
 from data_schema.huge_pages import CollapseHugePageDataTable
 from data_schema.memory_usage import MemoryUsageTable
 from data_schema.quanta_runtime import QuantaQueuedTable, QuantaRuntimeTable
@@ -21,6 +27,7 @@ from data_schema.schema import (
     collection_id_column,
     cumulative_pma_as_pdf,
 )
+from data_schema.ycsb import YCSBInvocationsTable, YCSBMetricsTable
 
 table_types: list[type[CollectionTable]] = [
     SystemInfoTable,
@@ -33,6 +40,12 @@ table_types: list[type[CollectionTable]] = [
     BlockIOQueueTable,
     BlockIOTable,
     CollapseHugePageDataTable,
+    YCSBInvocationsTable,
+    YCSBMetricsTable,
+    PolicyRSSTable,
+    PolicyDTLBTable,
+    PolicyStatusTable,
+    OriginalPerfTable,
 ] + list(perf.perf_table_types.values())
 
 
@@ -63,7 +76,7 @@ def demote(
 def get_user_group_ids() -> tuple[int, int]:
     curr = os.getuid()
     if curr >= 1000:
-        return (curr, curr)
+        return (curr, os.getgid())
     if "UNAME" in os.environ:
         user_id = getpwnam(os.environ["UNAME"]).pw_uid
     else:
@@ -87,4 +100,6 @@ __all__ = [
     "CollectionGraph",
     "GraphEngine",
     "SystemInfoTable",
+    "YCSBInvocationsTable",
+    "YCSBMetricsTable",
 ]

@@ -3,8 +3,11 @@ from pathlib import Path
 from typing import cast
 
 import polars as pl
-from bcc import BPF
-from data_collection.bpf_instrumentation.bpf_hook import POLL_TIMEOUT_MS, BPFProgram
+from data_collection.bpf_instrumentation.bpf_hook import (
+    POLL_TIMEOUT_MS,
+    BPFProgram,
+    capture_bpf,
+)
 from data_schema import CollectionTable
 from data_schema.generic_table import (
     CollapseHugePageDataTableRaw,
@@ -72,7 +75,7 @@ class CollapseHugePageBPFHook(BPFProgram):
 
     def load(self, collection_id: str):
         self.collection_id = collection_id
-        self.bpf = BPF(text=self.bpf_text)
+        self.bpf = capture_bpf(self.bpf_text)
         # self.bpf.attach_raw_tracepoint(tp=b"mm_collapse_huge_page", fn_name=b"mm_collapse_huge_page")
         self.bpf.attach_kprobe(
             event=b"collapse_huge_page", fn_name=b"kprobe_collapse_huge_page"

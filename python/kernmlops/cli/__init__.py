@@ -75,12 +75,13 @@ def cli_collect_data(
         else str(config.benchmark_config.generic.benchmark)
     )
     benchmark = benchmarks[name].from_config(config.benchmark_config)
-    collect.run_collect(
+    return_code = collect.run_collect(
         collector_config=collector_config,
         benchmark=benchmark,
         verbose=verbose,
         collection_prefix=collection_prefix,
     )
+    raise SystemExit(return_code)
 
 
 @cli_collect.command("dump")

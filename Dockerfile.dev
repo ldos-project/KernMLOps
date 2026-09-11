@@ -114,6 +114,11 @@ RUN pip install uv --break-system-packages && \
 
 FROM ${BUILD_IMAGE} AS user
 
+# Install policy build tools here so cached development base images also work.
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    build-essential clang-18 llvm-18-dev libbpf-dev libelf-dev zlib1g-dev \
+    && apt-get clean
+
 ARG IS_CI=true
 
 ARG UNAME

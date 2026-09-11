@@ -1,0 +1,53 @@
+diff --git a/src/cc/bpf_module.h b/src/cc/bpf_module.h
+--- a/src/cc/bpf_module.h
++++ b/src/cc/bpf_module.h
+@@ -73,6 +73,7 @@ class BPFModule {
+   void cleanup_rw_engine();
+   int parse(llvm::Module *mod);
+   int finalize();
++  int kernmlops_reduce();
+   int annotate();
+   void annotate_light();
+   void finalize_prog_func_info();
+diff --git a/src/cc/bpf_module.cc b/src/cc/bpf_module.cc
+--- a/src/cc/bpf_module.cc
++++ b/src/cc/bpf_module.cc
+@@ -68,6 +68,8 @@
+ #include "frontends/clang/loader.h"
+ #include "libbpf.h"
+ 
++#include "bcc_reduce.hpp"
++
+ namespace ebpf {
+ 
+ using std::get;
+@@ -565,6 +567,10 @@ int BPFModule::finalize() {
+   mod->setDataLayout("E-m:e-p:64:64-i64:64-n32:64-S128");
+ #endif
+ #endif
++  if (int rc = kernmlops_reduce()) {
++    mod_.reset();
++    return rc;
++  }
+   sections_p = rw_engine_enabled_ ? &sections_ : &tmp_sections;
+ 
+   string err;
+diff --git a/src/cc/frontends/clang/loader.cc b/src/cc/frontends/clang/loader.cc
+--- a/src/cc/frontends/clang/loader.cc
++++ b/src/cc/frontends/clang/loader.cc
+@@ -506,6 +506,15 @@ int ClangLoader::do_compile(
+   add_main_input(invocation2, main_path, &*out_buf1);
+   invocation2.getFrontendOpts().DisableFree = false;
+   invocation2.getCodeGenOpts().DisableFree = false;
++  // Retain frontend IR only for the explicitly selected policy modes.
++  const char *reduce = getenv("KERNMLOPS_BCC_REDUCE");
++  const char *evidence = getenv("KERNMLOPS_BCC_EVIDENCE");
++  const char *export_only = getenv("KERNMLOPS_BCC_EXPORT_ONLY");
++  if ((reduce && *reduce) || (evidence && *evidence) ||
++      (export_only && *export_only)) {
++    invocation2.getCodeGenOpts().DisableLLVMPasses = true;
++  }
++
+   // Resort to normal inlining. In -O0 the default is OnlyAlwaysInlining and
+   // clang might add noinline attribute even for functions with inline hint.
+   invocation2.getCodeGenOpts().setInlining(CodeGenOptions::NormalInlining);

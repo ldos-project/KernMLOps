@@ -54,6 +54,17 @@ CONTAINER_CONTEXT ?= default
 CONTAINER_CPUSET ?=
 CONTAINER_CMD ?= bash -l
 INTERACTIVE ?= it
+CONTAINER_HOST_HEADERS ?= 1
+CONTAINER_SOURCE_MODE ?= rw
+CONTAINER_PRIVILEGED ?= 1
+
+ifeq (${CONTAINER_HOST_HEADERS},1)
+	CONTAINER_HEADER_MOUNTS = \
+		-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR}:ro \
+		-v ${KERNEL_DEV_MODULES_DIR}/:${KERNEL_DEV_MODULES_DIR}:ro \
+		-v /usr/include:/usr/include \
+		${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT}
+endif
 
 # Benchmarking variables
 COLLECTION_BENCHMARK ?= faux
@@ -224,32 +235,29 @@ docker-image-dependencies:
 	--target dev .
 
 docker:
-	@if [ ! -d "${KERNEL_DEV_HEADERS_DIR}" ]; then \
+	@if [ "${CONTAINER_HOST_HEADERS}" = 1 ] && [ ! -d "${KERNEL_DEV_HEADERS_DIR}" ]; then \
 		echo "Kernel dev headers not installed: ${KERNEL_DEV_HEADERS_DIR}" && exit 1; \
 	fi
-	@if [ ! -d "${KERNEL_DEV_MODULES_DIR}" ]; then \
+	@if [ "${CONTAINER_HOST_HEADERS}" = 1 ] && [ ! -d "${KERNEL_DEV_MODULES_DIR}" ]; then \
 		echo "Kernel dev headers not installed: ${KERNEL_DEV_MODULES_DIR}" && exit 1; \
 	fi
 
 	@mkdir -p ${EXTERNAL_BENCHMARK_DIR}
 	@docker --context ${CONTAINER_CONTEXT} run --rm \
-	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR} \
-	-v ${KERNEL_DEV_HEADERS_DIR}/:${KERNEL_DEV_HEADERS_DIR}:ro \
-	-v ${KERNEL_DEV_MODULES_DIR}/:${KERNEL_DEV_MODULES_DIR}:ro \
-	-v /usr/include:/usr/include \
+	-v ${SRC_DIR}/:${CONTAINER_SRC_DIR}:${CONTAINER_SOURCE_MODE} \
+	${CONTAINER_HEADER_MOUNTS} \
 	-v ${EXTERNAL_BENCHMARK_DIR}/:/home/${UNAME}/kernmlops-benchmark \
 	-v ${EXTERNAL_BENCHMARK_DIR}/:/root/kernmlops-benchmark/ \
 	-v /sys/kernel/:/sys/kernel \
-	${KERNEL_DEV_SPECIFIC_HEADERS_MOUNT} \
 	${KERNMLOPS_CONTAINER_MOUNTS} \
 	${KERNMLOPS_CONTAINER_ENV} \
 	${CONTAINER_CPUSET} \
 	--pid=host \
-	--privileged \
+	$(if $(filter 1,${CONTAINER_PRIVILEGED}),--privileged) \
 	--hostname=${CONTAINER_HOSTNAME} \
 	--workdir=${CONTAINER_WORKDIR} ${CONTAINER_OPTS} -${INTERACTIVE} \
 	${IMAGE_NAME}:${VERSION} \
-	${CONTAINER_CMD} || true
+	${CONTAINER_CMD}
 
 install-ycsb:
 	@echo "Installing ycsb..."

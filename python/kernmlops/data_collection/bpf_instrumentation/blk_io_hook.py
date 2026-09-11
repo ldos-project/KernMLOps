@@ -4,7 +4,11 @@ from typing import cast
 
 import polars as pl
 from bcc import BPF
-from data_collection.bpf_instrumentation.bpf_hook import POLL_TIMEOUT_MS, BPFProgram
+from data_collection.bpf_instrumentation.bpf_hook import (
+    POLL_TIMEOUT_MS,
+    BPFProgram,
+    capture_bpf,
+)
 from data_schema import UPTIME_TIMESTAMP, CollectionTable
 from data_schema.block_io import BlockIOLatencyTable, BlockIOQueueTable, BlockIOTable
 
@@ -54,7 +58,7 @@ class BlockIOBPFHook(BPFProgram):
 
     def load(self, collection_id: str):
         self.collection_id = collection_id
-        self.bpf = BPF(text=self.bpf_text)
+        self.bpf = capture_bpf(self.bpf_text)
         self.bpf["block_io_starts"].open_perf_buffer(
             self._queue_event_handler, page_cnt=64
         )

@@ -8,6 +8,8 @@
 #include <linux/blk-mq.h>
 #include <uapi/linux/ptrace.h>
 
+#include "kermit.h"
+
 typedef struct block_io_start_perf_event {
   u32 device;
   u64 sector;
@@ -44,8 +46,8 @@ BPF_HASH(device_queue, u32, struct queue_lengths);
 // we maintain started_4k_ios separately so we can manage scenarios where there is
 // existing outstanding io for a device when this BPF program is installed
 BPF_HASH(started_4k_ios, struct start_key, u32, 1024);
-BPF_PERF_OUTPUT(block_io_starts);
-BPF_PERF_OUTPUT(block_io_ends);
+KERMIT_OUTPUT(block_io_starts, block_io_start_perf_event_t);
+KERMIT_OUTPUT(block_io_ends, block_io_end_perf_event_t);
 
 static dev_t ddevt(struct gendisk* disk) {
   return (disk->major << 20) | disk->first_minor;
@@ -105,19 +107,21 @@ RAW_TRACEPOINT_PROBE(block_rq_issue) {
   int queue_length_segments = q_lengths->queue_length_segments;
 
   // store io data
-  struct block_io_start_perf_event data;
-  __builtin_memset(&data, 0, sizeof(data));
-  data.device = device;
-  data.sector = sector;
-  data.segments = segments;
-  data.block_io_bytes = bytes;
-  // TODO(Patrick): avoid division and multiplication
-  data.block_io_start_uptime_us = ts / 1000;
-  data.block_io_flags = flags;
-  data.queue_length_4ks = queue_length_4ks;
-  data.queue_length_segments = queue_length_segments;
+  block_io_start_perf_event_t* data = KERMIT_RESERVE(block_io_starts, block_io_start_perf_event_t, 1);
+  if (data) {
+    __builtin_memset(data, 0, sizeof(*data));
+    data->device = device;
+    data->sector = sector;
+    data->segments = segments;
+    data->block_io_bytes = bytes;
+    // TODO(Patrick): avoid division and multiplication
+    data->block_io_start_uptime_us = ts / 1000;
+    data->block_io_flags = flags;
+    data->queue_length_4ks = queue_length_4ks;
+    data->queue_length_segments = queue_length_segments;
 
-  block_io_starts.perf_submit(ctx, &data, sizeof(data));
+    KERMIT_SUBMIT(block_io_starts, ctx, data);
+  }
 
   return 0;
 }
@@ -138,19 +142,21 @@ RAW_TRACEPOINT_PROBE(block_rq_complete) {
   u64 delta = ts - start_time_ns;
 
   // store io data
-  struct block_io_end_perf_event data;
-  __builtin_memset(&data, 0, sizeof(data));
-  data.device = device;
-  data.sector = sector;
-  data.segments = segments;
-  data.block_io_bytes = bytes;
-  // TODO(Patrick): avoid division and multiplication
-  data.block_io_end_uptime_us = ts / 1000;
-  data.block_latency_us = delta / 1000;
-  data.block_io_latency_us = io_delta / 1000;
-  data.block_io_flags = flags;
+  block_io_end_perf_event_t* data = KERMIT_RESERVE(block_io_ends, block_io_end_perf_event_t, 1);
+  if (data) {
+    __builtin_memset(data, 0, sizeof(*data));
+    data->device = device;
+    data->sector = sector;
+    data->segments = segments;
+    data->block_io_bytes = bytes;
+    // TODO(Patrick): avoid division and multiplication
+    data->block_io_end_uptime_us = ts / 1000;
+    data->block_latency_us = delta / 1000;
+    data->block_io_latency_us = io_delta / 1000;
+    data->block_io_flags = flags;
 
-  block_io_ends.perf_submit(ctx, &data, sizeof(data));
+    KERMIT_SUBMIT(block_io_ends, ctx, data);
+  }
 
   // get device queue for request that just finished
   struct queue_lengths* q_lengths = device_queue.lookup(&device);

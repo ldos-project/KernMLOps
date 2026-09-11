@@ -2,6 +2,8 @@
 #include <linux/sched.h>
 #include <uapi/linux/ptrace.h>
 
+#include "kermit.h"
+
 // Adapted from: https://github.com/iovisor/bcc/blob/master/tools/filelife.py
 
 typedef struct file_open_perf_event {
@@ -13,7 +15,7 @@ typedef struct file_open_perf_event {
   char file_name[DNAME_INLINE_LEN];
 } file_open_perf_event_t;
 
-BPF_PERF_OUTPUT(file_open_events);
+KERMIT_OUTPUT(file_open_events, file_open_perf_event_t);
 
 static int probe_dentry(struct pt_regs* ctx, struct dentry* dentry, bool created) {
   u32 pid = bpf_get_current_pid_tgid();
@@ -27,17 +29,19 @@ static int probe_dentry(struct pt_regs* ctx, struct dentry* dentry, bool created
     return 0;
   }
 
-  struct file_open_perf_event data;
-  __builtin_memset(&data, 0, sizeof(data));
-  data.pid = pid;
-  data.tgid = tgid;
+  file_open_perf_event_t* data = KERMIT_RESERVE(file_open_events, file_open_perf_event_t, 1);
+  if (!data)
+    return 0;
+  __builtin_memset(data, 0, sizeof(*data));
+  data->pid = pid;
+  data->tgid = tgid;
   // TODO(Patrick): avoid division and multiplication
-  data.ts_uptime_us = ts / 1000;
-  data.file_inode = dentry->d_inode->i_ino;
-  data.file_size_bytes = file_size;
-  bpf_probe_read(&data.file_name, DNAME_INLINE_LEN, (const void*)&dentry->d_iname);
+  data->ts_uptime_us = ts / 1000;
+  data->file_inode = dentry->d_inode->i_ino;
+  data->file_size_bytes = file_size;
+  bpf_probe_read(&data->file_name, DNAME_INLINE_LEN, (const void*)&dentry->d_iname);
 
-  file_open_events.perf_submit(ctx, &data, sizeof(data));
+  KERMIT_SUBMIT(file_open_events, ctx, data);
 
   return 0;
 }

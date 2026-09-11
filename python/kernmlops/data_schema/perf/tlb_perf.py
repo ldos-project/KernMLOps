@@ -61,6 +61,55 @@ class DTLBPerfTable(PerfCollectionTable):
         return [DTLBRateGraph, DTLBCumulativeGraph]
 
 
+class DTLBAccessPerfTable(PerfCollectionTable):
+    """Linux perf hardware-cache DTLB read accesses (DTLB | READ | ACCESS)."""
+
+    @classmethod
+    def name(cls) -> str:
+        return "dtlb_accesses"
+
+    @classmethod
+    def ev_type(cls) -> int:
+        return PerfType.HW_CACHE
+
+    @classmethod
+    def ev_config(cls) -> int:
+        return PerfHWCacheConfig.config(
+            cache=PerfHWCacheConfig.Cache.PERF_COUNT_HW_CACHE_DTLB,
+            op=PerfHWCacheConfig.Op.PERF_COUNT_HW_CACHE_OP_READ,
+            result=PerfHWCacheConfig.Result.PERF_COUNT_HW_CACHE_RESULT_ACCESS,
+        )
+
+    @classmethod
+    def hw_ids(cls) -> list[CustomHWEventID]:
+        return []
+
+    @classmethod
+    def component_name(cls) -> str:
+        return "dTLB"
+
+    @classmethod
+    def measured_event_name(cls) -> str:
+        return "Read Accesses"
+
+    @classmethod
+    def from_df(cls, table: pl.DataFrame) -> "DTLBAccessPerfTable":
+        return DTLBAccessPerfTable(table=table.cast(cls.schema(), strict=True))  # pyright: ignore [reportArgumentType]
+
+    def __init__(self, table: pl.DataFrame):
+        self._table = table
+
+    @property
+    def table(self) -> pl.DataFrame:
+        return self._table
+
+    def filtered_table(self) -> pl.DataFrame:
+        return self.table
+
+    def graphs(self) -> list[type[CollectionGraph]]:
+        return []
+
+
 class DTLBRateGraph(RatePerfGraph):
     @classmethod
     def perf_table_type(cls) -> type[PerfCollectionTable]:

@@ -1,6 +1,8 @@
 #include <linux/sched.h>
 #include <linux/time.h>
 
+#include "kermit.h"
+
 typedef struct zswap_event {
   u32 pid;
   u32 tgid;
@@ -8,9 +10,9 @@ typedef struct zswap_event {
   u64 end_ts;
 } zswap_event_t;
 
-BPF_PERF_OUTPUT(zswap_store_events);
-BPF_PERF_OUTPUT(zswap_load_events);
-BPF_PERF_OUTPUT(zswap_invalidate_events);
+KERMIT_OUTPUT(zswap_store_events, zswap_event_t);
+KERMIT_OUTPUT(zswap_load_events, zswap_event_t);
+KERMIT_OUTPUT(zswap_invalidate_events, zswap_event_t);
 
 BPF_HASH(stores, u64, u64);
 BPF_HASH(loads, u64, u64);
@@ -31,12 +33,14 @@ int trace_zswap_store_return(struct pt_regs* ctx) {
   struct task_struct* task;
   if (IS_ERR(task = (struct task_struct*)PT_REGS_RC(ctx)))
     return 0;
-  zswap_event_t event;
-  event.pid = (u32)(id);
-  event.tgid = (u32)(id >> 32);
-  event.start_ts = *start_ts;
-  event.end_ts = bpf_ktime_get_ns();
-  zswap_store_events.perf_submit(ctx, &event, sizeof(event));
+  zswap_event_t* data = KERMIT_RESERVE(zswap_store_events, zswap_event_t, 1);
+  if (data) {
+    data->pid = (u32)(id);
+    data->tgid = (u32)(id >> 32);
+    data->start_ts = *start_ts;
+    data->end_ts = bpf_ktime_get_ns();
+    KERMIT_SUBMIT(zswap_store_events, ctx, data);
+  }
   stores.delete(&id);
   return 0;
 }
@@ -56,12 +60,14 @@ int trace_zswap_load_return(struct pt_regs* ctx) {
   struct task_struct* task;
   if (IS_ERR(task = (struct task_struct*)PT_REGS_RC(ctx)))
     return 0;
-  zswap_event_t event;
-  event.pid = (u32)(id);
-  event.tgid = (u32)(id >> 32);
-  event.start_ts = *start_ts;
-  event.end_ts = bpf_ktime_get_ns();
-  zswap_load_events.perf_submit(ctx, &event, sizeof(event));
+  zswap_event_t* data = KERMIT_RESERVE(zswap_load_events, zswap_event_t, 1);
+  if (data) {
+    data->pid = (u32)(id);
+    data->tgid = (u32)(id >> 32);
+    data->start_ts = *start_ts;
+    data->end_ts = bpf_ktime_get_ns();
+    KERMIT_SUBMIT(zswap_load_events, ctx, data);
+  }
   loads.delete(&id);
   return 0;
 }
@@ -81,12 +87,14 @@ int trace_zswap_invalidate_return(struct pt_regs* ctx) {
   struct task_struct* task;
   if (IS_ERR(task = (struct task_struct*)PT_REGS_RC(ctx)))
     return 0;
-  zswap_event_t event;
-  event.pid = (u32)(id);
-  event.tgid = (u32)(id >> 32);
-  event.start_ts = *start_ts;
-  event.end_ts = bpf_ktime_get_ns();
-  zswap_invalidate_events.perf_submit(ctx, &event, sizeof(event));
+  zswap_event_t* data = KERMIT_RESERVE(zswap_invalidate_events, zswap_event_t, 1);
+  if (data) {
+    data->pid = (u32)(id);
+    data->tgid = (u32)(id >> 32);
+    data->start_ts = *start_ts;
+    data->end_ts = bpf_ktime_get_ns();
+    KERMIT_SUBMIT(zswap_invalidate_events, ctx, data);
+  }
   invalidates.delete(&id);
   return 0;
 }

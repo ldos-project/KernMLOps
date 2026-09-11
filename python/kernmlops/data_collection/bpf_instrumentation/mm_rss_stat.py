@@ -2,8 +2,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import polars as pl
-from bcc import BPF
-from data_collection.bpf_instrumentation.bpf_hook import POLL_TIMEOUT_MS, BPFProgram
+from data_collection.bpf_instrumentation.bpf_hook import (
+    POLL_TIMEOUT_MS,
+    BPFProgram,
+    capture_bpf,
+)
 from data_schema import CollectionTable
 from data_schema.generic_table import TraceMMRSSStatDataTable
 
@@ -34,7 +37,7 @@ class TraceRSSStatBPFHook(BPFProgram):
 
     def load(self, collection_id: str):
         self.collection_id = collection_id
-        self.bpf = BPF(text=self.bpf_text)
+        self.bpf = capture_bpf(self.bpf_text)
         # self.bpf.attach_raw_tracepoint(tp=b"mm_trace_rss_stat", fn_name=b"mm_trace_rss_stat")
         self.bpf["rss_stat_output"].open_perf_buffer(
             self._mm_trace_rss_stat_eh, page_cnt=256

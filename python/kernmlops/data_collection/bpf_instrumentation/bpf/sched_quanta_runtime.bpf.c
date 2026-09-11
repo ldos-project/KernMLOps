@@ -9,6 +9,8 @@
 #include <linux/sched.h>
 #include <uapi/linux/ptrace.h>
 
+#include "kermit.h"
+
 typedef struct quanta_runtime_perf_event {
   u32 pid;
   u32 tgid;
@@ -18,8 +20,8 @@ typedef struct quanta_runtime_perf_event {
 
 BPF_HASH(run_start, u32);
 BPF_HASH(queue_start, u32);
-BPF_PERF_OUTPUT(quanta_runtimes);
-BPF_PERF_OUTPUT(quanta_queue_times);
+KERMIT_OUTPUT(quanta_runtimes, quanta_runtime_perf_event_t);
+KERMIT_OUTPUT(quanta_queue_times, quanta_runtime_perf_event_t);
 
 #if USE_TRACEPOINT
 RAW_TRACEPOINT_PROBE(sched_wakeup_new) {
@@ -74,15 +76,17 @@ int trace_run(struct pt_regs* ctx, struct task_struct* prev) {
     if (tsp != 0) {
       delta = ts - *tsp;
 
-      struct quanta_runtime_perf_event data;
-      __builtin_memset(&data, 0, sizeof(data));
-      data.pid = next_pid;
-      data.tgid = next_tgid;
-      // TODO(Patrick): avoid division and multiplication
-      data.quanta_end_uptime_us = ts / 1000;
-      data.quanta_run_length_us = delta / 1000;
-      // TODO(Patrick): consider only submitting if greater than 10us or so
-      quanta_queue_times.perf_submit(ctx, &data, sizeof(data));
+      quanta_runtime_perf_event_t* data = KERMIT_RESERVE(quanta_queue_times, quanta_runtime_perf_event_t, 1);
+      if (data) {
+        __builtin_memset(data, 0, sizeof(*data));
+        data->pid = next_pid;
+        data->tgid = next_tgid;
+        // TODO(Patrick): avoid division and multiplication
+        data->quanta_end_uptime_us = ts / 1000;
+        data->quanta_run_length_us = delta / 1000;
+        // TODO(Patrick): consider only submitting if greater than 10us or so
+        KERMIT_SUBMIT(quanta_queue_times, ctx, data);
+      }
       queue_start.delete(&next_pid);
     }
     run_start.update(&next_pid, &ts);
@@ -101,15 +105,17 @@ int trace_run(struct pt_regs* ctx, struct task_struct* prev) {
   }
   delta = ts - *tsp;
 
-  struct quanta_runtime_perf_event data;
-  __builtin_memset(&data, 0, sizeof(data));
-  data.pid = pid;
-  data.tgid = tgid;
-  // TODO(Patrick): avoid division and multiplication
-  data.quanta_end_uptime_us = ts / 1000;
-  data.quanta_run_length_us = delta / 1000;
+  quanta_runtime_perf_event_t* data = KERMIT_RESERVE(quanta_runtimes, quanta_runtime_perf_event_t, 1);
+  if (data) {
+    __builtin_memset(data, 0, sizeof(*data));
+    data->pid = pid;
+    data->tgid = tgid;
+    // TODO(Patrick): avoid division and multiplication
+    data->quanta_end_uptime_us = ts / 1000;
+    data->quanta_run_length_us = delta / 1000;
 
-  quanta_runtimes.perf_submit(ctx, &data, sizeof(data));
+    KERMIT_SUBMIT(quanta_runtimes, ctx, data);
+  }
   run_start.delete(&pid);
   queue_start.update(&pid, &ts);
   return 0;

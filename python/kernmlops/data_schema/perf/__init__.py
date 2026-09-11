@@ -5,6 +5,7 @@ from data_schema.perf.perf_schema import (
     PerfCollectionTable,
 )
 from data_schema.perf.tlb_perf import (
+    DTLBAccessPerfTable,
     DTLBPerfTable,
     DTLBWalkDurationPerfTable,
     ITLBPerfTable,
@@ -16,6 +17,7 @@ perf_table_types: Mapping[str, type[PerfCollectionTable]] = {
     ITLBPerfTable.name(): ITLBPerfTable,
     TLBFlushPerfTable.name(): TLBFlushPerfTable,
     DTLBWalkDurationPerfTable.name(): DTLBWalkDurationPerfTable,
+    DTLBAccessPerfTable.name(): DTLBAccessPerfTable,
 }
 
 __all__ = [

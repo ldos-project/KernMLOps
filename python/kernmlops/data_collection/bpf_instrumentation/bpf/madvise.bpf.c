@@ -1,6 +1,8 @@
 #include <linux/mm_types.h>
 #include <linux/sched.h>
 
+#include "kermit.h"
+
 typedef struct madvise_output {
   u32 tgid;
   u64 ts_ns;
@@ -9,7 +11,7 @@ typedef struct madvise_output {
   int advice;
 } madvise_output_t;
 
-BPF_PERF_OUTPUT(madvise_output);
+KERMIT_OUTPUT(madvise_output, madvise_output_t);
 
 BPF_HASH(madvise_hash, u32, madvise_output_t, 32768);
 BPF_HASH(munmap_hash, u32, madvise_output_t, 32768);
@@ -39,7 +41,15 @@ int kretprobe__do_madvise(struct pt_regs* ctx) {
     madvise_hash.delete(&pid);
     return 0;
   }
-  madvise_output.perf_submit(ctx, data, sizeof(madvise_output_t));
+  madvise_output_t* output = KERMIT_RESERVE(madvise_output, madvise_output_t, 1);
+  if (output) {
+    output->tgid = data->tgid;
+    output->ts_ns = data->ts_ns;
+    output->address = data->address;
+    output->length = data->length;
+    output->advice = data->advice;
+    KERMIT_SUBMIT(madvise_output, ctx, output);
+  }
   madvise_hash.delete(&pid);
   return 0;
 }
@@ -68,7 +78,15 @@ int kretprobe__do_vmi_align_munmap(struct pt_regs* ctx) {
     munmap_hash.delete(&pid);
     return 0;
   }
-  madvise_output.perf_submit(ctx, data, sizeof(madvise_output_t));
+  madvise_output_t* output = KERMIT_RESERVE(madvise_output, madvise_output_t, 1);
+  if (output) {
+    output->tgid = data->tgid;
+    output->ts_ns = data->ts_ns;
+    output->address = data->address;
+    output->length = data->length;
+    output->advice = data->advice;
+    KERMIT_SUBMIT(madvise_output, ctx, output);
+  }
   munmap_hash.delete(&pid);
   return 0;
 }

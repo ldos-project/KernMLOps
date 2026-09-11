@@ -1,6 +1,8 @@
 #include <linux/mm_types.h>
 #include <linux/sched.h>
 
+#include "kermit.h"
+
 typedef struct rss_stat_output {
   u32 pid;
   u32 tgid;
@@ -9,7 +11,7 @@ typedef struct rss_stat_output {
   u64 counter_value;
 } rss_stat_output_t;
 
-BPF_PERF_OUTPUT(rss_stat_output);
+KERMIT_OUTPUT(rss_stat_output, rss_stat_output_t);
 
 BPF_HASH(rss_stat_hash, u32, rss_stat_output_t, 32768);
 
@@ -37,11 +39,15 @@ TRACEPOINT_PROBE(kmem, rss_stat) {
     return 0;
   }
 
-  data->member = args->member;
-  data->counter_value = (args->size) >> PAGE_SZ;
-  data->ts = bpf_ktime_get_ns();
-
-  rss_stat_output.perf_submit(args, data, sizeof(rss_stat_output_t));
+  rss_stat_output_t* output = KERMIT_RESERVE(rss_stat_output, rss_stat_output_t, 1);
+  if (output) {
+    output->pid = data->pid;
+    output->tgid = data->tgid;
+    output->member = args->member;
+    output->counter_value = (args->size) >> PAGE_SZ;
+    output->ts = bpf_ktime_get_ns();
+    KERMIT_SUBMIT(rss_stat_output, args, output);
+  }
   rss_stat_hash.delete(&pid);
   return 0;
 }

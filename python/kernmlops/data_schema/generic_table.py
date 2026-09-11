@@ -90,3 +90,19 @@ class MadviseDataTable(CollectionTable, metaclass=GenericTableMeta):
 
 class UnmapRangeDataTable(CollectionTable, metaclass=GenericTableMeta):
     probe_name = "unmap_range"
+
+
+class PolicyRSSTable(CollectionTable, metaclass=GenericTableMeta):
+    probe_name = "policy_rss"
+
+
+class PolicyDTLBTable(CollectionTable, metaclass=GenericTableMeta):
+    probe_name = "policy_dtlb"
+
+
+class PolicyStatusTable(CollectionTable, metaclass=GenericTableMeta):
+    probe_name = "policy_status"
+
+
+class OriginalPerfTable(CollectionTable, metaclass=GenericTableMeta):
+    probe_name = "original_perf"

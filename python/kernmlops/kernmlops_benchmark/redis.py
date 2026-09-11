@@ -1,12 +1,14 @@
+import logging
 import shutil
 import signal
 import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from threading import Lock
 from typing import cast
 
-from data_schema import GraphEngine, demote
+from data_schema import CollectionTable, GraphEngine, demote
 from kernmlops_benchmark.benchmark import Benchmark, GenericBenchmarkConfig
 from kernmlops_benchmark.errors import (
     BenchmarkError,
@@ -14,6 +16,7 @@ from kernmlops_benchmark.errors import (
     BenchmarkNotRunningError,
     BenchmarkRunningError,
 )
+from kernmlops_benchmark.ycsb import YCSBCapture
 from kernmlops_config import ConfigBase
 from pytimeparse.timeparse import timeparse
 
@@ -78,6 +81,30 @@ class RedisBenchmark(Benchmark):
         self.benchmark_dir = self.generic_config.get_benchmark_dir() / "ycsb"
         self.process: subprocess.Popen | None = None
         self.server: subprocess.Popen | None = None
+        self.ycsb = YCSBCapture(self.name())
+        self._running = False
+        self._cancelled = False
+        self._server_lock = Lock()
+
+    def configure_output(
+        self,
+        *,
+        collection_id: str,
+        collection_dir: Path,
+        run_label: str | None = None,
+        owner_ids: tuple[int, int] | None = None,
+    ) -> None:
+        self.ycsb.configure_output(
+            collection_id=collection_id,
+            collection_dir=collection_dir,
+            run_label=run_label,
+            owner_ids=owner_ids,
+        )
+
+    def finalize(self) -> list[CollectionTable]:
+        if self._running:
+            raise BenchmarkRunningError()
+        return self.ycsb.finalize()
 
     def is_configured(self) -> bool:
         return self.benchmark_dir.is_dir()
@@ -98,6 +125,12 @@ class RedisBenchmark(Benchmark):
             raise BenchmarkRunningError()
         if self.server is not None:
             raise BenchmarkRunningError()
+        if self._cancelled:
+            raise BenchmarkError("Redis benchmark was cancelled")
+        if not self.ycsb.configured:
+            raise BenchmarkError("Redis benchmark output must be configured before run")
+        if self.config.repeat < 1 or self.config.outer_repeat < 1:
+            raise BenchmarkError("Redis repeat counts must be positive")
 
         if not self.config.load_from_rdb:
             dump = Path("dump.rdb")
@@ -109,7 +142,11 @@ class RedisBenchmark(Benchmark):
             self.redis_server_name(),
             "./config/redis.conf",
         ]
-        self.server = subprocess.Popen(start_redis)
+        with self._server_lock:
+            if self._cancelled:
+                raise BenchmarkError("Redis benchmark was cancelled")
+            self._running = True
+            self.server = subprocess.Popen(start_redis)
 
         # Wait for redis
         ping_redis = subprocess.run(["redis-cli", "ping"])
@@ -137,7 +174,7 @@ class RedisBenchmark(Benchmark):
         for out_i in range(self.config.outer_repeat):
             for i in range(self.config.repeat):
                 if process is not None:
-                    process.wait()
+                    self.ycsb.wait(process)
                     if self.config.explicit_purge:
                         self.purge_server()
                     if space is not None:
@@ -175,10 +212,15 @@ class RedisBenchmark(Benchmark):
                 ]
 
                 if i == 0:
-                    load_redis = subprocess.Popen(load_redis, preexec_fn=demote())
+                    load_process = self.ycsb.spawn(
+                        load_redis,
+                        phase="load",
+                        iteration=i,
+                        outer_iteration=out_i,
+                        preexec_fn=demote(),
+                    )
 
-                    load_redis.wait()
-                    if load_redis.returncode != 0:
+                    if self.ycsb.wait(load_process) != 0:
                         raise BenchmarkError("Loading Redis Failing")
 
                     if self.config.explicit_purge:
@@ -234,41 +276,58 @@ class RedisBenchmark(Benchmark):
                     "-p",
                     f"fieldlengthdistribution={self.config.field_length_distribution}",
                 ]
-                process = subprocess.Popen(run_redis, preexec_fn=demote())
+                process = self.ycsb.spawn(
+                    run_redis,
+                    phase="run",
+                    iteration=i,
+                    outer_iteration=out_i,
+                    preexec_fn=demote(),
+                )
         self.process = process
 
     def poll(self) -> int | None:
         if self.process is None:
             raise BenchmarkNotRunningError()
-        ret = self.process.poll()
+        ret = self.ycsb.poll(self.process)
         if ret is None:
             return ret
         self.end_server()
+        self._running = False
         return ret
 
     def wait(self) -> None:
         if self.process is None:
             raise BenchmarkNotRunningError()
-        self.process.wait()
+        self.ycsb.wait(self.process)
         self.end_server()
+        self._running = False
 
     def kill(self) -> None:
-        if self.process is None:
-            raise BenchmarkNotRunningError()
-        self.process.terminate()
-        self.end_server()
+        self._cancelled = True
+        try:
+            self.ycsb.cancel()
+        finally:
+            try:
+                self.end_server()
+            finally:
+                self._running = False
 
     def end_server(self) -> None:
-        if self.server is None:
-            return
-        subprocess.run(size_redis)
-        self.server.send_signal(signal.SIGINT)
-        try:
-            self.server.wait(10)
-        except subprocess.TimeoutExpired:
-            self.server.terminate()
-
-        self.server = None
+        with self._server_lock:
+            if self.server is None:
+                return
+            if self.server.poll() is None:
+                try:
+                    subprocess.run(size_redis, timeout=5)
+                except (OSError, subprocess.TimeoutExpired):
+                    logging.getLogger(__name__).exception("Could not read Redis size")
+                self.server.send_signal(signal.SIGINT)
+                try:
+                    self.server.wait(10)
+                except subprocess.TimeoutExpired:
+                    self.server.kill()
+                    self.server.wait(5)
+            self.server = None
 
     @classmethod
     def plot_events(cls, graph_engine: GraphEngine) -> None:

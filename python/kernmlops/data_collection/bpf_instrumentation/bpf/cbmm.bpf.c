@@ -5,6 +5,8 @@
 #include <linux/sched/loadavg.h>
 #include <uapi/linux/ptrace.h>
 
+#include "kermit.h"
+
 struct cbmm_eager_paging {
   /* Cost related info */
   struct mm_cost_delta* cost;
@@ -52,8 +54,8 @@ struct cbmm_action {
 
 BPF_HASH(cbmm_action_hash, u64, struct cbmm_action, 1024);
 
-BPF_PERF_OUTPUT(cbmm_eager);
-BPF_PERF_OUTPUT(cbmm_prezero);
+KERMIT_OUTPUT(cbmm_eager, struct cbmm_eager_paging_inputs);
+KERMIT_OUTPUT(cbmm_prezero, struct cbmm_async_prezeroing_inputs);
 
 static void insert_mm_estimate_changes(int action) {
   u64 tgid_pid = bpf_get_current_pid_tgid();
@@ -77,28 +79,34 @@ int kprobe__mm_estimate_changes(struct pt_regs* ctx, struct mm_action* action,
 }
 
 static void mm_decide_push_eager(struct pt_regs* ctx, int decision, struct cbmm_action action) {
-  struct cbmm_eager_paging_inputs inputs;
-  memset(&inputs, 0, sizeof(inputs));
-  inputs.decision = decision;
-  inputs.freq_cycles = action.eager.freq_cycles;
-  inputs.greatest_range_benefit = action.eager.greatest_range_benefit;
-  cbmm_eager.perf_submit(ctx, &inputs, sizeof(inputs));
+  struct cbmm_eager_paging_inputs* inputs =
+      KERMIT_RESERVE(cbmm_eager, struct cbmm_eager_paging_inputs, 1);
+  if (!inputs)
+    return;
+  memset(inputs, 0, sizeof(*inputs));
+  inputs->decision = decision;
+  inputs->freq_cycles = action.eager.freq_cycles;
+  inputs->greatest_range_benefit = action.eager.greatest_range_benefit;
+  KERMIT_SUBMIT(cbmm_eager, ctx, inputs);
 }
 
 static void mm_decide_push_prezero(struct pt_regs* ctx, int decision, struct cbmm_action action) {
-  struct cbmm_async_prezeroing_inputs inputs;
-  memset(&inputs, 0, sizeof(inputs));
-  inputs.decision = decision;
-  inputs.load = action.prezero.load_info;
-  inputs.daemon_cost = action.prezero.daemon_cost;
-  inputs.prezero_n = action.prezero.prezero_n;
-  // inputs.nfree = action.prezero.nfree;
-  // inputs.critical_section_cost = action.prezero.critical_section_cost;
-  inputs.critical_section_cost = 150 * 2;
-  inputs.nfree = 10 * 3000 * 1000 / inputs.critical_section_cost;
-  inputs.zeroing_per_page_cost = action.prezero.zeroing_per_page_cost;
-  inputs.recent_used = action.prezero.recent_used;
-  cbmm_prezero.perf_submit(ctx, &inputs, sizeof(inputs));
+  struct cbmm_async_prezeroing_inputs* inputs =
+      KERMIT_RESERVE(cbmm_prezero, struct cbmm_async_prezeroing_inputs, 1);
+  if (!inputs)
+    return;
+  memset(inputs, 0, sizeof(*inputs));
+  inputs->decision = decision;
+  inputs->load = action.prezero.load_info;
+  inputs->daemon_cost = action.prezero.daemon_cost;
+  inputs->prezero_n = action.prezero.prezero_n;
+  // inputs->nfree = action.prezero.nfree;
+  // inputs->critical_section_cost = action.prezero.critical_section_cost;
+  inputs->critical_section_cost = 150 * 2;
+  inputs->nfree = 10 * 3000 * 1000 / inputs->critical_section_cost;
+  inputs->zeroing_per_page_cost = action.prezero.zeroing_per_page_cost;
+  inputs->recent_used = action.prezero.recent_used;
+  KERMIT_SUBMIT(cbmm_prezero, ctx, inputs);
 }
 
 int kretprobe__mm_decide(struct pt_regs* ctx) {

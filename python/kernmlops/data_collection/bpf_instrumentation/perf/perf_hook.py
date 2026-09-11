@@ -4,8 +4,12 @@ from pathlib import Path
 from typing import Any, Final
 
 import polars as pl
-from bcc import BPF, PerfType
-from data_collection.bpf_instrumentation.bpf_hook import POLL_TIMEOUT_MS, BPFProgram
+from bcc import PerfType
+from data_collection.bpf_instrumentation.bpf_hook import (
+    POLL_TIMEOUT_MS,
+    BPFProgram,
+    capture_bpf,
+)
 from data_collection.bpf_instrumentation.perf.perf_config import (
     PERF_EVENT_IOC_DISABLE,
     PERF_EVENT_IOC_ENABLE,
@@ -16,24 +20,26 @@ from data_schema import CollectionTable
 from data_schema.perf import PerfCollectionTable, perf_table_types
 
 PERF_HANDLER: Final[str] = """
-BPF_PERF_OUTPUT(NAME);
+KERMIT_OUTPUT(NAME, struct perf_event_data);
 int NAME_on(struct bpf_perf_event_data* ctx) {
   struct bpf_perf_event_value value_buf;
   if (bpf_perf_prog_read_value(ctx, (void*)&value_buf, sizeof(struct bpf_perf_event_value))) {
     return 0;
   }
-  struct perf_event_data data;
-  __builtin_memset(&data, 0, sizeof(data));
+  struct perf_event_data *data = KERMIT_RESERVE(NAME, struct perf_event_data, 1);
+  if (data == NULL) {
+    return 0;
+  }
   u32 pid = bpf_get_current_pid_tgid();
   u32 tgid = bpf_get_current_pid_tgid() >> 32;
   u64 ts = bpf_ktime_get_ns();
-  data.pid = pid;
-  data.tgid = tgid;
-  data.ts_uptime_us = ts / 1000;
-  data.count = value_buf.counter;
-  data.enabled_time_us = value_buf.enabled / 1000;
-  data.running_time_us = value_buf.running / 1000;
-  NAME.perf_submit(ctx, &data, sizeof(data));
+  data->pid = pid;
+  data->tgid = tgid;
+  data->ts_uptime_us = ts / 1000;
+  data->count = value_buf.counter;
+  data->enabled_time_us = value_buf.enabled / 1000;
+  data->running_time_us = value_buf.running / 1000;
+  KERMIT_SUBMIT(NAME, ctx, data);
   return 0;
 }
 """
@@ -67,9 +73,18 @@ class PerfBPFHook(BPFProgram):
     def name(cls) -> str:
         return "perf"
 
-    def __init__(self):
+    def __init__(self, events: list[type[PerfCollectionTable]] | None = None):
+        """Generate perf source without loading BPF.
+
+        None selects the default registry; [] generates only the base declarations.
+        """
+        if events is None:
+            events = list(perf_table_types.values())
+        elif len({event.name() for event in events}) != len(events):
+            raise ValueError("Perf event names must be unique")
+
         self._perf_data = dict[str, list[PerfData]]()
-        self.bpf_text = open(Path(__file__).parent / "../bpf/perf.bpf.c", "r").read()
+        self.bpf_text = (Path(__file__).parent / "../bpf/perf.bpf.c").read_text()
         self.loaded_hw_event_configs = dict[type[PerfCollectionTable], int]()
         self.group_fds: dict[int, int] | None = None
 
@@ -90,7 +105,7 @@ class PerfBPFHook(BPFProgram):
                 self._perf_data[perf_event.name()] = list[PerfData]()
                 self.loaded_hw_event_configs[perf_event] = perf_event.ev_config()
 
-        for perf_event in list(perf_table_types.values()):
+        for perf_event in events:
             init_perf_handler(perf_event)
 
     def _attach_perf_event(
@@ -123,7 +138,7 @@ class PerfBPFHook(BPFProgram):
 
     def load(self, collection_id: str):
         self.collection_id = collection_id
-        self.bpf = BPF(text=self.bpf_text)
+        self.bpf = capture_bpf(self.bpf_text)
         # sample frequency is in hertz
         for event, hw_config in self.loaded_hw_event_configs.items():
             self._attach_perf_event(
@@ -157,12 +172,12 @@ class PerfBPFHook(BPFProgram):
 
     def data(self) -> list[CollectionTable]:
         return [
-            perf_table_types[event_name].from_df_id(
-                pl.DataFrame(self._perf_data[event_name]),
+            event.from_df_id(
+                pl.DataFrame(self._perf_data[event.name()]),
                 collection_id=self.collection_id,
             )
-            for event_name in self._perf_data.keys()
-            if event_name in perf_table_types and len(self._perf_data[event_name]) > 0
+            for event in self.loaded_hw_event_configs
+            if len(self._perf_data[event.name()]) > 0
         ]
 
     def clear(self):

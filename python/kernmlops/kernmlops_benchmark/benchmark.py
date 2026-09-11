@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, cast
 
-from data_schema import GraphEngine
+from data_schema import CollectionTable, GraphEngine
 from kernmlops_config import ConfigBase
 from typing_extensions import Protocol
 
@@ -99,6 +99,21 @@ class Benchmark(Protocol):
         ...
 
     def setup(self) -> None: ...
+
+    def configure_output(
+        self,
+        *,
+        collection_id: str,
+        collection_dir: Path,
+        run_label: str | None = None,
+        owner_ids: tuple[int, int] | None = None,
+    ) -> None:
+        """Configure raw output destinations without parsing or building tables."""
+        pass
+
+    def finalize(self) -> list[CollectionTable]:
+        """Build result tables once, after measurement and all benchmark work stop."""
+        return []
 
     def run(self) -> None: ...
 
